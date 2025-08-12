@@ -1,0 +1,275 @@
+[build-system]
+requires = ["setuptools>=42.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "davinci-resolve-mcp"
+version = "0.1.0"
+description = "FastMCP server for professional video editing using DaVinci Resolve"
+readme = "README.md"
+authors = [
+    {name = "Sandra Schieder", email = "sandra@sandraschi.dev"},
+]
+requires-python = ">=3.6"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Content Creators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Video",
+    "Topic :: Multimedia :: Video :: Conversion",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    # Core dependencies
+    "fastmcp>=2.10.0,<3.0.0",
+    "fastapi>=0.95.0",
+    "uvicorn[standard]>=0.22.0",
+    "python-dotenv>=1.0.0",
+    "pydantic>=2.0.0,<3.0.0",
+    
+    # Process management and system utilities
+    "psutil>=5.9.0",
+    "pathlib>=1.0.1",
+    
+    # File handling and validation
+    "python-magic>=0.4.27; platform_system!='Windows'",
+    "python-magic-bin>=0.4.14; platform_system=='Windows'",
+    
+    # Configuration and utilities
+    "typing-extensions>=4.5.0",
+    "python-dateutil>=2.8.2",
+    "httpx>=0.24.0",
+    "pyyaml>=6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/sandraschi/davinci-resolve-mcp"
+Documentation = "https://github.com/sandraschi/davinci-resolve-mcp#readme"
+Issues = "https://github.com/sandraschi/davinci-resolve-mcp/issues"
+Source = "https://github.com/sandraschi/davinci-resolve-mcp"
+
+[project.scripts]
+davinci-resolve-mcp = "davinci_resolve_mcp.main:main"
+
+[project.optional-dependencies]
+dev = [
+    # Testing
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-mock>=3.11.0",
+    "pytest-xdist>=3.3.1",
+    "pytest-html>=4.0.0",
+    "pytest-timeout>=2.1.0",
+    
+    # Code quality
+    "black>=23.7.0",
+    "isort>=5.12.0",
+    "mypy>=1.4.0",
+    "ruff>=0.0.280",
+    "pre-commit>=3.3.0",
+    
+    # Documentation
+    "mkdocs>=1.4.3",
+    "mkdocs-material>=9.1.15",
+    "mkdocstrings[python]>=0.22.0",
+    "mkdocs-autorefs>=0.4.1",
+    "mkdocs-jupyter>=0.24.1",
+    "mkdocs-minify-plugin>=0.6.4",
+    "mkdocs-redirects>=1.1.2",
+    
+    # Type stubs
+    "types-python-dotenv>=1.0.0",
+    "types-psutil>=5.9.0",
+    "types-python-dateutil>=2.8.0",
+    "types-requests>=2.28.0",
+    "types-pyyaml>=6.0.0",
+]
+
+docs = [
+    "mkdocs>=1.4.3",
+    "mkdocs-material>=9.1.15",
+    "mkdocstrings[python]>=0.22.0",
+    "mkdocs-autorefs>=0.4.1",
+    "mkdocs-jupyter>=0.24.1",
+]
+
+[project.entry-points]
+"fastmcp.plugins" = { davinci_resolve = "davinci_resolve_mcp.plugins:setup_plugin" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 100
+target-version = ["py36"]
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.mypy]
+python_version = "3.6"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+strict_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+
+# DXT Configuration
+[tool.dxt]
+name = "davinci-resolve-mcp"
+display_name = "DaVinci Resolve MCP"
+version = "0.1.0"
+description = "MCP server for professional video editing using DaVinci Resolve"
+entry_point = "davinci_resolve_mcp.main:app"
+
+# Project Management Tools
+[[tool.dxt.tools]]
+name = "create_project"
+description = "Create new DaVinci Resolve project with settings"
+category = "project"
+
+[[tool.dxt.tools]]
+name = "open_project"
+description = "Open existing project by name"
+category = "project"
+
+[[tool.dxt.tools]]
+name = "list_projects"
+description = "List available projects in database"
+category = "project"
+
+[[tool.dxt.tools]]
+name = "get_project_info"
+description = "Extract comprehensive project information"
+category = "project"
+
+# Media Management Tools
+[[tool.dxt.tools]]
+name = "import_media"
+description = "Import media files to media pool with organization"
+category = "media"
+
+[[tool.dxt.tools]]
+name = "create_media_folder"
+description = "Create organizational folder in media pool"
+category = "media"
+
+[[tool.dxt.tools]]
+name = "search_media"
+description = "Search media by name, format, or metadata"
+category = "media"
+
+[[tool.dxt.tools]]
+name = "get_media_info"
+description = "Extract comprehensive media file information"
+category = "media"
+
+# Timeline Editing Tools
+[[tool.dxt.tools]]
+name = "create_timeline"
+description = "Create new timeline with specified settings"
+category = "timeline"
+
+[[tool.dxt.tools]]
+name = "add_clips_to_timeline"
+description = "Add clips to timeline at specified positions"
+category = "timeline"
+
+[[tool.dxt.tools]]
+name = "edit_clip"
+description = "Perform edit operations (cut, trim, move)"
+category = "timeline"
+
+[[tool.dxt.tools]]
+name = "get_timeline_info"
+description = "Extract timeline structure and content"
+category = "timeline"
+
+# Color Grading Tools
+[[tool.dxt.tools]]
+name = "apply_lut"
+description = "Apply LUT to specified color node"
+category = "color"
+
+[[tool.dxt.tools]]
+name = "adjust_color_wheels"
+description = "Adjust primary color wheels (lift, gamma, gain)"
+category = "color"
+
+[[tool.dxt.tools]]
+name = "create_color_node"
+description = "Add color correction node to clip"
+category = "color"
+
+[[tool.dxt.tools]]
+name = "copy_grade"
+description = "Copy color grade between clips"
+category = "color"
+
+# Rendering Tools
+[[tool.dxt.tools]]
+name = "add_render_job"
+description = "Queue render job with specified settings"
+category = "render"
+
+[[tool.dxt.tools]]
+name = "batch_render"
+description = "Process multiple render jobs"
+category = "render"
+
+[[tool.dxt.tools]]
+name = "monitor_render_progress"
+description = "Check rendering progress and status"
+category = "render"
+
+[[tool.dxt.tools]]
+name = "export_timeline"
+description = "Export timeline to AAF, XML, or EDL"
+category = "render"
+
+# Audio Processing Tools
+[[tool.dxt.tools]]
+name = "adjust_audio_levels"
+description = "Adjust audio volume and mixing"
+category = "audio"
+
+[[tool.dxt.tools]]
+name = "apply_audio_effects"
+description = "Apply audio effects (EQ, compression, etc.)"
+category = "audio"
+
+[[tool.dxt.tools]]
+name = "sync_audio"
+description = "Synchronize audio and video tracks"
+category = "audio"
+
+[[tool.dxt.tools]]
+name = "export_audio"
+description = "Extract audio tracks from timeline"
+category = "audio"
+
+[tool.dxt.config]
+log_level = "INFO"
+max_workers = 4
+request_timeout = 120.0
+resolve_timeout = 60.0
