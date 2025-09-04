@@ -33,7 +33,7 @@ The DaVinci Resolve MCP server provides Claude and other AI agents with professi
 
 ### 1. MCP Interface Layer
 **Purpose**: FastMCP protocol communication with AI agents  
-**Technology**: FastMCP 2.10 framework  
+**Technology**: FastMCP 2.10.1 framework  
 **Responsibilities**:
 - Tool registration and discovery
 - Parameter validation and conversion

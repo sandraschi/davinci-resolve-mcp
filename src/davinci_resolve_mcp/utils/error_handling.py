@@ -6,12 +6,11 @@ for the FastMCP server.
 """
 import logging
 import traceback
-from typing import Any, Dict, Optional, Type, TypeVar, Callable, Awaitable
 from functools import wraps
+from typing import Any, Dict, Optional, Type, TypeVar, Callable, Awaitable, cast
 
 from fastmcp import FastMCP
 from fastmcp.tools import Tool
-from pydantic import BaseModel
 
 from .exceptions import (
     DaVinciResolveMCPError,
@@ -20,28 +19,12 @@ from .exceptions import (
     ResolveAPIError,
     ResolveNotRunningError
 )
+from ..types import ErrorResponse, SuccessResponse, F
 
 # Alias for backward compatibility
 ResolveError = DaVinciResolveMCPError
 
 logger = logging.getLogger(__name__)
-
-# Type variable for generic function typing
-F = TypeVar('F', bound=Callable[..., Awaitable[Any]])
-
-
-class ErrorResponse(BaseModel):
-    """Standard error response format."""
-    status: str = "error"
-    error_type: str
-    message: str
-    details: Optional[Dict[str, Any]] = None
-
-
-class SuccessResponse(BaseModel):
-    """Standard success response format."""
-    status: str = "success"
-    data: Dict[str, Any]
 
 
 def handle_errors(func: F) -> Callable[..., Any]:
@@ -134,11 +117,61 @@ def create_tool(func: F, **tool_kwargs) -> Tool:
     """
     Create a FastMCP tool with error handling.
     
-    This is a convenience function that wraps a function with error handling
-    and creates a FastMCP tool from it.
+    Args:
+        func: The function to wrap with error handling
+        **tool_kwargs: Additional keyword arguments to pass to Tool
+        
+    Returns:
+        Tool: A FastMCP tool with error handling
     """
-    # Apply error handling decorator
     wrapped_func = handle_errors(func)
+    return Tool(func=wrapped_func, **tool_kwargs)
+
+
+def register_error_handlers(app: FastMCP) -> None:
+    """
+    Register error handlers with the FastMCP application.
     
-    # Create the tool with the wrapped function
-    return Tool(wrapped_func, **tool_kwargs)
+    Args:
+        app: The FastMCP application instance
+    """
+    @app.exception_handler(ResolveConnectionError)
+    async def handle_connection_error(request, exc: ResolveConnectionError) -> ErrorResponse:
+        return ErrorResponse(
+            error_type="connection_error",
+            message=str(exc) or "Failed to connect to DaVinci Resolve",
+            details={"original_error": str(exc)}
+        )
+    
+    @app.exception_handler(ResolveOperationError)
+    async def handle_operation_error(request, exc: ResolveOperationError) -> ErrorResponse:
+        return ErrorResponse(
+            error_type="operation_error",
+            message=str(exc) or "Operation failed in DaVinci Resolve",
+            details={"original_error": str(exc)}
+        )
+    
+    @app.exception_handler(ResolveAPIError)
+    async def handle_api_error(request, exc: ResolveAPIError) -> ErrorResponse:
+        return ErrorResponse(
+            error_type="api_error",
+            message=str(exc) or "DaVinci Resolve API error",
+            details={"original_error": str(exc)}
+        )
+    
+    @app.exception_handler(ResolveNotRunningError)
+    async def handle_not_running_error(request, exc: ResolveNotRunningError) -> ErrorResponse:
+        return ErrorResponse(
+            error_type="not_running_error",
+            message=str(exc) or "DaVinci Resolve is not running",
+            details={"original_error": str(exc)}
+        )
+    
+    @app.exception_handler(Exception)
+    async def handle_generic_error(request, exc: Exception) -> ErrorResponse:
+        logger.exception("Unhandled exception occurred")
+        return ErrorResponse(
+            error_type="internal_error",
+            message="An internal server error occurred",
+            details={"error": str(exc) if str(exc) else repr(exc)}
+        )

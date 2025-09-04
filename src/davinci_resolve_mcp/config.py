@@ -4,40 +4,130 @@ Configuration management for DaVinci Resolve MCP Server.
 This module handles configuration loading, validation, and management
 for the DaVinci Resolve MCP server.
 """
+from __future__ import annotations
 
+import logging
 import os
 import platform
+import sys
+from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union, cast
 
 import yaml
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, HttpUrl, validator, root_validator
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
+# Type variable for generic model type
+ModelT = TypeVar('ModelT', bound=BaseModel)
+
+class LogLevel(str, Enum):
+    """Standard log levels for consistent configuration."""
+    DEBUG = "DEBUG"
+    INFO = "INFO"
+    WARNING = "WARNING"
+    ERROR = "ERROR"
+    CRITICAL = "CRITICAL"
+
+class ColorSpace(str, Enum):
+    """Supported color spaces."""
+    REC709 = "Rec.709"
+    REC2020 = "Rec.2020"
+    P3_D65 = "DCI-P3 D65"
+    ACES = "ACEScct"
+    SRGB = "sRGB"
+    CUSTOM = "Custom"
+
+class FrameRate(float, Enum):
+    """Common frame rates for video projects."""
+    FILM_24 = 24.0
+    NTSC_DF = 29.97
+    NTSC_NDF = 30.0
+    PAL = 25.0
+    HD_50 = 50.0
+    HD_60 = 60.0
 
 
 class ResolveEnvironmentConfig(BaseModel):
-    """Environment configuration for DaVinci Resolve API access."""
+    """
+    Environment configuration for DaVinci Resolve API access.
     
-    script_api_path: Optional[str] = None
-    script_lib_path: Optional[str] = None
-    python_path_additions: List[str] = Field(default_factory=list)
+    This configuration handles paths and environment variables needed to access
+    the DaVinci Resolve Python API.
+    """
+    script_api_path: Optional[Path] = Field(
+        default=None,
+        description="Path to DaVinci Resolve's Python modules"
+    )
+    script_lib_path: Optional[Path] = Field(
+        default=None,
+        description="Path to additional script libraries"
+    )
+    python_path_additions: List[Path] = Field(
+        default_factory=list,
+        description="Additional paths to add to PYTHONPATH"
+    )
     
     class Config:
         """Pydantic configuration."""
         extra = "allow"
+        json_encoders = {
+            Path: str
+        }
+    
+    @validator('script_api_path', 'script_lib_path', pre=True)
+    def validate_paths(cls, v: Any) -> Optional[Path]:
+        """Convert string paths to Path objects."""
+        if v is None or isinstance(v, Path):
+            return v
+        return Path(str(v))
 
 
 class ConnectionConfig(BaseModel):
-    """Connection configuration for Resolve API."""
+    """
+    Connection configuration for Resolve API.
     
-    timeout: float = Field(default=30.0, ge=5.0, le=300.0)
-    retry_attempts: int = Field(default=3, ge=1, le=10)
-    retry_delay: float = Field(default=2.0, ge=0.5, le=30.0)
-    connection_check_interval: float = Field(default=5.0, ge=1.0, le=60.0)
-    headless_mode: bool = Field(default=False)
+    This configuration controls how the application connects to and communicates
+    with the DaVinci Resolve application.
+    """
+    timeout: float = Field(
+        default=30.0,
+        ge=5.0,
+        le=300.0,
+        description="Timeout in seconds for API operations"
+    )
+    retry_attempts: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="Number of retry attempts for failed operations"
+    )
+    retry_delay: float = Field(
+        default=2.0,
+        ge=0.5,
+        le=30.0,
+        description="Delay in seconds between retry attempts"
+    )
+    connection_check_interval: float = Field(
+        default=5.0,
+        ge=1.0,
+        le=60.0,
+        description="Interval in seconds to check connection health"
+    )
+    headless_mode: bool = Field(
+        default=False,
+        description="Run Resolve in headless mode (if supported)"
+    )
+    auto_reconnect: bool = Field(
+        default=True,
+        description="Automatically attempt to reconnect if connection is lost"
+    )
     
     class Config:
         """Pydantic configuration."""
-        extra = "allow"
+        extra = "ignore"  # Ignore extra fields instead of raising validation errors
 
 
 class RenderConfig(BaseModel):

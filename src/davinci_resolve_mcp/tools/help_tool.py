@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from typing import TypeVar, Generic
 
 from ..models import (
-    ResolveObject, Project, MediaPool, Timeline, RenderQueue,
+    ResolveObject, ProjectInfo, MediaPool, Timeline, RenderQueue,
     ColorGrade, AudioMixer, get_available_models, get_model_dependencies
 )
 

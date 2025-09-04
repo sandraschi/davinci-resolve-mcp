@@ -4,19 +4,25 @@ DaVinci Resolve Connection Manager.
 This module handles connection management to the DaVinci Resolve API,
 including connection establishment, monitoring, and recovery.
 """
+from __future__ import annotations
 
 import asyncio
 import logging
 import time
-from typing import Dict, Optional, Any
+from typing import Dict, Optional, Any, Type, TYPE_CHECKING, cast
 
-from ..config import DaVinciResolveConfig
+from ..types import ConnectionState
 from ..utils.exceptions import (
     ResolveConnectionError,
     ResolveNotRunningError,
-    ResolveAPIError
+    ResolveAPIError,
+    ResolveOperationError
 )
 from .environment import ResolveEnvironment
+
+if TYPE_CHECKING:
+    from ..config import DaVinciResolveConfig
+    import DaVinciResolveScript as DVR_script  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +35,7 @@ class ResolveConnectionManager:
     including error handling, retry logic, and connection monitoring.
     """
     
-    def __init__(self, config: DaVinciResolveConfig):
+    def __init__(self, config: 'DaVinciResolveConfig') -> None:
         """
         Initialize the connection manager.
         
@@ -40,57 +46,99 @@ class ResolveConnectionManager:
         self.environment = ResolveEnvironment()
         
         # Connection state
-        self.resolve = None
-        self.project_manager = None
-        self.current_project = None
-        self.connection_status = "disconnected"
-        self.last_connection_check = 0
+        self.resolve: Optional[Any] = None
+        self.project_manager: Optional[Any] = None
+        self.current_project: Optional[Any] = None
+        self.connection_status: str = ConnectionState.DISCONNECTED
+        self.last_connection_check: float = 0.0
+        self._lock = asyncio.Lock()
         
         # Setup environment
         self.environment.setup_environment_variables()
         
-    async def connect(self) -> bool:
+    async def connect(self, max_retries: int = 3, retry_delay: float = 1.0) -> bool:
         """
-        Establish connection to DaVinci Resolve.
+        Establish connection to DaVinci Resolve with retry logic.
         
+        Args:
+            max_retries: Maximum number of connection attempts
+            retry_delay: Delay between retry attempts in seconds
+            
         Returns:
             bool: True if connection successful, False otherwise
             
         Raises:
             ResolveNotRunningError: If DaVinci Resolve is not running
-            ResolveConnectionError: If connection fails for other reasons
+            ResolveConnectionError: If connection fails after all retries
         """
-        try:
-            # Check if Resolve is running
-            if not self.environment.check_resolve_running():
-                raise ResolveNotRunningError("DaVinci Resolve is not running")
+        async with self._lock:
+            if self.connection_status == ConnectionState.CONNECTED:
+                return True
+                
+            last_error = None
             
-            # Import DaVinci Resolve script module
-            try:
-                import DaVinciResolveScript as dvr_script
-            except ImportError as e:
-                raise ResolveConnectionError(f"Cannot import DaVinciResolveScript: {e}")
+            for attempt in range(1, max_retries + 1):
+                try:
+                    # Check if Resolve is running
+                    if not self.environment.check_resolve_running():
+                        raise ResolveNotRunningError("DaVinci Resolve is not running")
+                    
+                    # Import DaVinci Resolve script module
+                    try:
+                        import DaVinciResolveScript as dvr_script  # type: ignore
+                    except ImportError as e:
+                        raise ResolveConnectionError(
+                            f"Cannot import DaVinciResolveScript: {e}. "
+                            "Make sure DaVinci Resolve is installed and the script module is available."
+                        ) from e
+                    
+                    # Establish connection
+                    self.resolve = dvr_script.scriptapp("Resolve")
+                    if not self.resolve:
+                        raise ResolveConnectionError(
+                            "Failed to connect to DaVinci Resolve: scriptapp returned None"
+                        )
+                    
+                    # Get project manager
+                    self.project_manager = self.resolve.GetProjectManager()
+                    if not self.project_manager:
+                        raise ResolveConnectionError(
+                            "Failed to get project manager from DaVinci Resolve"
+                        )
+                    
+                    self.connection_status = ConnectionState.CONNECTED
+                    self.last_connection_check = time.time()
+                    
+                    logger.info("Successfully connected to DaVinci Resolve")
+                    return True
+                    
+                except ResolveNotRunningError:
+                    self.connection_status = ConnectionState.ERROR
+                    logger.error("DaVinci Resolve is not running")
+                    raise
+                    
+                except Exception as e:
+                    last_error = e
+                    self.connection_status = ConnectionState.ERROR
+                    
+                    if attempt < max_retries:
+                        logger.warning(
+                            f"Connection attempt {attempt} failed: {e}. "
+                            f"Retrying in {retry_delay} seconds..."
+                        )
+                        await asyncio.sleep(retry_delay)
+                    else:
+                        error_msg = (
+                            f"Failed to connect to DaVinci Resolve after {max_retries} attempts. "
+                            f"Last error: {e}"
+                        )
+                        logger.error(error_msg)
+                        raise ResolveConnectionError(error_msg) from e
             
-            # Establish connection
-            self.resolve = dvr_script.scriptapp("Resolve")
-            if not self.resolve:
-                raise ResolveConnectionError("Failed to connect to DaVinci Resolve")
-            
-            # Get project manager
-            self.project_manager = self.resolve.GetProjectManager()
-            if not self.project_manager:
-                raise ResolveConnectionError("Failed to get project manager")
-            
-            self.connection_status = "connected"
-            self.last_connection_check = time.time()
-            
-            logger.info("Successfully connected to DaVinci Resolve")
-            return True
-            
-        except Exception as e:
-            self.connection_status = "error"
-            logger.error(f"Failed to connect to DaVinci Resolve: {e}")
-            raise
+            # This should theoretically never be reached due to the raise in the loop
+            raise ResolveConnectionError(
+                f"Failed to connect to DaVinci Resolve: {last_error}"
+            ) if last_error else ResolveConnectionError("Failed to connect to DaVinci Resolve")
     
     async def disconnect(self) -> None:
         """Disconnect from DaVinci Resolve."""

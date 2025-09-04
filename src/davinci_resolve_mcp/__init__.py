@@ -31,6 +31,8 @@ __version__ = "0.1.0"
 __author__ = "Sandra Schieder"
 __email__ = "sandra@sandraschi.dev"
 
+from typing import Union
+
 # Import core components
 from .server import DaVinciResolveMcpServer
 
