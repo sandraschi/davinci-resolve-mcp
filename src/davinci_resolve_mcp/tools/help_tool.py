@@ -88,7 +88,7 @@ class HelpTool:
         """Load built-in help content."""
         # Help for core classes
         self._add_class_help(ResolveObject, "Base class for all Resolve objects.")
-        self._add_class_help(Project, "Represents a DaVinci Resolve project.")
+        self._add_class_help(ProjectInfo, "Represents a DaVinci Resolve project.")
         self._add_class_help(MediaPool, "Manages media items and bins in a project.")
         self._add_class_help(Timeline, "Represents a timeline in a project.")
         self._add_class_help(RenderQueue, "Manages render jobs for a project.")

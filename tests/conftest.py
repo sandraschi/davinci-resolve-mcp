@@ -104,22 +104,16 @@ def app_state(mock_config, mock_connection_manager):
     return state
 
 @pytest.fixture
-def test_app(app_state):
-    """Create a test FastMCP application with mocked dependencies."""
+def test_app():
+    """Create a test FastMCP application."""
     from fastmcp import FastMCP
-    from davinci_resolve_mcp.server import app
-    
-    # Replace app state with our test state
+
     test_app = FastMCP(
         name="Test DaVinci Resolve MCP",
-        description="Test application",
+        instructions="Test application",
         version="0.1.0"
     )
-    
-    # Copy routes and other attributes from the real app
-    test_app.routes = app.routes.copy()
-    test_app.state = app_state
-    
+
     return test_app
 
 @pytest.fixture(autouse=True)

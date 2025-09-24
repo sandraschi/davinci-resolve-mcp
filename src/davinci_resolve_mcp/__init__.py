@@ -33,15 +33,11 @@ __email__ = "sandra@sandraschi.dev"
 
 from typing import Union
 
-# Import core components
-from .server import DaVinciResolveMcpServer
-
 # Import the help system
 from .tools import help, get_help, UserLevel
 
 # Re-export commonly used components for easier access
 __all__ = [
-    "DaVinciResolveMcpServer",  # Main server class
     "help",                     # Help tool instance
     "get_help",                 # Help function
     "UserLevel",                # User level enum

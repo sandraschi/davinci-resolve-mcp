@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "davinci-resolve-advanced": {
+      "command": "python",
+      "args": ["-m", "davinci_resolve_mcp.server"],
+      "cwd": "C:\\path\\to\\davinci-resolve-mcp\\src",
+      "env": {
+        "PYTHONPATH": "C:\\path\\to\\davinci-resolve-mcp\\src",
+        "RESOLVE_SCRIPT_API_PATH": "C:\\Program Files\\Blackmagic Design\\DaVinci Resolve\\Support\\Developer\\Scripting",
+        "HOST": "127.0.0.1",
+        "PORT": "8000",
+        "LOG_LEVEL": "INFO",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}

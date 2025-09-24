@@ -87,14 +87,18 @@ class TestMediaTools:
         """Set up test environment."""
         self.app = FastMCP(
             name="Test App",
-            description="Test application",
+            instructions="Test application",
             version="0.1.0"
         )
         
         # Register tools
         from davinci_resolve_mcp.tools.media_tools import register_tools
         register_tools(self.app)
-        
+
+        # Set up connection manager in module state
+        from davinci_resolve_mcp.server import app as server_app
+        server_app.state.connection_manager = mock_connection_manager
+
         # Set up mocks
         self.mock_resolve = mock_resolve
         self.mock_project_manager = mock_resolve.GetProjectManager.return_value

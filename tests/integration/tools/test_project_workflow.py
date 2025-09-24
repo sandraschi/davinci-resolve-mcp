@@ -18,7 +18,7 @@ class TestProjectWorkflow:
         # Create a test app
         self.app = FastMCP(
             name="Test App",
-            description="Test application",
+            instructions="Test application",
             version="0.1.0"
         )
         

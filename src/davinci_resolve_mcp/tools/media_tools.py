@@ -7,7 +7,7 @@ including importing media, organizing the media pool, and managing clips.
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Any, Union
 
 from pydantic import BaseModel, Field, validator
 

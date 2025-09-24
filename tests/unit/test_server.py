@@ -9,7 +9,7 @@ from unittest.mock import MagicMock, patch, AsyncMock
 from fastmcp import FastMCP
 from fastapi.testclient import TestClient
 
-from davinci_resolve_mcp.server import app, AppState, lifespan, handle_shutdown, handle_startup
+from davinci_resolve_mcp.server import app, AppState, initialize_server
 from davinci_resolve_mcp.config import DaVinciResolveConfig
 from davinci_resolve_mcp.connection.manager import ResolveConnectionManager
 
@@ -37,86 +37,44 @@ class TestAppState:
         state.connection_pool.close_all_connections.assert_called_once()
 
 
-class TestServerLifespan:
-    """Tests for the server lifespan events."""
-    
-    @pytest.fixture
-    def mock_app(self):
-        """Create a mock FastMCP app with state."""
-        app = FastMCP(
-            name="Test App",
-            description="Test application",
-            version="0.1.0"
-        )
-        app.state = AppState(MagicMock())
-        return app
-    
-    @pytest.mark.asyncio
-    async def test_lifespan_startup(self, mock_app):
-        """Test the application startup event."""
-        # Create a mock lifespan context
-        mock_lifespan_context = AsyncMock()
-        mock_lifespan_context.__aenter__.return_value = {"app": mock_app}
-        
-        # Mock the connection manager
-        mock_connection_manager = AsyncMock()
-        mock_connection_manager.connect.return_value = True
-        
-        with patch('davinci_resolve_mcp.server.ResolveConnectionManager', 
-                  return_value=mock_connection_manager) as mock_manager_cls:
-            # Call the lifespan function
-            async with lifespan(mock_app) as context:
-                assert context == {"app": mock_app}
-                
-                # Verify the connection manager was initialized
-                mock_manager_cls.assert_called_once_with(mock_app.state.config)
-                
-                # Verify connect was called
-                mock_connection_manager.connect.assert_awaited_once()
-                
-                # Verify the app state was updated
-                assert mock_app.state.connection_manager == mock_connection_manager
-    
-    @pytest.mark.asyncio
-    async def test_lifespan_shutdown(self, mock_app):
-        """Test the application shutdown event."""
-        # Set up a mock connection pool
-        mock_connection_pool = AsyncMock()
-        mock_app.state.connection_pool = mock_connection_pool
-        
-        # Call the shutdown handler
-        await handle_shutdown(mock_app)
-        
-        # Verify the connection pool was closed
-        mock_connection_pool.close_all_connections.assert_awaited_once()
-    
-    @pytest.mark.asyncio
-    async def test_lifespan_startup_connection_error(self, mock_app):
-        """Test startup when connection to Resolve fails."""
-        # Mock the connection manager to fail connection
-        mock_connection_manager = AsyncMock()
-        mock_connection_manager.connect.return_value = False
-        
-        with patch('davinci_resolve_mcp.server.ResolveConnectionManager', 
-                  return_value=mock_connection_manager):
-            # Call the lifespan function and expect an exception
-            with pytest.raises(RuntimeError, match="Failed to connect to DaVinci Resolve"):
-                async with lifespan(mock_app):
-                    pass
-    
-    @pytest.mark.asyncio
-    async def test_handle_startup(self, mock_app):
-        """Test the handle_startup function."""
-        # Mock the connection manager
-        mock_connection_manager = AsyncMock()
-        mock_connection_manager.connect.return_value = True
-        mock_app.state.connection_manager = mock_connection_manager
-        
-        # Call the startup handler
-        await handle_startup(mock_app)
-        
-        # Verify connect was called
-        mock_connection_manager.connect.assert_awaited_once()
+class TestServerInitialization:
+    """Tests for server initialization."""
+
+    def test_initialize_server_success(self):
+        """Test successful server initialization."""
+        with patch('davinci_resolve_mcp.server.load_default') as mock_load_default, \
+             patch('davinci_resolve_mcp.server.ResolveConnectionManager') as mock_manager, \
+             patch('davinci_resolve_mcp.server.ResolveConnectionPool') as mock_pool, \
+             patch('davinci_resolve_mcp.server.register_tools') as mock_register:
+
+            mock_config = MagicMock()
+            mock_load_default.return_value = mock_config
+            mock_config.setup_environment = MagicMock()
+
+            # Call the initialization function
+            initialize_server()
+
+            # Verify configuration was loaded
+            mock_load_default.assert_called_once()
+            mock_config.setup_environment.assert_called_once()
+
+            # Verify connection manager was created
+            mock_manager.assert_called_once_with(mock_config)
+
+            # Verify connection pool was created
+            mock_pool.assert_called_once()
+
+            # Verify tools were registered
+            mock_register.assert_called_once()
+
+    def test_initialize_server_error(self):
+        """Test server initialization failure."""
+        with patch('davinci_resolve_mcp.server.load_default') as mock_load_default:
+            mock_load_default.side_effect = Exception("Configuration error")
+
+            # Call the initialization function and expect an exception
+            with pytest.raises(Exception, match="Configuration error"):
+                initialize_server()
 
 
 class TestServerEndpoints:
@@ -128,7 +86,7 @@ class TestServerEndpoints:
         # Create a test app with our mocks
         test_app = FastMCP(
             name="Test App",
-            description="Test application",
+            instructions="Test application",
             version="0.1.0"
         )
         

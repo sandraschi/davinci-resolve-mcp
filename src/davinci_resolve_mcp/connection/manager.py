@@ -429,3 +429,26 @@ class ResolveConnectionPool:
         for connection in self.connections.values():
             await connection.disconnect()
         self.connections.clear()
+
+    async def close(self) -> None:
+        """
+        Close the connection manager and clean up resources.
+
+        This method properly closes the connection to DaVinci Resolve
+        and releases any associated resources.
+        """
+        try:
+            # Close the main connection
+            if self.resolve:
+                # Note: DaVinci Resolve API doesn't have explicit disconnect methods
+                # The connection is managed by the Python module
+                self.resolve = None
+                self.project_manager = None
+                self.current_project = None
+
+            self.connection_status = ConnectionState.DISCONNECTED
+            logger.info("ResolveConnectionManager closed successfully")
+
+        except Exception as e:
+            logger.error(f"Error closing ResolveConnectionManager: {str(e)}")
+            raise

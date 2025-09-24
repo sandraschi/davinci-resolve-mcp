@@ -95,7 +95,7 @@ class TestProjectTools:
         """Set up test environment."""
         self.app = FastMCP(
             name="Test App",
-            description="Test application",
+            instructions="Test application",
             version="0.1.0"
         )
         
@@ -108,8 +108,9 @@ class TestProjectTools:
         self.mock_project_manager = mock_resolve.GetProjectManager.return_value
         self.mock_project = self.mock_project_manager.GetCurrentProject.return_value
         
-        # Set up connection manager
-        self.app.state.connection_manager = mock_connection_manager
+        # Set up connection manager in module state
+        from davinci_resolve_mcp.server import app as server_app
+        server_app.state.connection_manager = mock_connection_manager
         
         # Set up project manager return values
         self.mock_project_manager.GetProjectListInCurrentFolder.return_value = ["Project 1", "Test Project"]

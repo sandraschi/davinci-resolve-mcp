@@ -113,65 +113,38 @@ def handle_resolve_error(exc: Exception) -> dict:
         ).dict()
 
 
-def create_tool(func: F, **tool_kwargs) -> Tool:
+def create_tool(func: F, **tool_kwargs) -> F:
     """
-    Create a FastMCP tool with error handling.
-    
+    Decorator to create a FastMCP tool with error handling.
+
     Args:
         func: The function to wrap with error handling
-        **tool_kwargs: Additional keyword arguments to pass to Tool
-        
+        **tool_kwargs: Additional keyword arguments (currently unused)
+
     Returns:
-        Tool: A FastMCP tool with error handling
+        The wrapped function with error handling
     """
+    # Wrap the function with error handling
     wrapped_func = handle_errors(func)
-    return Tool(func=wrapped_func, **tool_kwargs)
+
+    # Store original function attributes
+    wrapped_func.__name__ = func.__name__
+    wrapped_func.__doc__ = func.__doc__
+    wrapped_func.__annotations__ = func.__annotations__
+
+    return wrapped_func
 
 
 def register_error_handlers(app: FastMCP) -> None:
     """
     Register error handlers with the FastMCP application.
-    
+
+    Note: FastMCP handles errors differently than FastAPI.
+    Error handling is done at the tool level using the handle_errors decorator.
+
     Args:
         app: The FastMCP application instance
     """
-    @app.exception_handler(ResolveConnectionError)
-    async def handle_connection_error(request, exc: ResolveConnectionError) -> ErrorResponse:
-        return ErrorResponse(
-            error_type="connection_error",
-            message=str(exc) or "Failed to connect to DaVinci Resolve",
-            details={"original_error": str(exc)}
-        )
-    
-    @app.exception_handler(ResolveOperationError)
-    async def handle_operation_error(request, exc: ResolveOperationError) -> ErrorResponse:
-        return ErrorResponse(
-            error_type="operation_error",
-            message=str(exc) or "Operation failed in DaVinci Resolve",
-            details={"original_error": str(exc)}
-        )
-    
-    @app.exception_handler(ResolveAPIError)
-    async def handle_api_error(request, exc: ResolveAPIError) -> ErrorResponse:
-        return ErrorResponse(
-            error_type="api_error",
-            message=str(exc) or "DaVinci Resolve API error",
-            details={"original_error": str(exc)}
-        )
-    
-    @app.exception_handler(ResolveNotRunningError)
-    async def handle_not_running_error(request, exc: ResolveNotRunningError) -> ErrorResponse:
-        return ErrorResponse(
-            error_type="not_running_error",
-            message=str(exc) or "DaVinci Resolve is not running",
-            details={"original_error": str(exc)}
-        )
-    
-    @app.exception_handler(Exception)
-    async def handle_generic_error(request, exc: Exception) -> ErrorResponse:
-        logger.exception("Unhandled exception occurred")
-        return ErrorResponse(
-            error_type="internal_error",
-            message="An internal server error occurred",
-            details={"error": str(exc) if str(exc) else repr(exc)}
-        )
+    # Error handling is now done at the tool level with handle_errors decorator
+    # FastMCP doesn't have FastAPI-style exception handlers
+    pass

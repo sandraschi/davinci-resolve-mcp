@@ -1,0 +1,86 @@
+name: Question/Support
+description: Ask a question or request help
+title: "[QUESTION] "
+labels: ["question", "help wanted"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Question/Support Request
+        Need help or have a question? We're here to help! Please provide as much detail as possible.
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know or what help do you need?
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Provide context about what you're trying to accomplish.
+      placeholder: |
+        - What are you trying to do?
+        - What have you tried so far?
+        - What documentation have you read?
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Please provide details about your setup.
+      value: |
+        - OS: [e.g., Windows 11, macOS 12.0, Ubuntu 20.04]
+        - DaVinci Resolve Version: [e.g., 18.6.4]
+        - Python Version: [e.g., 3.11.0]
+        - MCP Version: [e.g., 0.1.0]
+        - Claude Desktop Version: [if applicable]
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs/Output
+      description: If applicable, include any relevant logs, error messages, or output.
+      placeholder: |
+        ```
+        Paste any relevant logs or output here
+        ```
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What area does your question relate to?
+      options:
+        - Installation/Setup
+        - Configuration
+        - Usage/Commands
+        - Development/Contributing
+        - Documentation
+        - Troubleshooting
+        - Performance
+        - Integration
+        - Other
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I have read the README and documentation
+          required: true
+        - label: I have searched existing issues for similar questions
+          required: true
+        - label: This is not a bug report (use bug report template instead)
+          required: true

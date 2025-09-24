@@ -6,13 +6,14 @@ This module provides the command-line interface for the DaVinci Resolve MCP serv
 """
 import asyncio
 import logging
+import sys
 from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.logging import RichHandler
 
-from .server import start_server
+from .server import start_server, app, initialize_server
 from .connection.environment import verify_resolve_environment
 from .config import settings
 
@@ -84,6 +85,39 @@ def start(
         if debug:
             logger.exception("Detailed error:")
         raise typer.Exit(1)
+
+
+@app.command()
+def mcp():
+    """Run the MCP server in stdio mode for Claude Desktop."""
+    # Set up logging for MCP mode (less verbose)
+    logging.basicConfig(
+        level=logging.WARNING,  # Only show warnings and errors in MCP mode
+        format="%(levelname)s: %(message)s"
+    )
+
+    logger.info("Starting DaVinci Resolve MCP server in stdio mode...")
+
+    # Initialize the server
+    try:
+        initialize_server()
+    except Exception as e:
+        logger.error(f"Failed to initialize server: {str(e)}")
+        sys.exit(1)
+
+    # Run the MCP server in stdio mode
+    try:
+        # Import here to avoid circular imports
+        import asyncio
+        from .server import app as mcp_app
+
+        # Run the FastMCP app in stdio mode
+        asyncio.run(mcp_app.run())
+    except KeyboardInterrupt:
+        logger.info("MCP server stopped")
+    except Exception as e:
+        logger.error(f"MCP server error: {str(e)}")
+        sys.exit(1)
 
 
 @app.command()

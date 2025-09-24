@@ -6,17 +6,11 @@ This module implements the FastMCP server for DaVinci Resolve integration.
 import asyncio
 import logging
 import sys
-import signal
 import os
-import uvicorn
-from pathlib import Path
-from typing import Dict, Any, Optional, List, Type, Callable, Awaitable, Union
+from typing import Dict, Any, Optional, List
 
-from fastmcp import FastMCP, FastMCPConfig
-from fastmcp.tools import Tool
-from pydantic import BaseModel, Field, HttpUrl, validator
-from fastapi import FastAPI, HTTPException, status, Request
-from fastapi.responses import JSONResponse
+from fastmcp.server import FastMCP
+from pydantic import BaseModel, Field
 
 from .connection.manager import ResolveConnectionManager, ResolveConnectionPool
 from .config import DaVinciResolveConfig, load_default
@@ -29,7 +23,7 @@ from .utils.error_handling import (
     handle_resolve_error
 )
 from .utils.exceptions import (
-    ResolveError,
+    DaVinciResolveMCPError,
     ResolveConnectionError,
     ResolveOperationError,
     ResolveAPIError,
@@ -61,59 +55,22 @@ class AppState:
 # Initialize the FastMCP app
 app = FastMCP(
     name="DaVinci Resolve MCP",
+    instructions="MCP server for DaVinci Resolve integration",
     version="0.1.0",
-    description="MCP server for DaVinci Resolve integration",
-    config=FastMCPConfig(
-        host=os.getenv("HOST", "0.0.0.0"),
-        port=int(os.getenv("PORT", "8000")),
-        debug=os.getenv("DEBUG", "false").lower() == "true",
-        log_level=os.getenv("LOG_LEVEL", "info"),
-        reload=os.getenv("RELOAD", "false").lower() == "true"
-    )
+    host=os.getenv("HOST", "0.0.0.0"),
+    port=int(os.getenv("PORT", "8000")),
+    debug=os.getenv("DEBUG", "false").lower() == "true",
+    log_level=os.getenv("LOG_LEVEL", "info")
 )
 
 # Initialize application state
 app.state = AppState()
 
-# Register error handlers
-app.add_exception_handler(ResolveError, handle_resolve_error)
-app.add_exception_handler(HTTPException, lambda request, exc: JSONResponse(
-    status_code=exc.status_code,
-    content={"detail": exc.detail}
-))
-app.add_exception_handler(Exception, lambda request, exc: JSONResponse(
-    status_code=500,
-    content={"detail": "Internal server error"}
-))
+# Note: FastMCP handles exceptions differently than FastAPI
+# Error handling is done at the tool level using the handle_errors decorator
 
-# Register signal handlers for graceful shutdown
-def handle_shutdown(signum, frame):
-    """Handle shutdown signals."""
-    logger.info("Received shutdown signal, cleaning up...")
-    app.state.should_exit = True
-    
-    # Close all connections
-    if hasattr(app.state, 'connection_pool') and app.state.connection_pool:
-        app.state.connection_pool.close_all_connections()
-    
-    # Close connection manager
-    if hasattr(app.state, 'connection_manager') and app.state.connection_manager:
-        asyncio.create_task(app.state.connection_manager.close())
-    
-    logger.info("Cleanup complete. Shutting down...")
-    sys.exit(0)
-
-# Register signal handlers
-signal.signal(signal.SIGINT, handle_shutdown)
-signal.signal(signal.SIGTERM, handle_shutdown)
-
-# Middleware for request logging
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    logger.info(f"Request: {request.method} {request.url}")
-    response = await call_next(request)
-    logger.info(f"Response status: {response.status_code}")
-    return response
+# Note: FastMCP handles HTTP serving and lifecycle differently
+# Signal handlers and middleware are not applicable
 
 class ConnectionParams(BaseModel):
     """Parameters for connecting to DaVinci Resolve."""
@@ -122,59 +79,45 @@ class ConnectionParams(BaseModel):
     timeout: int = Field(30, description="Connection timeout in seconds")
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize resources when the server starts."""
+# Note: FastMCP handles lifecycle through the lifespan parameter or run() method
+# For now, we'll initialize resources when the module is imported
+def initialize_server():
+    """Initialize server resources."""
     try:
-        logger.info("Starting DaVinci Resolve MCP server...")
-        
+        logger.info("Initializing DaVinci Resolve MCP server...")
+
         # Load configuration
         config_path = os.getenv("CONFIG_PATH")
         if config_path and os.path.exists(config_path):
             app.state.config = DaVinciResolveConfig.load_from_file(config_path)
         else:
             app.state.config = load_default()
-        
-        logger.info(f"Loaded configuration: {app.state.config.dict()}")
-        
+
+        logger.info("Configuration loaded")
+
         # Set up environment
         app.state.config.setup_environment()
-        
+
         # Initialize connection manager
         app.state.connection_manager = ResolveConnectionManager(app.state.config)
-        
+
         # Initialize connection pool
         app.state.connection_pool = ResolveConnectionPool(
             config=app.state.config,
             max_connections=app.state.config.max_workers
         )
-        
+
         # Register all tools
         register_tools()
-        
+
         logger.info("DaVinci Resolve MCP server initialized successfully")
-        
+
     except Exception as e:
         logger.error(f"Failed to initialize server: {str(e)}")
         logger.exception("Initialization error:")
         raise
 
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Clean up resources when the server shuts down."""
-    try:
-        if app.state.connection_pool:
-            app.state.connection_pool.close_all_connections()
-            
-        if app.state.connection_manager:
-            await app.state.connection_manager.close()
-            
-        logger.info("DaVinci Resolve MCP server shutdown complete")
-        
-    except Exception as e:
-        logger.error(f"Error during shutdown: {str(e)}")
-        logger.exception("Shutdown error:")
+# Note: Server initialization is handled in main.py and the MCP command
 
 
 @create_tool
@@ -251,7 +194,55 @@ def register_tools():
     """Register all tools with the FastMCP app."""
     try:
         logger.info("Registering tools...")
-        
+
+        # Register core server tools
+        app.add_tool(get_resolve_info)
+        app.add_tool(list_projects)
+
+        # Register help tool
+        from .tools.help_tool import get_help
+        @app.tool()
+        async def help(topic: Optional[str] = None, level: Optional[str] = None) -> str:
+            """
+            Get help and documentation for DaVinci Resolve MCP tools.
+
+            Args:
+                topic: The topic to get help for (optional)
+                level: User level ('beginner', 'intermediate', 'advanced', 'developer')
+
+            Returns:
+                Formatted help text
+            """
+            return get_help(topic, level)
+
+        # Register status tool
+        @app.tool()
+        async def get_status() -> Dict[str, Any]:
+            """
+            Get the current status of DaVinci Resolve and MCP server.
+
+            Returns:
+                Dict containing status information
+            """
+            if not app.state.connection_manager:
+                return {"status": "error", "message": "Connection manager not initialized"}
+
+            return app.state.connection_manager.get_status()
+
+        # Register health check tool
+        @app.tool()
+        async def health_check() -> Dict[str, Any]:
+            """
+            Perform a comprehensive health check of the system.
+
+            Returns:
+                Dict containing health check results
+            """
+            if not app.state.connection_manager:
+                return {"status": "error", "message": "Connection manager not initialized"}
+
+            return await app.state.connection_manager.health_check()
+
         # Import tool modules
         from .tools.project_tools import register_tools as register_project_tools
         from .tools.media_tools import register_tools as register_media_tools
@@ -259,7 +250,7 @@ def register_tools():
         from .tools.render_tools import register_tools as register_render_tools
         from .tools.audio_tools import register_tools as register_audio_tools
         from .tools.color_tools import register_tools as register_color_tools
-        
+
         # Register tools from modules
         register_project_tools(app)
         register_media_tools(app)
@@ -267,14 +258,12 @@ def register_tools():
         register_render_tools(app)
         register_audio_tools(app)
         register_color_tools(app)
-        
+
         logger.info("All tools registered successfully")
-        
+
     except Exception as e:
         logger.error(f"Failed to register tools: {str(e)}")
         raise
-    
-    logger.info("All tools registered successfully")
 
 
 async def start_server(host: str = None, port: int = None, debug: bool = None):

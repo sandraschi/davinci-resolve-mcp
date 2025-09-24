@@ -1,101 +1,22 @@
 {
-  "dxt_version": "0.1",
+  "manifest_version": "0.2",
   "name": "davinci-resolve-mcp",
   "version": "0.1.0",
   "description": "DaVinci Resolve MCP server for AI-assisted video editing",
-  "long_description": "A powerful MCP server that enables AI-assisted video editing workflows in DaVinci Resolve. Provides comprehensive control over projects, media, timelines, color grading, and rendering through a clean API.",
   "author": {
-    "name": "Sandra Schieder",
-    "email": "sandra@sandraschi.dev",
-    "url": "https://github.com/sandraschi"
+    "name": "Sandra Schieder"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sandraschi/davinci-resolve-mcp"
-  },
-  "homepage": "https://github.com/sandraschi/davinci-resolve-mcp",
-  "documentation": "https://github.com/sandraschi/davinci-resolve-mcp/blob/main/README.md",
-  "support": "https://github.com/sandraschi/davinci-resolve-mcp/issues",
   "license": "MIT",
-  "keywords": ["davinci-resolve", "video-editing", "mcp", "automation", "ai"],
-  "icon": "assets/icon.png",
   "server": {
     "type": "python",
     "entry_point": "src/davinci_resolve_mcp/server.py",
-    "working_directory": "src",
     "mcp_config": {
       "command": "python",
       "args": ["-m", "davinci_resolve_mcp.server"],
-      "cwd": "src",
       "env": {
-        "RESOLVE_SCRIPT_API_PATH": "${user_config.resolve_script_api_path}",
-        "HOST": "${user_config.host}",
-        "PORT": "${user_config.port}",
-        "LOG_LEVEL": "${user_config.log_level}",
+        "PYTHONPATH": "src",
         "PYTHONUNBUFFERED": "1"
       }
     }
-  },
-  "user_config": {
-    "resolve_script_api_path": {
-      "type": "directory",
-      "title": "DaVinci Resolve Scripts Folder",
-      "description": "Path to DaVinci Resolve's Scripts folder (usually in Program Files/Blackmagic Design/DaVinci Resolve/Support/Developer/Scripting)",
-      "required": true,
-      "default": "C:\\Program Files\\Blackmagic Design\\DaVinci Resolve\\Support\\Developer\\Scripting"
-    },
-    "host": {
-      "type": "string",
-      "title": "Server Host",
-      "description": "Host address for the MCP server to bind to",
-      "required": true,
-      "default": "127.0.0.1"
-    },
-    "port": {
-      "type": "string",
-      "title": "Server Port",
-      "description": "Port for the MCP server to listen on",
-      "required": true,
-      "default": "8000"
-    },
-    "log_level": {
-      "type": "string",
-      "title": "Log Level",
-      "description": "Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
-      "required": false,
-      "default": "INFO",
-      "enum": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-    },
-    "project_directory": {
-      "type": "directory",
-      "title": "Default Project Directory",
-      "description": "Default directory for DaVinci Resolve projects",
-      "required": false,
-      "default": "${HOME}/Documents/DaVinci Resolve/Projects"
-    },
-    "media_directory": {
-      "type": "directory",
-      "title": "Default Media Directory",
-      "description": "Default directory for media files",
-      "required": false,
-      "default": "${HOME}/Documents/DaVinci Resolve/Media"
-    }
-  },
-  "capabilities": {
-    "filesystem": {
-      "read": [
-        "${user_config.resolve_script_api_path}",
-        "${user_config.project_directory}",
-        "${user_config.media_directory}"
-      ],
-      "write": [
-        "${user_config.project_directory}",
-        "${user_config.media_directory}"
-      ]
-    }
-  },
-  "permissions": {
-    "network": true,
-    "env": true
   }
 }
