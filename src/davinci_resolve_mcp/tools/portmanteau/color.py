@@ -1,0 +1,128 @@
+"""
+DaVinci Resolve Color Portmanteau Tool.
+
+Consolidates color grading operations into a single tool.
+"""
+import logging
+from typing import Any, Dict, Literal, Optional
+
+logger = logging.getLogger(__name__)
+
+
+def setup_color_portmanteau(app):
+    """Register the color portmanteau tool."""
+
+    @app.tool()
+    async def resolve_color(
+        action: Literal["create_node", "apply_lut", "set_color_space", "adjust_wheels"],
+        node_type: str = "primary",
+        node_name: Optional[str] = None,
+        parent_node: Optional[str] = None,
+        timeline_name: Optional[str] = None,
+        clip_path: Optional[str] = None,
+        lut_path: Optional[str] = None,
+        intensity: float = 1.0,
+        input_color_space: Optional[str] = None,
+        output_color_space: Optional[str] = None,
+        input_gamma: Optional[str] = None,
+        output_gamma: Optional[str] = None,
+        lift: Optional[Dict[str, float]] = None,
+        gamma: Optional[Dict[str, float]] = None,
+        gain: Optional[Dict[str, float]] = None,
+        offset: Optional[Dict[str, float]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Comprehensive color grading for DaVinci Resolve.
+
+        PORTMANTEAU PATTERN: Consolidates 4 color tools into 1.
+
+        SUPPORTED ACTIONS:
+        - create_node: Create color correction node (requires: node_type)
+        - apply_lut: Apply LUT to clip (requires: clip_path, lut_path)
+        - set_color_space: Set color space transform
+        - adjust_wheels: Adjust color wheels (lift/gamma/gain/offset)
+
+        Args:
+            action: Operation to perform (create_node, apply_lut, set_color_space, adjust_wheels)
+            node_type: Node type (primary, log, hdr, curves, qualifier, window, lut). Default: primary
+            node_name: Name for the node. Optional.
+            parent_node: Parent node to connect to. Optional.
+            timeline_name: Target timeline. Optional.
+            clip_path: Path to clip. Required for: apply_lut
+            lut_path: Path to LUT file. Required for: apply_lut
+            intensity: LUT intensity (0.0-1.0). Default: 1.0
+            input_color_space: Input color space. Used by: set_color_space
+            output_color_space: Output color space. Used by: set_color_space
+            input_gamma: Input gamma. Used by: set_color_space
+            output_gamma: Output gamma. Used by: set_color_space
+            lift: Lift adjustments {r, g, b, y}. Used by: adjust_wheels
+            gamma: Gamma adjustments {r, g, b, y}. Used by: adjust_wheels
+            gain: Gain adjustments {r, g, b, y}. Used by: adjust_wheels
+            offset: Offset adjustments {r, g, b, y}. Used by: adjust_wheels
+
+        Returns:
+            Dict with operation results
+
+        Examples:
+            # Create primary color node
+            resolve_color("create_node", node_type="primary", node_name="Base Grade")
+
+            # Apply LUT
+            resolve_color("apply_lut", clip_path="C:/clip.mp4", lut_path="C:/LUTs/Film.cube")
+
+            # Adjust color wheels
+            resolve_color("adjust_wheels", lift={"r": 0.1, "g": 0.0, "b": -0.1})
+        """
+        from ..color_tools import (
+            create_color_node,
+            apply_lut,
+            set_color_space,
+            adjust_color_wheels,
+            ColorCorrectionType,
+            ColorSpaceTransform,
+        )
+
+        # Map node_type string to enum
+        node_type_map = {
+            "primary": ColorCorrectionType.PRIMARY,
+            "log": ColorCorrectionType.LOG,
+            "hdr": ColorCorrectionType.HDR,
+            "curves": ColorCorrectionType.CURVES,
+            "qualifier": ColorCorrectionType.QUALIFIER,
+            "window": ColorCorrectionType.WINDOW,
+            "tracker": ColorCorrectionType.TRACKER,
+            "blur": ColorCorrectionType.BLUR,
+            "sharpen": ColorCorrectionType.SHARPEN,
+            "noise_reduction": ColorCorrectionType.NOISE_REDUCTION,
+            "resize": ColorCorrectionType.RESIZE,
+            "lut": ColorCorrectionType.LUT,
+        }
+
+        if action == "create_node":
+            node_type_enum = node_type_map.get(node_type.lower(), ColorCorrectionType.PRIMARY)
+            return await create_color_node(node_type_enum, node_name, parent_node, timeline_name)
+
+        elif action == "apply_lut":
+            if not clip_path or not lut_path:
+                return {"status": "error", "message": "clip_path and lut_path required for apply_lut"}
+            return await apply_lut(clip_path, lut_path, intensity, timeline_name)
+
+        elif action == "set_color_space":
+            if not all([input_color_space, output_color_space, input_gamma, output_gamma]):
+                return {"status": "error", "message": "All color space params required"}
+            transform = ColorSpaceTransform(
+                input_color_space=input_color_space,
+                output_color_space=output_color_space,
+                input_gamma=input_gamma,
+                output_gamma=output_gamma,
+            )
+            return await set_color_space(transform, timeline_name)
+
+        elif action == "adjust_wheels":
+            return await adjust_color_wheels(lift, gamma, gain, offset, timeline_name)
+
+        else:
+            return {"status": "error", "message": f"Unknown action: {action}"}
+
+    logger.info("Registered resolve_color portmanteau tool")
+

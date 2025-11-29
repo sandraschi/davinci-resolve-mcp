@@ -192,72 +192,57 @@ def list_projects() -> Dict[str, Any]:
 
 def register_tools():
     """Register all tools with the FastMCP app."""
+    import os
+    tool_mode = os.getenv("RESOLVE_TOOL_MODE", "portmanteau").lower()
+
     try:
-        logger.info("Registering tools...")
+        logger.info(f"Registering tools (mode: {tool_mode})...")
 
         # Register core server tools
         app.add_tool(get_resolve_info)
         app.add_tool(list_projects)
 
-        # Register help tool
-        from .tools.help_tool import get_help
-        @app.tool()
-        async def help(topic: Optional[str] = None, level: Optional[str] = None) -> str:
-            """
-            Get help and documentation for DaVinci Resolve MCP tools.
+        if tool_mode == "portmanteau":
+            # Use consolidated portmanteau tools (7 tools)
+            from .tools.portmanteau import setup_all_portmanteau_tools
+            setup_all_portmanteau_tools(app)
+            logger.info("Registered 7 portmanteau tools")
+        else:
+            # Legacy: register individual tools (26 tools)
+            from .tools.help_tool import get_help
+            @app.tool()
+            async def help(topic: Optional[str] = None, level: Optional[str] = None) -> str:
+                """Get help and documentation for DaVinci Resolve MCP tools."""
+                return get_help(topic, level)
 
-            Args:
-                topic: The topic to get help for (optional)
-                level: User level ('beginner', 'intermediate', 'advanced', 'developer')
+            @app.tool()
+            async def get_status() -> Dict[str, Any]:
+                """Get the current status of DaVinci Resolve and MCP server."""
+                if not app.state.connection_manager:
+                    return {"status": "error", "message": "Connection manager not initialized"}
+                return app.state.connection_manager.get_status()
 
-            Returns:
-                Formatted help text
-            """
-            return get_help(topic, level)
+            @app.tool()
+            async def health_check() -> Dict[str, Any]:
+                """Perform a comprehensive health check of the system."""
+                if not app.state.connection_manager:
+                    return {"status": "error", "message": "Connection manager not initialized"}
+                return await app.state.connection_manager.health_check()
 
-        # Register status tool
-        @app.tool()
-        async def get_status() -> Dict[str, Any]:
-            """
-            Get the current status of DaVinci Resolve and MCP server.
+            from .tools.project_tools import register_tools as register_project_tools
+            from .tools.media_tools import register_tools as register_media_tools
+            from .tools.timeline_tools import register_tools as register_timeline_tools
+            from .tools.render_tools import register_tools as register_render_tools
+            from .tools.audio_tools import register_tools as register_audio_tools
+            from .tools.color_tools import register_tools as register_color_tools
 
-            Returns:
-                Dict containing status information
-            """
-            if not app.state.connection_manager:
-                return {"status": "error", "message": "Connection manager not initialized"}
-
-            return app.state.connection_manager.get_status()
-
-        # Register health check tool
-        @app.tool()
-        async def health_check() -> Dict[str, Any]:
-            """
-            Perform a comprehensive health check of the system.
-
-            Returns:
-                Dict containing health check results
-            """
-            if not app.state.connection_manager:
-                return {"status": "error", "message": "Connection manager not initialized"}
-
-            return await app.state.connection_manager.health_check()
-
-        # Import tool modules
-        from .tools.project_tools import register_tools as register_project_tools
-        from .tools.media_tools import register_tools as register_media_tools
-        from .tools.timeline_tools import register_tools as register_timeline_tools
-        from .tools.render_tools import register_tools as register_render_tools
-        from .tools.audio_tools import register_tools as register_audio_tools
-        from .tools.color_tools import register_tools as register_color_tools
-
-        # Register tools from modules
-        register_project_tools(app)
-        register_media_tools(app)
-        register_timeline_tools(app)
-        register_render_tools(app)
-        register_audio_tools(app)
-        register_color_tools(app)
+            register_project_tools(app)
+            register_media_tools(app)
+            register_timeline_tools(app)
+            register_render_tools(app)
+            register_audio_tools(app)
+            register_color_tools(app)
+            logger.info("Registered 26 individual tools")
 
         logger.info("All tools registered successfully")
 

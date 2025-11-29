@@ -9,12 +9,12 @@
   "license": "MIT",
   "server": {
     "type": "python",
-    "entry_point": "src/davinci_resolve_mcp/server.py",
+    "entry_point": "davinci_resolve_mcp/server.py",
     "mcp_config": {
       "command": "python",
       "args": ["-m", "davinci_resolve_mcp.server"],
       "env": {
-        "PYTHONPATH": "src",
+        "PYTHONPATH": ".",
         "PYTHONUNBUFFERED": "1"
       }
     }

@@ -3,7 +3,7 @@
 🎬 **Revolutionary AI automation for professional video editing workflows through natural language commands**
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![FastMCP](https://img.shields.io/badge/FastMCP-2.12+-green.svg)](https://github.com/jlowin/fastmcp)
+[![FastMCP](https://img.shields.io/badge/FastMCP-2.13.1-green.svg)](https://github.com/jlowin/fastmcp)
 [![DaVinci Resolve](https://img.shields.io/badge/DaVinci%20Resolve-18+-red.svg)](https://www.blackmagicdesign.com/products/davinciresolve)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-success.svg)](https://github.com/sandraschieder/davinci-resolve-mcp)
@@ -44,60 +44,35 @@ help.set_user_level("intermediate")  # Options: beginner, intermediate, advanced
 
 ### 🎯 **Revolutionary Capabilities**
 
-- **44+ Professional Tools** - Complete video production pipeline automation
+- **7 Portmanteau Tools** - Consolidated from 26 individual tools (73% reduction!)
 - **Natural Language Control** - Complex operations through simple AI conversations
 - **Claude Desktop Integration** - Seamless MCP protocol integration
 - **Cross-Platform Support** - Windows, macOS, and Linux compatibility
 - **Production-Ready** - Built for real professional video workflows
 - **87% Test Coverage** - 74 unit tests + 12 integration tests
-- **FastMCP 2.12+ Framework** - Latest MCP protocol implementation
+- **FastMCP 2.13.1 Framework** - Latest MCP protocol implementation
 - **Comprehensive Error Handling** - Graceful degradation and user-friendly messages
 
 ---
 
-## 🛠️ **Tool Categories & Features**
+## 🛠️ **Portmanteau Tools (SOTA Architecture)**
 
-### 📁 **Project Management**
-- Create projects with custom settings (4K, HDR, frame rates)
-- Open and switch between projects by name
-- List all available projects in database
-- Extract comprehensive project information
-- Manage project settings and databases
+| Tool | Actions | Description |
+|------|---------|-------------|
+| `resolve_project` | create, open, list, get_settings, update_settings | Project management |
+| `resolve_media` | import, list, create_folder, get_metadata | Media pool operations |
+| `resolve_timeline` | create, info, add_clip, cut, set_playhead | Timeline editing |
+| `resolve_color` | create_node, apply_lut, set_color_space, adjust_wheels | Color grading |
+| `resolve_render` | timeline, presets, with_preset, job_status | Rendering & export |
+| `resolve_audio` | get_tracks, add_effect, adjust_levels, normalize | Audio processing |
+| `resolve_system` | info, status, health, help | System utilities |
 
-### 🎬 **Media Pool Operations**  
-- Import media files with automatic organization
-- Create folder structures in media pool
-- Search media by name, format, or metadata
-- Extract detailed media file information
-- Batch import with custom settings
+### Tool Mode Configuration
 
-### ✂️ **Timeline Editing**
-- Create timelines with specific settings
-- Add clips to timelines at precise positions
-- Perform edit operations (cut, trim, move, copy)
-- Multi-track editing and arrangement
-- Extract timeline structure and content
+Set `RESOLVE_TOOL_MODE` environment variable:
+- `portmanteau` (default) - 7 consolidated tools
+- `individual` - 26 individual tools (backward compatibility)
 
-### 🎨 **Color Grading**
-- Apply LUTs to clips or entire timelines
-- Adjust primary color wheels (lift, gamma, gain)
-- Create and manage color correction nodes
-- Copy color grades between clips
-- Professional color workflow automation
-
-### 🎥 **Rendering & Export**
-- Queue render jobs with custom settings
-- Batch rendering with multiple presets
-- Monitor rendering progress and status
-- Export timelines to industry formats (AAF, XML, EDL)
-- Custom render preset management
-
-### 🔊 **Audio Processing**
-- Adjust audio levels and mixing
-- Apply audio effects (EQ, compression, etc.)
-- Synchronize audio and video tracks
-- Extract and export audio tracks
-- Professional audio workflow automation
 
 ---
 
