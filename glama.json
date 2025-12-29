@@ -3,9 +3,10 @@
   "mcpServers": {
     "davinci-resolve-mcp": {
       "command": "python",
-      "args": ["-m", "davinci_resolve_mcp.main", "mcp"],
+      "args": ["run_mcp.py"],
+      "cwd": "${workspaceFolder}/davinci-resolve-mcp",
       "env": {
-        "PYTHONPATH": "${PWD}",
+        "PYTHONPATH": "${workspaceFolder}/davinci-resolve-mcp/src",
         "PYTHONUNBUFFERED": "1"
       },
       "description": "FastMCP 2.14.1 compatible MCP server for professional DaVinci Resolve video editing automation. 7 portmanteau tools (or 26 individual tools) for project management, media operations, timeline editing, color grading, rendering, and audio processing.",

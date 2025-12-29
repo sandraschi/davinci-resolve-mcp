@@ -14,7 +14,7 @@ from rich.console import Console
 from rich.logging import RichHandler
 
 from .server import start_server, app as mcp_app, initialize_server
-from .connection.environment import verify_resolve_environment
+from .connection.environment import ResolveEnvironment
 
 # Configure logging
 logging.basicConfig(
@@ -65,8 +65,12 @@ def start(
     # Verify DaVinci Resolve environment
     try:
         console.print("🔍 Verifying DaVinci Resolve environment...")
-        env_info = verify_resolve_environment()
-        console.print(f"✅ Found DaVinci Resolve {env_info.get('version', 'unknown')} at {env_info.get('install_path', 'unknown')}")
+        env = ResolveEnvironment()
+        install_path = env.detect_resolve_installation()
+        if install_path:
+            console.print(f"✅ Found DaVinci Resolve at {install_path}")
+        else:
+            console.print("⚠️  DaVinci Resolve not detected - some features may not work")
     except Exception as e:
         console.print(f"❌ Error: {str(e)}", style="red")
         if debug:
@@ -89,35 +93,50 @@ def start(
 @app.command()
 def mcp():
     """Run the MCP server in stdio mode for Claude Desktop."""
-    # Set up logging for MCP mode (less verbose)
-    logging.basicConfig(
-        level=logging.WARNING,  # Only show warnings and errors in MCP mode
-        format="%(levelname)s: %(message)s"
+    # Import structlog for MCP mode (structured logging to stderr)
+    import structlog
+    
+    # Configure structlog for MCP mode (JSON to stderr only)
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.UnicodeDecoder(),
+            structlog.processors.JSONRenderer()
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
     )
+    
+    mcp_logger = structlog.get_logger(__name__)
 
-    logger.info("Starting DaVinci Resolve MCP server in stdio mode...")
-
-    # Initialize the server
+    # Initialize the server (lazy initialization - don't fail if DaVinci Resolve not running)
     try:
         initialize_server()
+        mcp_logger.info("Server initialized successfully")
     except Exception as e:
-        logger.error(f"Failed to initialize server: {str(e)}")
-        sys.exit(1)
+        # Log but don't exit - allow server to start and tools will report errors
+        mcp_logger.warning("Server initialization warning", error=str(e), 
+                          message="Server will start but some tools may not work until DaVinci Resolve is available")
 
     # Run the MCP server in stdio mode
     try:
-        # Import here to avoid circular imports
-        import asyncio
-
         # Run the FastMCP 2.14.1 app in stdio mode
         async def run_mcp():
             await mcp_app.run_stdio_async()
         
         asyncio.run(run_mcp())
     except KeyboardInterrupt:
-        logger.info("MCP server stopped")
+        mcp_logger.info("MCP server stopped by user")
     except Exception as e:
-        logger.error("MCP server error", error=str(e))
+        mcp_logger.error("MCP server error", error=str(e))
         sys.exit(1)
 
 
