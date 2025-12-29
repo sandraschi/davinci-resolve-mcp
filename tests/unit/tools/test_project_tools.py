@@ -2,7 +2,6 @@
 Tests for the DaVinci Resolve project tools.
 """
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
 
 from fastmcp import FastMCP
 from pydantic import ValidationError
@@ -100,7 +99,6 @@ class TestProjectTools:
         )
         
         # Register tools
-        from davinci_resolve_mcp.tools.project_tools import register_tools
         register_tools(self.app)
         
         # Set up mocks

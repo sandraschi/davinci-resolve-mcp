@@ -34,11 +34,11 @@ __email__ = "sandra@sandraschi.dev"
 from typing import Union
 
 # Import the help system
-from .tools import help, get_help, UserLevel
+from .tools import help as _help_tool, get_help, UserLevel
 
 # Re-export commonly used components for easier access
 __all__ = [
-    "help",                     # Help tool instance
+    "help",                     # Help function
     "get_help",                 # Help function
     "UserLevel",                # User level enum
 ]
@@ -55,11 +55,6 @@ def help(topic: str = None, level: Union[str, UserLevel] = None) -> str:
     Returns:
         str: The formatted help text.
     """
-    from .tools import help as help_tool, get_help
-    
     if level is not None:
         return get_help(topic, level)
-    return help_tool(topic) if topic is not None else help_tool()
-
-# Add the help function to __all__
-__all__.append("help")
+    return _help_tool(topic) if topic is not None else _help_tool()

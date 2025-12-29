@@ -9,20 +9,18 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from typing import Dict, Optional, Any, Type, TYPE_CHECKING, cast
+from typing import Dict, Optional, Any, TYPE_CHECKING
 
 from ..types import ConnectionState
 from ..utils.exceptions import (
     ResolveConnectionError,
     ResolveNotRunningError,
-    ResolveAPIError,
-    ResolveOperationError
+    ResolveAPIError
 )
 from .environment import ResolveEnvironment
 
 if TYPE_CHECKING:
     from ..config import DaVinciResolveConfig
-    import DaVinciResolveScript as DVR_script  # type: ignore
 
 logger = logging.getLogger(__name__)
 

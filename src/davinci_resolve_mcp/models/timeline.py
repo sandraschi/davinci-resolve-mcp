@@ -4,11 +4,11 @@ Timeline-related data models for DaVinci Resolve.
 This module contains data models for managing timelines, tracks, clips, and edits
 in DaVinci Resolve projects.
 """
-from typing import Dict, List, Optional, Any, Union, Literal
+from typing import Dict, List, Optional, Any
 from datetime import datetime
 from enum import Enum
-from pydantic import Field, validator
-from .common import ResolveObject, TimeCode, Resolution, FrameRate, ColorSpace, MediaType, Result
+from pydantic import Field
+from .common import ResolveObject, TimeCode, Resolution, FrameRate
 from .media import MediaItem
 
 class TrackType(str, Enum):

@@ -13,9 +13,8 @@ import typer
 from rich.console import Console
 from rich.logging import RichHandler
 
-from .server import start_server, app, initialize_server
+from .server import start_server, app as mcp_app, initialize_server
 from .connection.environment import verify_resolve_environment
-from .config import settings
 
 # Configure logging
 logging.basicConfig(
@@ -109,14 +108,16 @@ def mcp():
     try:
         # Import here to avoid circular imports
         import asyncio
-        from .server import app as mcp_app
 
-        # Run the FastMCP app in stdio mode
-        asyncio.run(mcp_app.run())
+        # Run the FastMCP 2.14.1 app in stdio mode
+        async def run_mcp():
+            await mcp_app.run_stdio_async()
+        
+        asyncio.run(run_mcp())
     except KeyboardInterrupt:
         logger.info("MCP server stopped")
     except Exception as e:
-        logger.error(f"MCP server error: {str(e)}")
+        logger.error("MCP server error", error=str(e))
         sys.exit(1)
 
 

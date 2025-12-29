@@ -1,47 +1,49 @@
 """
-DaVinci Resolve MCP - FastMCP Server
+DaVinci Resolve MCP - FastMCP 2.14.1 Server
 
 This module implements the FastMCP server for DaVinci Resolve integration.
+
+Status: Beta - Actively developed, API may change
 """
 import asyncio
-import logging
-import sys
 import os
-from typing import Dict, Any, Optional, List
+import sys
+from contextlib import asynccontextmanager
+from typing import Dict, Any, Optional
 
-from fastmcp.server import FastMCP
+import structlog
+from fastmcp import FastMCP
 from pydantic import BaseModel, Field
 
 from .connection.manager import ResolveConnectionManager, ResolveConnectionPool
 from .config import DaVinciResolveConfig, load_default
 from .utils.error_handling import (
-    handle_errors,
-    register_error_handlers,
-    ErrorResponse,
-    SuccessResponse,
-    create_tool,
-    handle_resolve_error
+    create_tool
 )
 from .utils.exceptions import (
-    DaVinciResolveMCPError,
-    ResolveConnectionError,
-    ResolveOperationError,
-    ResolveAPIError,
-    ResolveNotRunningError
+    ResolveConnectionError
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler('davinci_resolve_mcp.log')
-    ]
+# Configure structured logging (JSON to stderr only)
+structlog.configure(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        structlog.processors.JSONRenderer()
+    ],
+    context_class=dict,
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
 )
-logger = logging.getLogger(__name__)
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 # Global application state
 class AppState:
@@ -52,15 +54,62 @@ class AppState:
         self.connection_pool: Optional[ResolveConnectionPool] = None
         self.should_exit = False
 
-# Initialize the FastMCP app
+# Server lifespan for startup/shutdown lifecycle
+@asynccontextmanager
+async def server_lifespan(app: FastMCP):
+    """Server lifespan context manager for FastMCP 2.14.1+."""
+    # Startup
+    logger.info("Starting DaVinci Resolve MCP Server", version="0.1.0", fastmcp_version="2.14.1")
+    try:
+        yield
+    finally:
+        # Shutdown
+        logger.info("Shutting down DaVinci Resolve MCP Server")
+
+# Initialize the FastMCP 2.14.1 app with comprehensive instructions
 app = FastMCP(
-    name="DaVinci Resolve MCP",
-    instructions="MCP server for DaVinci Resolve integration",
-    version="0.1.0",
-    host=os.getenv("HOST", "0.0.0.0"),
-    port=int(os.getenv("PORT", "8000")),
-    debug=os.getenv("DEBUG", "false").lower() == "true",
-    log_level=os.getenv("LOG_LEVEL", "info")
+    "DaVinci Resolve MCP",
+    instructions="""You are DaVinci Resolve MCP, a professional video editing automation server for DaVinci Resolve.
+
+CORE CAPABILITIES:
+- Project Management: Create, open, list projects with professional settings
+- Media Operations: Import media, organize folders, search and manage media pool
+- Timeline Editing: Create timelines, add clips, perform cuts and edits
+- Color Grading: Apply LUTs, adjust color wheels, create color nodes, copy grades
+- Rendering: Queue render jobs, batch render, monitor progress, export timelines
+- Audio Processing: Adjust levels, apply effects, sync audio, export audio tracks
+- System Utilities: Get system info, health checks, help system
+
+USAGE PATTERNS:
+1. Project Setup: Use resolve_project(operation="create") to create projects, resolve_project(operation="open") to open existing ones
+2. Media Management: Use resolve_media(operation="import") to import files, resolve_media(operation="list") to browse media pool
+3. Timeline Editing: Use resolve_timeline(operation="create") to create timelines, resolve_timeline(operation="add_clip") to add clips
+4. Color Grading: Use resolve_color(operation="apply_lut") for LUTs, resolve_color(operation="adjust_wheels") for color correction
+5. Rendering: Use resolve_render(operation="timeline") to queue renders, resolve_render(operation="job_status") to check progress
+6. Audio: Use resolve_audio(operation="adjust_levels") for mixing, resolve_audio(operation="add_effect") for processing
+
+RESPONSE FORMAT:
+- All tools return dictionaries with operation results
+- Error responses include clear error messages and recovery suggestions
+- Success responses include relevant data and status information
+
+ERROR HANDLING:
+- Connection errors provide DaVinci Resolve startup instructions
+- Operation errors specify what failed and how to fix it
+- API errors include troubleshooting steps
+- Direct communication: Clear, actionable feedback
+
+TOOL MODES:
+- Portmanteau mode (default): 7 consolidated tools with operation parameters
+- Individual mode: 26 individual tools (set RESOLVE_TOOL_MODE=individual)
+
+PROFESSIONAL WORKFLOWS:
+- Supports 4K, 8K, HDR workflows
+- Professional color spaces (Rec.709, Rec.2020, P3)
+- Frame-accurate editing and color grading
+- Batch processing for efficiency
+- Multi-format rendering and export""",
+    lifespan=server_lifespan
 )
 
 # Initialize application state
@@ -84,7 +133,7 @@ class ConnectionParams(BaseModel):
 def initialize_server():
     """Initialize server resources."""
     try:
-        logger.info("Initializing DaVinci Resolve MCP server...")
+        logger.info("Initializing DaVinci Resolve MCP server")
 
         # Load configuration
         config_path = os.getenv("CONFIG_PATH")
@@ -93,7 +142,7 @@ def initialize_server():
         else:
             app.state.config = load_default()
 
-        logger.info("Configuration loaded")
+        logger.info("Configuration loaded", config_path=config_path or "default")
 
         # Set up environment
         app.state.config.setup_environment()
@@ -113,8 +162,7 @@ def initialize_server():
         logger.info("DaVinci Resolve MCP server initialized successfully")
 
     except Exception as e:
-        logger.error(f"Failed to initialize server: {str(e)}")
-        logger.exception("Initialization error:")
+        logger.error("Failed to initialize server", error=str(e))
         raise
 
 # Note: Server initialization is handled in main.py and the MCP command
@@ -196,7 +244,7 @@ def register_tools():
     tool_mode = os.getenv("RESOLVE_TOOL_MODE", "portmanteau").lower()
 
     try:
-        logger.info(f"Registering tools (mode: {tool_mode})...")
+        logger.info("Registering tools", tool_mode=tool_mode)
 
         # Register core server tools
         app.add_tool(get_resolve_info)
@@ -206,7 +254,7 @@ def register_tools():
             # Use consolidated portmanteau tools (7 tools)
             from .tools.portmanteau import setup_all_portmanteau_tools
             setup_all_portmanteau_tools(app)
-            logger.info("Registered 7 portmanteau tools")
+            logger.info("Registered portmanteau tools", count=7)
         else:
             # Legacy: register individual tools (26 tools)
             from .tools.help_tool import get_help
@@ -242,12 +290,12 @@ def register_tools():
             register_render_tools(app)
             register_audio_tools(app)
             register_color_tools(app)
-            logger.info("Registered 26 individual tools")
+            logger.info("Registered individual tools", count=26)
 
         logger.info("All tools registered successfully")
 
     except Exception as e:
-        logger.error(f"Failed to register tools: {str(e)}")
+        logger.error("Failed to register tools", error=str(e))
         raise
 
 
@@ -300,7 +348,6 @@ if __name__ == "__main__":
     import uvicorn
     import asyncio
     import signal
-    import logging
     import os
     import sys
     

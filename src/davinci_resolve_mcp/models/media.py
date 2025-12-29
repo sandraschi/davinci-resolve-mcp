@@ -4,12 +4,11 @@ Media-related data models for DaVinci Resolve.
 This module contains data models for managing media files, metadata, and import settings
 in DaVinci Resolve projects.
 """
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import List, Optional, Union
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
-from pydantic import Field, validator, HttpUrl, DirectoryPath, FilePath
-from .common import ResolveObject, TimeCode, Resolution, FrameRate, ColorSpace, MediaType, FileFormat, Result
+from pydantic import Field
+from .common import ResolveObject, TimeCode, Resolution, FrameRate, ColorSpace, MediaType, FileFormat
 
 class MediaMetadata(ResolveObject):
     """Metadata for media files in DaVinci Resolve."""

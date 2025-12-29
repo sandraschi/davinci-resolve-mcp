@@ -3,7 +3,7 @@
 🎬 **Revolutionary AI automation for professional video editing workflows through natural language commands**
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![FastMCP](https://img.shields.io/badge/FastMCP-2.13.1-green.svg)](https://github.com/jlowin/fastmcp)
+[![FastMCP](https://img.shields.io/badge/FastMCP-2.14.1-green.svg)](https://github.com/jlowin/fastmcp)
 [![DaVinci Resolve](https://img.shields.io/badge/DaVinci%20Resolve-18+-red.svg)](https://www.blackmagicdesign.com/products/davinciresolve)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Production Ready](https://img.shields.io/badge/Status-Production%20Ready-success.svg)](https://github.com/sandraschieder/davinci-resolve-mcp)
@@ -50,7 +50,7 @@ help.set_user_level("intermediate")  # Options: beginner, intermediate, advanced
 - **Cross-Platform Support** - Windows, macOS, and Linux compatibility
 - **Production-Ready** - Built for real professional video workflows
 - **87% Test Coverage** - 74 unit tests + 12 integration tests
-- **FastMCP 2.13.1 Framework** - Latest MCP protocol implementation
+- **FastMCP 2.14.1 Framework** - Latest MCP protocol implementation with structured logging
 - **Comprehensive Error Handling** - Graceful degradation and user-friendly messages
 
 ---
@@ -223,22 +223,30 @@ pytest tests/ -v
 
 ### **Running Tests**
 ```bash
-# Unit tests
+# Using Makefile (recommended)
+make test              # Run all tests
+make test-unit         # Unit tests only
+make test-integration  # Integration tests only
+make test-coverage     # With coverage report
+
+# Or directly
 pytest tests/unit/ -v
-
-# Integration tests (requires DaVinci Resolve)
 pytest tests/integration/ -v
-
-# Full test suite
 pytest tests/ --cov=davinci_resolve_mcp
 ```
 
 ### **Code Quality**
 ```bash
-black src/ tests/
-isort src/ tests/
-mypy src/
+# Using Makefile (recommended)
+make lint
+make format
+make type-check
+make check
+
+# Or directly
 ruff check src/ tests/
+ruff format src/ tests/
+mypy src/ --ignore-missing-imports
 ```
 
 ---

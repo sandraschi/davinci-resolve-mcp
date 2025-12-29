@@ -5,11 +5,10 @@ This module provides tools for managing DaVinci Resolve projects,
 including creation, opening, listing, and project settings management.
 """
 import logging
-from typing import Dict, List, Optional, Any
+from typing import Dict, Optional, Any
 
 from pydantic import BaseModel, Field
 
-from ..connection.manager import ResolveConnectionManager
 from ..utils.exceptions import ResolveConnectionError, ResolveOperationError
 
 logger = logging.getLogger(__name__)

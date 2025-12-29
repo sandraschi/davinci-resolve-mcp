@@ -1,0 +1,91 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "mcpServers": {
+    "davinci-resolve-mcp": {
+      "command": "python",
+      "args": ["-m", "davinci_resolve_mcp.main", "mcp"],
+      "env": {
+        "PYTHONPATH": "${PWD}",
+        "PYTHONUNBUFFERED": "1"
+      },
+      "description": "FastMCP 2.14.1 compatible MCP server for professional DaVinci Resolve video editing automation. 7 portmanteau tools (or 26 individual tools) for project management, media operations, timeline editing, color grading, rendering, and audio processing.",
+      "capabilities": {
+        "tools": {
+          "enabled": true
+        },
+        "resources": {
+          "enabled": false
+        },
+        "prompts": {
+          "enabled": false
+        }
+      },
+      "timeout": {
+        "initialize": 30000,
+        "message": 60000
+      },
+      "metadata": {
+        "version": "0.1.0",
+        "author": "Sandra Schieder",
+        "homepage": "https://github.com/sandraschi/davinci-resolve-mcp",
+        "license": "MIT",
+        "tags": [
+          "davinci-resolve",
+          "video-editing",
+          "video",
+          "editing",
+          "automation",
+          "color-grading",
+          "rendering",
+          "mcp-server",
+          "fastmcp"
+        ],
+        "categories": [
+          "video-editing",
+          "automation",
+          "professional-tools"
+        ]
+      }
+    }
+  },
+  "maintainers": ["sandraschi"],
+  "name": "davinci-resolve-mcp",
+  "description": "FastMCP 2.14.1 compatible MCP server for professional DaVinci Resolve video editing automation. 7 portmanteau tools (or 26 individual tools) for complete video production workflows. Beta status.",
+  "type": "mcp_server",
+  "status": "beta",
+  "framework": "FastMCP 2.14.1",
+  "tools": 7,
+  "transport": ["stdio"],
+  "keywords": [
+    "davinci-resolve",
+    "video-editing",
+    "video",
+    "editing",
+    "automation",
+    "color-grading",
+    "rendering",
+    "mcp-server",
+    "fastmcp"
+  ],
+  "features": {
+    "video_editing": {
+      "enabled": true,
+      "capabilities": ["project_management", "timeline_editing", "media_organization"]
+    },
+    "color_grading": {
+      "enabled": true,
+      "capabilities": ["lut_application", "color_wheels", "node_management"]
+    },
+    "rendering": {
+      "enabled": true,
+      "capabilities": ["batch_rendering", "progress_monitoring", "multi_format_export"]
+    },
+    "audio_processing": {
+      "enabled": true,
+      "capabilities": ["level_adjustment", "effects", "sync"]
+    },
+    "workflow_automation": {
+      "enabled": true
+    }
+  }
+}

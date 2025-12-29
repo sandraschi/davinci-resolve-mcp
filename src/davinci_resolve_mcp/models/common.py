@@ -4,11 +4,10 @@ Common types and enums used across all DaVinci Resolve operations.
 This module contains the fundamental data types and base classes that are used throughout
 the DaVinci Resolve MCP system. These types provide the foundation for all other models.
 """
-from typing import Dict, Any, Optional, Union, List, Literal
+from typing import Dict, Any, Optional, List
 from enum import Enum
-from pydantic import BaseModel, Field, validator, conint, confloat
+from pydantic import BaseModel, Field
 from datetime import datetime
-from typing_extensions import Annotated
 
 class ErrorCode(str, Enum):
     """Standard error codes for DaVinci Resolve operations."""

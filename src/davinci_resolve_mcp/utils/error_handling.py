@@ -7,10 +7,9 @@ for the FastMCP server.
 import logging
 import traceback
 from functools import wraps
-from typing import Any, Dict, Optional, Type, TypeVar, Callable, Awaitable, cast
+from typing import Any, Callable
 
 from fastmcp import FastMCP
-from fastmcp.tools import Tool
 
 from .exceptions import (
     DaVinciResolveMCPError,

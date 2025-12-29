@@ -9,9 +9,9 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
-from .exceptions import ValidationError, UnsupportedFormatError
+from .exceptions import ValidationError
 
 
 def validate_file_path(file_path: Union[str, Path]) -> Path:

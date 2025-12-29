@@ -2,13 +2,11 @@
 Integration tests for the DaVinci Resolve MCP API endpoints.
 """
 import pytest
-import asyncio
 from pathlib import Path
 from fastapi.testclient import TestClient
 
 from davinci_resolve_mcp.server import app, AppState
 from davinci_resolve_mcp.config import DaVinciResolveConfig
-from davinci_resolve_mcp.connection.manager import ResolveConnectionManager
 
 class TestResolveAPI:
     """Integration tests for the DaVinci Resolve MCP API."""

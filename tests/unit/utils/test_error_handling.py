@@ -2,9 +2,8 @@
 Tests for the error handling utilities.
 """
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
 from fastmcp import FastMCP
-from fastapi import HTTPException, status
+from fastapi import status
 
 from davinci_resolve_mcp.utils.error_handling import (
     ErrorResponse,

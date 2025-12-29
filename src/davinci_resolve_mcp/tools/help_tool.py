@@ -4,18 +4,15 @@ Help tool for the DaVinci Resolve MCP package.
 This module provides a help system that offers self-documentation with support for
 multiple user levels and context-aware help.
 """
-from enum import Enum, auto
-from typing import Dict, List, Optional, Any, Type, Union, get_type_hints
+from enum import Enum
+from typing import Dict, List, Optional, Type, Union
 import inspect
-import os
-import json
-from pathlib import Path
 from dataclasses import dataclass, field
 from typing import TypeVar, Generic
 
 from ..models import (
     ResolveObject, ProjectInfo, MediaPool, Timeline, RenderQueue,
-    ColorGrade, AudioMixer, get_available_models, get_model_dependencies
+    ColorGrade, AudioMixer
 )
 
 # Type variable for generic help content

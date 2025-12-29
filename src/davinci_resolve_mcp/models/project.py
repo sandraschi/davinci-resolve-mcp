@@ -4,11 +4,10 @@ Project-related data models for DaVinci Resolve.
 This module contains data models for managing DaVinci Resolve projects,
 including project settings, metadata, and database information.
 """
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from datetime import datetime
-from enum import Enum
-from pydantic import Field, validator, HttpUrl
-from .common import ResolveObject, TimeCode, Resolution, FrameRate, ColorSpace, Result
+from pydantic import Field
+from .common import ResolveObject, TimeCode, Resolution, FrameRate, ColorSpace
 
 class ProjectSettings(ResolveObject):
     """Project settings and metadata."""

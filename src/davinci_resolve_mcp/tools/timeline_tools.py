@@ -5,12 +5,12 @@ This module provides tools for managing timelines in DaVinci Resolve,
 including creating, editing, and manipulating timelines and their contents.
 """
 import logging
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from enum import Enum
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 from ..connection.manager import ResolveConnectionManager
-from ..utils.exceptions import ResolveConnectionError, ResolveOperationError
+from ..utils.exceptions import ResolveOperationError
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,6 @@
 Tests for the DaVinci Resolve connection manager.
 """
 import pytest
-import asyncio
 from unittest.mock import patch, MagicMock, AsyncMock
 
 from davinci_resolve_mcp.connection.manager import (

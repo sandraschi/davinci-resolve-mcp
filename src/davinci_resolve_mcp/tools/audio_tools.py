@@ -5,12 +5,12 @@ This module provides tools for working with audio in DaVinci Resolve,
 including mixing, effects, and audio processing operations.
 """
 import logging
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from enum import Enum
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 from ..connection.manager import ResolveConnectionManager
-from ..utils.exceptions import ResolveConnectionError, ResolveOperationError
+from ..utils.exceptions import ResolveOperationError
 
 logger = logging.getLogger(__name__)
 
@@ -370,7 +370,7 @@ def register_tools(app):
                         # to analyze and adjust levels
                         
                         # For now, just set a volume adjustment based on the target level
-                        current_volume = 1.0  # This would be measured in a real implementation
+                        # current_volume would be measured in a real implementation
                         adjustment = target_level / 20.0  # Simplified calculation
                         
                         timeline.SetTrackProperty(f"volumeTrack{track_index}", "audio", str(adjustment))

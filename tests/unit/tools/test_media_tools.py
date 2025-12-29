@@ -2,8 +2,7 @@
 Tests for the DaVinci Resolve media tools.
 """
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-from pathlib import Path
+from unittest.mock import MagicMock
 
 from fastmcp import FastMCP
 from pydantic import ValidationError
@@ -92,7 +91,6 @@ class TestMediaTools:
         )
         
         # Register tools
-        from davinci_resolve_mcp.tools.media_tools import register_tools
         register_tools(self.app)
 
         # Set up connection manager in module state

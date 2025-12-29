@@ -4,10 +4,10 @@ Audio-related data models for DaVinci Resolve.
 This module contains data models for managing audio tracks, effects, mixing,
 and other audio-related functionality in DaVinci Resolve.
 """
-from typing import Dict, List, Optional, Any, Union, Tuple
+from typing import Dict, List, Optional, Any
 from enum import Enum
-from pydantic import Field, validator, conint, confloat
-from .common import ResolveObject, TimeCode, Result
+from pydantic import Field
+from .common import ResolveObject, TimeCode
 
 
 class AudioTrackType(str, Enum):

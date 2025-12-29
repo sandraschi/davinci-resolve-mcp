@@ -7,11 +7,10 @@ including importing media, organizing the media pool, and managing clips.
 import logging
 import os
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
-from ..connection.manager import ResolveConnectionManager
 from ..utils.exceptions import ResolveConnectionError, ResolveOperationError
 
 logger = logging.getLogger(__name__)

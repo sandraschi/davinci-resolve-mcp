@@ -4,8 +4,7 @@ Shared type definitions for DaVinci Resolve MCP.
 This module contains common type definitions used across the application
 to prevent circular imports and improve code organization.
 """
-from typing import Any, Dict, List, Optional, Union, Callable, Awaitable, TypeVar
-from pathlib import Path
+from typing import Any, Dict, Optional, Callable, TypeVar
 from pydantic import BaseModel
 
 # Type variables for generic function typing

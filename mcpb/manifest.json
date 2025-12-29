@@ -1,84 +1,28 @@
 {
+  "manifest_version": "0.2",
   "name": "davinci-resolve-mcp",
   "version": "1.0.0",
   "description": "AI-powered professional video editing automation for DaVinci Resolve - Revolutionary natural language control of complete video production workflows with Austrian precision",
-  "author": "Sandra",
+  "author": {
+    "name": "Sandra",
+    "email": "sandra@example.com"
+  },
   "license": "MIT",
-  "homepage": "https://github.com/sandraschi/davinci-resolve-mcp",
   "repository": {
     "type": "git",
     "url": "https://github.com/sandraschi/davinci-resolve-mcp"
   },
-  "main": "server/server.py",
-  "mcp": {
-    "version": "1.0",
-    "capabilities": ["tools"],
-    "prompts": {
-      "system": "assets/prompts/system.md",
-      "editing_workflows": "assets/prompts/editing_workflows.md",
-      "color_grading": "assets/prompts/color_grading.md",
-      "audio_mixing": "assets/prompts/audio_mixing.md",
-      "rendering_delivery": "assets/prompts/rendering_delivery.md",
-      "advanced_techniques": "assets/prompts/advanced_techniques.md",
-      "troubleshooting": "assets/prompts/troubleshooting.md"
+  "server": {
+    "type": "python",
+    "entry_point": "src/davinci_resolve_mcp/server.py",
+    "mcp_config": {
+      "command": "python",
+      "args": ["src/davinci_resolve_mcp/server.py"],
+      "env": {
+        "PYTHONPATH": "${__dirname}/src",
+        "PYTHONUNBUFFERED": "1"
+      }
     }
-  },
-  "runtime": {
-    "python": ">=3.8"
-  },
-  "dependencies": {
-    "fastmcp": ">=2.12.0",
-    "pydantic": ">=2.0.0"
-  },
-  "features": [
-    "44+ professional video editing tools",
-    "Natural language workflow automation",
-    "Project management (create, import, export)",
-    "Timeline editing (clips, transitions, effects)",
-    "Color grading and correction",
-    "Audio mixing and sound design",
-    "Multi-format rendering and delivery",
-    "Media pool organization",
-    "Fusion compositing integration",
-    "Fairlight audio post-production",
-    "87% test coverage (74 unit + 12 integration tests)",
-    "Cross-platform (Windows, macOS, Linux)",
-    "Production-ready workflows",
-    "Comprehensive error handling",
-    "Austrian engineering quality"
-  ],
-  "supported_resolve_versions": [
-    "DaVinci Resolve 18+",
-    "DaVinci Resolve Studio 18+"
-  ],
-  "requirements": {
-    "software": ["DaVinci Resolve 18 or later (Free or Studio)"],
-    "os": ["Windows 10/11", "macOS 10.15+", "Linux (CentOS 7.3+)"],
-    "network": ["Local API access to Resolve (default port 9000)"]
-  },
-  "tool_categories": {
-    "project_management": ["Create, open, save, export projects", "Media import/export"],
-    "timeline_editing": ["Clip manipulation, transitions, effects", "Timeline management"],
-    "color_grading": ["Color wheels, curves, LUTs", "Node-based grading"],
-    "audio_mixing": ["Track management, mixing, effects", "Fairlight integration"],
-    "rendering": ["Multi-format export", "YouTube, Vimeo, Instagram presets"],
-    "media_pool": ["Organization, folders, bins", "Metadata management"],
-    "fusion": ["Compositing, VFX", "Node-based workflows"],
-    "fairlight": ["Audio post-production", "Multi-track mixing"]
-  },
-  "keywords": [
-    "davinci-resolve",
-    "video-editing",
-    "color-grading",
-    "post-production",
-    "nle",
-    "automation",
-    "ai-editing",
-    "filmmaking",
-    "professional-video",
-    "blackmagic",
-    "fastmcp",
-    "austria"
-  ]
+  }
 }
 

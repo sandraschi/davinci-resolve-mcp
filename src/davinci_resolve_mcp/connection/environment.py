@@ -8,7 +8,6 @@ operating systems and sets up the required environment for API access.
 import os
 import platform
 import subprocess
-import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 

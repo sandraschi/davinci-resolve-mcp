@@ -6,7 +6,7 @@ These models provide a structured way to interact with DaVinci Resolve's functio
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import List
 
 # Re-export all public classes and enums from submodules
 from .common import (

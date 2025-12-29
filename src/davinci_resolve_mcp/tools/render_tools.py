@@ -6,12 +6,12 @@ in DaVinci Resolve, including render presets, format settings, and batch operati
 """
 import logging
 import os
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any
 from enum import Enum
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 from ..connection.manager import ResolveConnectionManager
-from ..utils.exceptions import ResolveConnectionError, ResolveOperationError
+from ..utils.exceptions import ResolveOperationError
 
 logger = logging.getLogger(__name__)
 

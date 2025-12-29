@@ -5,12 +5,12 @@ This module provides tools for color grading and correction in DaVinci Resolve,
 including node-based color operations, LUT management, and color matching.
 """
 import logging
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, Optional, Any
 from enum import Enum
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 from ..connection.manager import ResolveConnectionManager
-from ..utils.exceptions import ResolveConnectionError, ResolveOperationError
+from ..utils.exceptions import ResolveOperationError
 
 logger = logging.getLogger(__name__)
 

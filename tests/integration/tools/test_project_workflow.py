@@ -2,7 +2,7 @@
 Integration tests for project-related tool workflows.
 """
 import pytest
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock
 
 from fastmcp import FastMCP
 

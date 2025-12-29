@@ -9,13 +9,12 @@ from __future__ import annotations
 import logging
 import os
 import platform
-import sys
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union, cast
+from typing import Any, Dict, List, Optional, TypeVar, Union
 
 import yaml
-from pydantic import BaseModel, Field, HttpUrl, validator, root_validator
+from pydantic import BaseModel, Field, validator
 
 # Configure logger
 logger = logging.getLogger(__name__)

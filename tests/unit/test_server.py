@@ -1,8 +1,6 @@
 """
 Tests for the DaVinci Resolve MCP server.
 """
-import asyncio
-import signal
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
 
@@ -10,8 +8,6 @@ from fastmcp import FastMCP
 from fastapi.testclient import TestClient
 
 from davinci_resolve_mcp.server import app, AppState, initialize_server
-from davinci_resolve_mcp.config import DaVinciResolveConfig
-from davinci_resolve_mcp.connection.manager import ResolveConnectionManager
 
 class TestAppState:
     """Tests for the AppState class."""
