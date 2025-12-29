@@ -145,17 +145,22 @@ def check():
     """Check the DaVinci Resolve environment and connection."""
     console.print("🔍 Checking DaVinci Resolve environment...")
     try:
-        env_info = verify_resolve_environment()
-        console.print("✅ [green]DaVinci Resolve Environment:[/green]")
-        console.print(f"   • Version: {env_info.get('version', 'Unknown')}")
-        console.print(f"   • Install Path: {env_info.get('install_path', 'Unknown')}")
-        console.print(f"   • Python Version: {env_info.get('python_version', 'Unknown')}")
-        console.print(f"   • API Access: {'✅ Available' if env_info.get('api_available', False) else '❌ Not Available'}")
+        env = ResolveEnvironment()
+        install_path = env.detect_resolve_installation()
+        is_running = env.check_resolve_running()
         
-        if not env_info.get('api_available', False):
-            console.print("\n❌ [yellow]Warning:[/yellow] Could not access DaVinci Resolve API.")
-            console.print("   Make sure DaVinci Resolve is installed and the Python module is in your PYTHONPATH.")
+        console.print("✅ [green]DaVinci Resolve Environment:[/green]")
+        console.print(f"   • Install Path: {install_path or 'Not Found'}")
+        console.print(f"   • Running: {'✅ Yes' if is_running else '❌ No'}")
+        
+        if not install_path:
+            console.print("\n❌ [yellow]Warning:[/yellow] DaVinci Resolve installation not detected.")
+            console.print("   Make sure DaVinci Resolve is installed.")
             raise typer.Exit(1)
+        
+        if not is_running:
+            console.print("\n⚠️  [yellow]Warning:[/yellow] DaVinci Resolve is not running.")
+            console.print("   Start DaVinci Resolve before using the MCP server.")
             
     except Exception as e:
         console.print(f"❌ [red]Error:[/red] {str(e)}")
