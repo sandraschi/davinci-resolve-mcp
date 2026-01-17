@@ -53,6 +53,397 @@ class TimelineInfo(BaseModel):
     tracks: List[TimelineTrack] = Field(default_factory=list, description="Tracks in the timeline")
 
 
+async def create_timeline(
+    app,
+    name: str,
+    frame_rate: float = 24.0,
+    width: int = 1920,
+    height: int = 1080,
+    start_frame: int = 0,
+    timeline_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Create a new timeline in the current project.
+
+    Args:
+        app: FastMCP app instance
+        name: Name for the new timeline
+        frame_rate: Frame rate for the timeline
+        width: Width in pixels
+        height: Height in pixels
+        start_frame: Starting frame number
+        timeline_name: Optional name for the timeline
+
+    Returns:
+        Dict containing timeline creation result
+    """
+    return await create_timeline_impl(app, name, frame_rate, width, height, start_frame, timeline_name)
+
+
+async def get_timeline_info(app, timeline_name: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Get information about a timeline.
+
+    Args:
+        app: FastMCP app instance
+        timeline_name: Name of timeline to get info for (uses current if None)
+
+    Returns:
+        Dict containing timeline information
+    """
+    return await get_timeline_info_impl(app, timeline_name)
+
+
+async def add_clip_to_timeline(
+    app,
+    clip_path: str,
+    track_index: int = 1,
+    track_type: TrackType = TrackType.VIDEO,
+    start_frame: Optional[int] = None,
+    timeline_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Add a clip to a timeline at the specified position.
+
+    Args:
+        app: FastMCP app instance
+        clip_path: Path to the clip in media pool
+        track_index: Track index to add to
+        track_type: Type of track (video/audio)
+        start_frame: Frame to insert at (uses current playhead if None)
+        timeline_name: Name of timeline to add to (uses current if None)
+
+    Returns:
+        Dict containing clip addition result
+    """
+    return await add_clip_to_timeline_impl(app, clip_path, track_index, track_type, start_frame, timeline_name)
+
+
+async def cut_clip(
+    app,
+    frame: int,
+    track_index: int = 1,
+    track_type: TrackType = TrackType.VIDEO,
+    timeline_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Cut a clip at the specified frame.
+
+    Args:
+        app: FastMCP app instance
+        frame: Frame number to cut at
+        track_index: Track index containing the clip
+        track_type: Type of track
+        timeline_name: Name of timeline (uses current if None)
+
+    Returns:
+        Dict containing cut result
+    """
+    return await cut_clip_impl(app, frame, track_index, track_type, timeline_name)
+
+
+async def set_timeline_playhead(
+    app,
+    frame: int,
+    timeline_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Set the playhead position in a timeline.
+
+    Args:
+        app: FastMCP app instance
+        frame: Frame number to set playhead to
+        timeline_name: Name of timeline (uses current if None)
+
+    Returns:
+        Dict containing playhead setting result
+    """
+    return await set_timeline_playhead_impl(app, frame, timeline_name)
+
+
+async def create_timeline_impl(
+    app,
+    name: str,
+    frame_rate: float = 24.0,
+    width: int = 1920,
+    height: int = 1080,
+    start_frame: int = 0,
+    timeline_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Implementation of timeline creation (shared between individual and portmanteau tools).
+    """
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        project = connection.current_project
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        # Create timeline
+        timeline = project.AddTimeline(name, frame_rate, width, height, start_frame)
+        if not timeline:
+            raise ResolveOperationError(f"Failed to create timeline '{name}'")
+
+        # Set timeline name if provided
+        if timeline_name:
+            timeline.SetName(timeline_name)
+
+        return {
+            "status": "success",
+            "timeline": {
+                "name": timeline.GetName(),
+                "frame_rate": timeline.GetSetting("timelineFrameRate"),
+                "duration": timeline.GetDuration(),
+                "start_frame": timeline.GetStartFrame()
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Error creating timeline: {str(e)}")
+        raise ResolveOperationError(f"Failed to create timeline: {str(e)}")
+
+
+async def get_timeline_info_impl(app, timeline_name: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Implementation of timeline info retrieval (shared between individual and portmanteau tools).
+    """
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        project = connection.current_project
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        # Get the specified timeline or current timeline
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        # Get timeline tracks
+        tracks = []
+        for track_type in [TrackType.VIDEO, TrackType.AUDIO, TrackType.SUBTITLE]:
+            track_count = timeline.GetTrackCount(track_type.value)
+            for i in range(1, track_count + 1):
+                track_name = timeline.GetTrackName(track_type.value, i)
+                tracks.append({
+                    "type": track_type.value,
+                    "index": i,
+                    "name": track_name,
+                    "is_locked": timeline.GetIsTrackLocked(track_type.value, i),
+                    "is_muted": timeline.GetIsTrackMuted(track_type.value, i)
+                })
+
+        return {
+            "status": "success",
+            "timeline": {
+                "name": timeline.GetName(),
+                "duration": timeline.GetDuration(),
+                "frame_rate": timeline.GetSetting("timelineFrameRate"),
+                "start_frame": timeline.GetStartFrame(),
+                "end_frame": timeline.GetEndFrame(),
+                "current_timecode": timeline.GetCurrentTimecode(),
+                "tracks": tracks
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting timeline info: {str(e)}")
+        raise ResolveOperationError(f"Failed to get timeline info: {str(e)}")
+
+
+async def add_clip_to_timeline_impl(
+    app,
+    clip_path: str,
+    track_index: int = 1,
+    track_type: TrackType = TrackType.VIDEO,
+    start_frame: Optional[int] = None,
+    timeline_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Implementation of clip addition to timeline (shared between individual and portmanteau tools).
+    """
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        project = connection.current_project
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        media_pool = project.GetMediaPool()
+        if not media_pool:
+            raise ResolveOperationError("Failed to access media pool")
+
+        # Get the specified timeline or current timeline
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        # Find the clip in media pool
+        clip = None
+        root_folder = media_pool.GetRootFolder()
+
+        def find_clip(folder, path_parts):
+            if not path_parts:
+                return None
+            clip_name = path_parts[-1]
+            folder_path = path_parts[:-1]
+
+            current_folder = folder
+            for folder_name in folder_path:
+                subfolders = media_pool.GetSubFolders(current_folder)
+                if subfolders and folder_name in subfolders:
+                    current_folder = subfolders[folder_name]
+                else:
+                    return None
+
+            clips = media_pool.GetClipList(current_folder) or []
+            for c in clips:
+                if c.GetName() == clip_name:
+                    return c
+            return None
+
+        path_parts = [p for p in clip_path.split('/') if p]
+        clip = find_clip(root_folder, path_parts)
+
+        if not clip:
+            raise ResolveOperationError(f"Clip '{clip_path}' not found in media pool")
+
+        # Insert at current position if no start_frame is specified
+        if start_frame is None:
+            start_frame = timeline.GetCurrentTimecode()
+
+        # Insert the clip
+        result = timeline.InsertClipTimeline({
+            "mediaPoolItem": clip,
+            "trackIndex": track_index,
+            "recordFrame": start_frame
+        }, start_frame)
+
+        if not result:
+            raise ResolveOperationError("Failed to add clip to timeline")
+
+        return {
+            "status": "success",
+            "clip_path": clip_path,
+            "timeline_name": timeline.GetName(),
+            "track_index": track_index,
+            "track_type": track_type.value,
+            "start_frame": start_frame
+        }
+
+    except Exception as e:
+        logger.error(f"Error adding clip to timeline: {str(e)}")
+        raise ResolveOperationError(f"Failed to add clip to timeline: {str(e)}")
+
+
+async def cut_clip_impl(
+    app,
+    frame: int,
+    track_index: int = 1,
+    track_type: TrackType = TrackType.VIDEO,
+    timeline_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Implementation of clip cutting (shared between individual and portmanteau tools).
+    """
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        project = connection.current_project
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        # Get the specified timeline or current timeline
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        # Cut the clip at the specified frame
+        result = timeline.CutClipAtPlayhead(frame, track_index)
+        if not result:
+            raise ResolveOperationError(f"Failed to cut clip at frame {frame}")
+
+        return {
+            "status": "success",
+            "timeline_name": timeline.GetName(),
+            "frame": frame,
+            "track_index": track_index,
+            "track_type": track_type.value
+        }
+
+    except Exception as e:
+        logger.error(f"Error cutting clip: {str(e)}")
+        raise ResolveOperationError(f"Failed to cut clip: {str(e)}")
+
+
+async def set_timeline_playhead_impl(
+    app,
+    frame: int,
+    timeline_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Implementation of playhead setting (shared between individual and portmanteau tools).
+    """
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        project = connection.current_project
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        # Get the specified timeline or current timeline
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        # Set the playhead
+        result = timeline.SetCurrentTimecode(frame)
+        if not result:
+            raise ResolveOperationError(f"Failed to set playhead to frame {frame}")
+
+        return {
+            "status": "success",
+            "timeline_name": timeline.GetName(),
+            "frame": frame,
+            "timecode": timeline.GetCurrentTimecode()
+        }
+
+    except Exception as e:
+        logger.error(f"Error setting playhead: {str(e)}")
+        raise ResolveOperationError(f"Failed to set playhead: {str(e)}")
+
+
 def register_tools(app):
     """Register timeline management tools with the FastMCP app."""
     
@@ -382,5 +773,3 @@ def register_tools(app):
     # - Adjust clip properties
     # - Manage markers
     # - Etc.
-
-    return app

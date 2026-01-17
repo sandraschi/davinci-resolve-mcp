@@ -64,29 +64,29 @@ def setup_media_portmanteau(app):
             resolve_media("get_metadata", clip_path="C:/Videos/clip1.mp4")
         """
         from ..media_tools import (
-            import_media,
-            list_media,
-            create_folder,
-            get_media_metadata,
+            import_media_impl as import_media,
+            list_media_impl as list_media,
+            create_folder_impl as create_folder,
+            get_media_metadata_impl as get_media_metadata,
         )
 
         if action == "import":
             if not paths:
                 return {"status": "error", "message": "paths is required for import action"}
-            return await import_media(paths, target_folder, as_sequence, force_framerate, force_resolution)
+            return await import_media(app, paths, target_folder, as_sequence, force_framerate, force_resolution)
 
         elif action == "list":
-            return await list_media(folder_path)
+            return await list_media(app, folder_path)
 
         elif action == "create_folder":
             if not folder_path:
                 return {"status": "error", "message": "folder_path is required for create_folder action"}
-            return await create_folder(folder_path)
+            return await create_folder(app, folder_path)
 
         elif action == "get_metadata":
             if not clip_path:
                 return {"status": "error", "message": "clip_path is required for get_metadata action"}
-            return await get_media_metadata(clip_path)
+            return await get_media_metadata(app, clip_path)
 
         else:
             return {"status": "error", "message": f"Unknown action: {action}"}

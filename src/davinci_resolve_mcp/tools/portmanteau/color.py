@@ -74,10 +74,10 @@ def setup_color_portmanteau(app):
             resolve_color("adjust_wheels", lift={"r": 0.1, "g": 0.0, "b": -0.1})
         """
         from ..color_tools import (
-            create_color_node,
-            apply_lut,
-            set_color_space,
-            adjust_color_wheels,
+            create_color_node_impl as create_color_node,
+            apply_lut_impl as apply_lut,
+            set_color_space_impl as set_color_space,
+            adjust_color_wheels_impl as adjust_color_wheels,
             ColorCorrectionType,
             ColorSpaceTransform,
         )
@@ -100,26 +100,28 @@ def setup_color_portmanteau(app):
 
         if action == "create_node":
             node_type_enum = node_type_map.get(node_type.lower(), ColorCorrectionType.PRIMARY)
-            return await create_color_node(node_type_enum, node_name, parent_node, timeline_name)
+            return await create_color_node(app, node_type_enum, node_name, parent_node, timeline_name)
 
         elif action == "apply_lut":
             if not clip_path or not lut_path:
                 return {"status": "error", "message": "clip_path and lut_path required for apply_lut"}
-            return await apply_lut(clip_path, lut_path, intensity, timeline_name)
+            return await apply_lut(app, lut_path, clip_path, None, timeline_name)
 
         elif action == "set_color_space":
-            if not all([input_color_space, output_color_space, input_gamma, output_gamma]):
-                return {"status": "error", "message": "All color space params required"}
-            transform = ColorSpaceTransform(
+            if not all([input_color_space, output_color_space]):
+                return {"status": "error", "message": "input_color_space and output_color_space required"}
+            input_transform = ColorSpaceTransform(
                 input_color_space=input_color_space,
-                output_color_space=output_color_space,
-                input_gamma=input_gamma,
-                output_gamma=output_gamma,
+                output_color_space=input_color_space
             )
-            return await set_color_space(transform, timeline_name)
+            output_transform = ColorSpaceTransform(
+                input_color_space=output_color_space,
+                output_color_space=output_color_space
+            )
+            return await set_color_space(app, input_transform, output_transform, clip_path, timeline_name)
 
         elif action == "adjust_wheels":
-            return await adjust_color_wheels(lift, gamma, gain, offset, timeline_name)
+            return await adjust_color_wheels(app, lift, gamma, gain, offset, clip_path, node_name, timeline_name)
 
         else:
             return {"status": "error", "message": f"Unknown action: {action}"}

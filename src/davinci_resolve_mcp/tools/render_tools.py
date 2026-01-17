@@ -81,6 +81,284 @@ class RenderJob(BaseModel):
     settings: Dict[str, Any]
 
 
+async def render_timeline(
+    app,
+    output_path: str,
+    format: RenderFormat = RenderFormat.MP4,
+    codec: RenderCodec = RenderCodec.H264,
+    preset_name: Optional[str] = None,
+    custom_name: Optional[str] = None,
+    timeline_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Render a timeline to a file.
+
+    Args:
+        app: FastMCP app instance
+        output_path: Output file or directory path
+        format: Render format
+        codec: Render codec
+        preset_name: Use preset instead of custom settings
+        custom_name: Custom output filename
+        timeline_name: Name of timeline to render
+
+    Returns:
+        Dict containing render job information
+    """
+    return await render_timeline_impl(app, output_path, format, codec, preset_name, custom_name, timeline_name)
+
+
+async def get_render_presets(app) -> Dict[str, Any]:
+    """
+    Get available render presets.
+
+    Args:
+        app: FastMCP app instance
+
+    Returns:
+        Dict containing render presets
+    """
+    return await get_render_presets_impl(app)
+
+
+async def render_with_preset(
+    app,
+    preset_name: str,
+    output_path: str,
+    timeline_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Render timeline using a preset.
+
+    Args:
+        app: FastMCP app instance
+        preset_name: Name of render preset to use
+        output_path: Output file or directory path
+        timeline_name: Name of timeline to render
+
+    Returns:
+        Dict containing render job information
+    """
+    return await render_with_preset_impl(app, preset_name, output_path, timeline_name)
+
+
+async def get_render_job_status(app, job_id: str) -> Dict[str, Any]:
+    """
+    Get status of a render job.
+
+    Args:
+        app: FastMCP app instance
+        job_id: Render job ID
+
+    Returns:
+        Dict containing job status
+    """
+    return await get_render_job_status_impl(app, job_id)
+
+
+async def render_timeline_impl(
+    app,
+    output_path: str,
+    format: RenderFormat = RenderFormat.MP4,
+    codec: RenderCodec = RenderCodec.H264,
+    preset_name: Optional[str] = None,
+    custom_name: Optional[str] = None,
+    timeline_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Implementation of timeline rendering (shared between individual and portmanteau tools).
+    """
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        project = connection.current_project
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        # Get the specified timeline or current timeline
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        # Set output path
+        if not os.path.isabs(output_path):
+            output_path = os.path.abspath(output_path)
+
+        if os.path.isdir(output_path):
+            # If output_path is a directory, create a filename
+            filename = f"{custom_name or timeline.GetName()}.{format.value}"
+            output_path = os.path.join(output_path, filename)
+
+        # Get render settings
+        render_settings = {
+            "TargetDir": os.path.dirname(output_path),
+            "CustomName": os.path.splitext(os.path.basename(output_path))[0],
+            "Format": format.value,
+            "Codec": codec.value,
+            "FormatWidth": timeline.GetSetting("timelineResolutionWidth"),
+            "FormatHeight": timeline.GetSetting("timelineResolutionHeight"),
+            "FrameRate": timeline.GetSetting("timelineFrameRate"),
+        }
+
+        # Add the render job
+        job_id = project.AddRenderJob(render_settings)
+        if not job_id:
+            raise ResolveOperationError("Failed to create render job")
+
+        return {
+            "status": "success",
+            "job_id": job_id,
+            "output_path": output_path,
+            "format": format.value,
+            "codec": codec.value,
+            "timeline_name": timeline.GetName()
+        }
+
+    except Exception as e:
+        logger.error(f"Error rendering timeline: {str(e)}")
+        raise ResolveOperationError(f"Failed to render timeline: {str(e)}")
+
+
+async def get_render_presets_impl(app) -> Dict[str, Any]:
+    """
+    Implementation of render presets retrieval (shared between individual and portmanteau tools).
+    """
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        project = connection.current_project
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        # Get render presets
+        presets = project.GetRenderPresets() or []
+
+        preset_list = []
+        for preset in presets:
+            preset_list.append({
+                "name": preset.get("Name", ""),
+                "description": preset.get("Description", ""),
+                "format": preset.get("Format", ""),
+                "codec": preset.get("Codec", ""),
+                "width": preset.get("Width", 0),
+                "height": preset.get("Height", 0),
+                "frame_rate": preset.get("FrameRate", 0)
+            })
+
+        return {
+            "status": "success",
+            "presets": preset_list,
+            "count": len(preset_list)
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting render presets: {str(e)}")
+        raise ResolveOperationError(f"Failed to get render presets: {str(e)}")
+
+
+async def render_with_preset_impl(
+    app,
+    preset_name: str,
+    output_path: str,
+    timeline_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """
+    Implementation of preset-based rendering (shared between individual and portmanteau tools).
+    """
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        project = connection.current_project
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        # Get the specified timeline or current timeline
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        # Set output path
+        if not os.path.isabs(output_path):
+            output_path = os.path.abspath(output_path)
+
+        if os.path.isdir(output_path):
+            # If output_path is a directory, create a filename
+            filename = f"{timeline.GetName()}.mp4"
+            output_path = os.path.join(output_path, filename)
+
+        # Create render settings from preset
+        render_settings = {
+            "TargetDir": os.path.dirname(output_path),
+            "CustomName": os.path.splitext(os.path.basename(output_path))[0],
+            "PresetName": preset_name
+        }
+
+        # Add the render job
+        job_id = project.AddRenderJobFromPreset(render_settings)
+        if not job_id:
+            raise ResolveOperationError(f"Failed to create render job with preset '{preset_name}'")
+
+        return {
+            "status": "success",
+            "job_id": job_id,
+            "output_path": output_path,
+            "preset_name": preset_name,
+            "timeline_name": timeline.GetName()
+        }
+
+    except Exception as e:
+        logger.error(f"Error rendering with preset: {str(e)}")
+        raise ResolveOperationError(f"Failed to render with preset: {str(e)}")
+
+
+async def get_render_job_status_impl(app, job_id: str) -> Dict[str, Any]:
+    """
+    Implementation of render job status retrieval (shared between individual and portmanteau tools).
+    """
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        project = connection.current_project
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        # Get render job status
+        status = project.GetRenderJobStatus(job_id)
+        if not status:
+            raise ResolveOperationError(f"Render job '{job_id}' not found")
+
+        return {
+            "status": "success",
+            "job_id": job_id,
+            "job_status": status.get('Status', 'Unknown'),
+            "progress": status.get('Completion', 0.0),
+            "output_path": status.get('TargetDir', ''),
+            "message": status.get('Message', '')
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting render job status: {str(e)}")
+        raise ResolveOperationError(f"Failed to get render job status: {str(e)}")
+
+
 def register_tools(app):
     """Register render tools with the FastMCP app."""
     
@@ -387,5 +665,3 @@ def register_tools(app):
                 
         except Exception as e:
             raise ResolveOperationError(f"Failed to get render job status: {str(e)}")
-
-    return app

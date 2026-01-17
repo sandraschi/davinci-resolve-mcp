@@ -1,28 +1,81 @@
 {
   "manifest_version": "0.2",
   "name": "davinci-resolve-mcp",
-  "version": "1.0.0",
-  "description": "AI-powered professional video editing automation for DaVinci Resolve - Revolutionary natural language control of complete video production workflows with Austrian precision",
+  "version": "0.2.0",
+  "description": "Professional AI-powered video editing automation for DaVinci Resolve. Revolutionary natural language control of complete video production workflows with FastMCP 2.14.3 conversational orchestration.",
   "author": {
-    "name": "Sandra",
-    "email": "sandra@example.com"
+    "name": "Sandra Schieder",
+    "email": "sandra@sandraschi.dev"
   },
   "license": "MIT",
+  "keywords": [
+    "video-editing",
+    "davinci-resolve",
+    "mcp",
+    "fastmcp",
+    "ai-automation",
+    "professional-video",
+    "color-grading",
+    "post-production"
+  ],
+  "homepage": "https://github.com/sandraschi/davinci-resolve-mcp",
   "repository": {
     "type": "git",
     "url": "https://github.com/sandraschi/davinci-resolve-mcp"
   },
+  "bugs": {
+    "url": "https://github.com/sandraschi/davinci-resolve-mcp/issues"
+  },
+  "categories": [
+    "productivity",
+    "developer-tools",
+    "media",
+    "video"
+  ],
   "server": {
     "type": "python",
-    "entry_point": "src/davinci_resolve_mcp/server.py",
+    "module": "davinci_resolve_mcp.server",
+    "entry_point": "app",
     "mcp_config": {
       "command": "python",
-      "args": ["src/davinci_resolve_mcp/server.py"],
+      "args": ["-m", "davinci_resolve_mcp.server"],
       "env": {
         "PYTHONPATH": "${__dirname}/src",
-        "PYTHONUNBUFFERED": "1"
+        "PYTHONUNBUFFERED": "1",
+        "RESOLVE_TOOL_MODE": "portmanteau"
       }
     }
+  },
+  "engines": {
+    "python": ">=3.8",
+    "fastmcp": ">=2.14.3"
+  },
+  "dependencies": {
+    "fastmcp": ">=2.14.3,<2.15.0",
+    "structlog": ">=23.0.0",
+    "pydantic": ">=2.0.0,<3.0.0"
+  },
+  "mcp_features": {
+    "conversational_tools": true,
+    "sampling_capabilities": true,
+    "portmanteau_tools": true,
+    "agentic_workflows": true
+  },
+  "supported_platforms": [
+    "windows",
+    "macos",
+    "linux"
+  ],
+  "davinci_resolve": {
+    "minimum_version": "18.0",
+    "recommended_version": "18.5+",
+    "features": [
+      "project_management",
+      "media_pool",
+      "timeline_editing",
+      "color_grading",
+      "audio_processing",
+      "rendering"
+    ]
   }
 }
-

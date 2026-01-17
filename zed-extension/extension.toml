@@ -1,0 +1,31 @@
+# DaVinci Resolve MCP - Zed Extension Configuration
+
+id = "davinci-resolve-mcp"
+name = "DaVinci Resolve MCP"
+description = "Professional AI-powered video editing automation for DaVinci Resolve with natural language control"
+version = "0.2.0"
+schema_version = 1
+authors = ["Sandra Schieder <sandra@sandraschi.dev>"]
+repository = "https://github.com/sandraschi/davinci-resolve-mcp"
+
+[language_servers.davinci-resolve-mcp]
+name = "DaVinci Resolve MCP"
+language = "python"
+
+[language_servers.davinci-resolve-mcp.binary]
+path = "python"
+args = ["-m", "davinci_resolve_mcp.server"]
+
+[language_servers.davinci-resolve-mcp.environment]
+PYTHONPATH = "src"
+PYTHONUNBUFFERED = "1"
+RESOLVE_TOOL_MODE = "portmanteau"
+
+[grammars.python]
+repository = "https://github.com/zed-industries/zed"
+commit = "main"
+path = "crates/zed/resources/grammars/python"
+
+[languages.python.language_servers]
+primary = ["pyright", "ruff-lsp"]
+secondary = ["davinci-resolve-mcp"]

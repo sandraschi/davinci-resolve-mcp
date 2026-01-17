@@ -33,7 +33,7 @@ classifiers = [
 
 dependencies = [
     # Core dependencies
-    "fastmcp>=2.14.1,<2.15.0",
+    "fastmcp>=2.14.3,<2.15.0",
     "structlog>=23.0.0",
     "fastapi>=0.95.0",
     "uvicorn[standard]>=0.22.0",
@@ -62,7 +62,7 @@ Issues = "https://github.com/sandraschi/davinci-resolve-mcp/issues"
 Source = "https://github.com/sandraschi/davinci-resolve-mcp"
 
 [project.scripts]
-davinci-resolve-mcp = "davinci_resolve_mcp.main:main"
+davinci-resolve-mcp = "davinci_resolve_mcp.main:main"`r`nbuild-mcpb = "build_mcpb:main"`r`nbuild-zed-extension = "scripts.build_zed:main"`r`ninstall-pre-commit = "scripts.install_precommit:main"
 
 [project.optional-dependencies]
 dev = [

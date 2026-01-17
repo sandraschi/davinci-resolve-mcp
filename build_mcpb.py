@@ -1,155 +1,270 @@
 """
-Build script for creating the DaVinci Resolve MCPB package.
+MCPB Build Script for DaVinci Resolve MCP
 
-This script automates the process of creating a MCPB package for the DaVinci Resolve MCP server.
-IMPORTANT: MCPB packages contain NO dependencies - handled by MCPB runtime.
+Creates optimized MCPB packages with FastMCP 2.14.3 conversational and sampling capabilities.
+Follows MCPB specification for professional distribution.
 """
 
 import json
 import os
 import shutil
-import subprocess
 import sys
 import zipfile
 from pathlib import Path
+from typing import Dict, List, Optional
 
-def validate_manifest(manifest_path):
-    """Validate the MCPB manifest file."""
-    try:
-        with open(manifest_path, 'r', encoding='utf-8') as f:
-            manifest = json.load(f)
-        print("[OK] Manifest validation successful")
-        return True
-    except json.JSONDecodeError as e:
-        print(f"[ERROR] Invalid JSON in manifest: {e}")
-        return False
-    except Exception as e:
-        print(f"[ERROR] Error validating manifest: {e}")
-        return False
 
-def ensure_directory(directory):
-    """Ensure a directory exists, create it if it doesn't."""
-    os.makedirs(directory, exist_ok=True)
+class MCPBPackager:
+    """Professional MCPB package creator with validation and optimization."""
 
-def copy_source_files(source_dir, dest_dir):
-    """Copy Python source files to the DXT package directory."""
-    # Copy the entire src directory
-    src_path = source_dir / "src"
-    dest_src_path = dest_dir / "src"
-    
-    if dest_src_path.exists():
-        shutil.rmtree(dest_src_path)
-    
-    # Copy all files and directories from src to dest_dir/src
-    shutil.copytree(src_path, dest_src_path, dirs_exist_ok=True)
-    
-    # Also copy any top-level Python files
-    for item in source_dir.glob("*.py"):
-        if item.is_file() and item.name != "build_mcpb.py":
-            shutil.copy2(item, dest_dir / item.name)
-    
-    print(f"[OK] Copied source files to {dest_dir}")
+    def __init__(self, repo_root: Path):
+        self.repo_root = repo_root
+        self.mcpb_dir = repo_root / "mcpb"
+        self.dist_dir = repo_root / "dist"
+        self.src_dir = repo_root / "src"
 
-def copy_assets(source_dir, dest_dir):
-    """Copy asset files to the DXT package directory."""
-    assets_src = source_dir / "dxt" / "assets"
-    assets_dest = dest_dir / "assets"
-    
-    if assets_src.exists():
-        if assets_dest.exists():
-            shutil.rmtree(assets_dest)
-        shutil.copytree(assets_src, assets_dest)
-        print(f"[OK] Copied assets to {assets_dest}")
-    else:
-        print("[INFO] No assets directory found, skipping")
+    def validate_manifest(self) -> bool:
+        """Validate MCPB manifest with comprehensive checks."""
+        manifest_path = self.mcpb_dir / "manifest.json"
 
-def copy_license(source_dir, dest_dir):
-    """Copy the LICENSE file to the DXT package directory."""
-    license_src = source_dir / "LICENSE"
-    if license_src.exists():
-        shutil.copy2(license_src, dest_dir)
-        print(f"[OK] Copied LICENSE to {dest_dir}")
-    else:
-        print("[INFO] No LICENSE file found, skipping")
+        if not manifest_path.exists():
+            print("❌ Manifest file not found at mcpb/manifest.json")
+            return False
 
-def copy_readme(source_dir, dest_dir):
-    """Copy the README.md file to the DXT package directory."""
-    readme_src = source_dir / "README.md"
-    if readme_src.exists():
-        shutil.copy2(readme_src, dest_dir)
-        print(f"[OK] Copied README.md to {dest_dir}")
-    else:
-        print("[INFO] No README.md file found, skipping")
+        try:
+            with open(manifest_path, 'r', encoding='utf-8') as f:
+                manifest = json.load(f)
 
-# REMOVED: install_dependencies() - MCPB packages contain NO dependencies!
-# Dependencies are handled by the MCPB runtime system.
+            # Required fields validation
+            required_fields = ["manifest_version", "name", "version", "server"]
+            missing_fields = [field for field in required_fields if field not in manifest]
 
-def create_mcpb_package(source_dir, output_dir):
-    """Create the MCPB package - MINIMAL approach with NO dependencies."""
-    # Ensure output directory exists
-    ensure_directory(output_dir)
+            if missing_fields:
+                print(f"❌ Missing required manifest fields: {', '.join(missing_fields)}")
+                return False
 
-    # Get manifest info
-    manifest_src = source_dir / "mcpb" / "manifest.json"
-    if not manifest_src.exists():
-        print("[ERROR] Manifest file not found in mcpb/manifest.json")
-        return False
+            # Version validation
+            if manifest.get("manifest_version") != "0.2":
+                print("❌ Unsupported manifest version. Expected: 0.2")
+                return False
 
-    try:
-        # Read manifest to get package info
-        with open(manifest_src, 'r', encoding='utf-8') as f:
-            manifest = json.load(f)
+            # FastMCP version validation
+            deps = manifest.get("dependencies", {})
+            fastmcp_version = deps.get("fastmcp", "")
+            if not fastmcp_version or "2.14.3" not in fastmcp_version:
+                print("⚠️  Warning: FastMCP 2.14.3 not specified in dependencies")
 
-        package_name = manifest.get('name', 'davinci-resolve-mcp')
-        package_version = manifest.get('version', '0.1.0')
-        output_file = output_dir / f"{package_name}-{package_version}.mcpb"
+            print("✅ Manifest validation successful")
+            return True
 
-        # Create the MCPB package with MINIMAL contents
-        with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            # Write the CORRECT manifest file (manifest.json)
-            zipf.writestr("manifest.json", json.dumps(manifest, indent=2))
+        except json.JSONDecodeError as e:
+            print(f"❌ Invalid JSON in manifest: {e}")
+            return False
+        except Exception as e:
+            print(f"❌ Error validating manifest: {e}")
+            return False
 
-            # Add the main server file ONLY (NO dependencies, NO assets, NO extras)
-            server_path = source_dir / "src" / "davinci_resolve_mcp" / "server.py"
-            if server_path.exists():
-                zipf.write(str(server_path), "src/davinci_resolve_mcp/server.py")
+    def ensure_directories(self) -> None:
+        """Ensure required directories exist."""
+        self.dist_dir.mkdir(exist_ok=True)
+        print(f"✅ Output directory ready: {self.dist_dir}")
+
+    def collect_package_files(self) -> Dict[str, Path]:
+        """Collect all files to include in the MCPB package."""
+        files_to_package = {}
+
+        # Core server files
+        server_files = [
+            "server.py",
+            "agentic.py",
+            "config.py",
+            "types.py"
+        ]
+
+        for file in server_files:
+            src_path = self.src_dir / "davinci_resolve_mcp" / file
+            if src_path.exists():
+                files_to_package[f"src/davinci_resolve_mcp/{file}"] = src_path
             else:
-                print("[WARNING] Main server file not found, package may not work")
+                print(f"⚠️  Warning: Core file not found: {file}")
 
-        print(f"[SUCCESS] Created minimal MCPB package: {output_file}")
-        print(f"[WARNING] IMPORTANT: This MCPB package contains NO dependencies!")
-        print(f"   The MCPB runtime handles all Python package dependencies.\n")
+        # Tools directory
+        tools_dir = self.src_dir / "davinci_resolve_mcp" / "tools"
+        if tools_dir.exists():
+            for file_path in tools_dir.rglob("*.py"):
+                if file_path.is_file():
+                    rel_path = file_path.relative_to(self.src_dir)
+                    files_to_package[f"src/{rel_path}"] = file_path
 
-        # List contents for verification
-        print("Package contents:")
-        with zipfile.ZipFile(output_file, 'r') as zipf:
-            for file in zipf.namelist():
-                print(f"- {file}")
+        # Utils directory
+        utils_dir = self.src_dir / "davinci_resolve_mcp" / "utils"
+        if utils_dir.exists():
+            for file_path in utils_dir.rglob("*.py"):
+                if file_path.is_file():
+                    rel_path = file_path.relative_to(self.src_dir)
+                    files_to_package[f"src/{rel_path}"] = file_path
 
-        return True
+        # Connection directory
+        conn_dir = self.src_dir / "davinci_resolve_mcp" / "connection"
+        if conn_dir.exists():
+            for file_path in conn_dir.rglob("*.py"):
+                if file_path.is_file():
+                    rel_path = file_path.relative_to(self.src_dir)
+                    files_to_package[f"src/{rel_path}"] = file_path
 
-    except Exception as e:
-        print(f"[ERROR] Failed to create MCPB package: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+        # Models directory
+        models_dir = self.src_dir / "davinci_resolve_mcp" / "models"
+        if models_dir.exists():
+            for file_path in models_dir.rglob("*.py"):
+                if file_path.is_file():
+                    rel_path = file_path.relative_to(self.src_dir)
+                    files_to_package[f"src/{rel_path}"] = file_path
+
+        # Main __init__.py
+        init_file = self.src_dir / "davinci_resolve_mcp" / "__init__.py"
+        if init_file.exists():
+            files_to_package["src/davinci_resolve_mcp/__init__.py"] = init_file
+
+        print(f"📦 Collected {len(files_to_package)} files for packaging")
+        return files_to_package
+
+    def create_package(self, files_to_package: Dict[str, Path]) -> bool:
+        """Create the MCPB package with optimized compression."""
+        manifest_path = self.mcpb_dir / "manifest.json"
+
+        try:
+            with open(manifest_path, 'r', encoding='utf-8') as f:
+                manifest = json.load(f)
+
+            package_name = manifest.get('name', 'davinci-resolve-mcp')
+            package_version = manifest.get('version', '0.1.0')
+            output_file = self.dist_dir / f"{package_name}-{package_version}.mcpb"
+
+            print(f"🏗️  Building MCPB package: {output_file.name}")
+
+            with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as zipf:
+                # Add manifest
+                zipf.writestr("manifest.json", json.dumps(manifest, indent=2))
+
+                # Add all collected files
+                for archive_path, source_path in files_to_package.items():
+                    zipf.write(str(source_path), archive_path)
+                    print(f"  ➕ {archive_path}")
+
+            # Verify package
+            with zipfile.ZipFile(output_file, 'r') as zipf:
+                package_files = zipf.namelist()
+
+            print("
+📋 Package contents:"            for file in sorted(package_files):
+                print(f"  • {file}")
+
+            file_size = output_file.stat().st_size
+            print("
+📊 Package statistics:"            print(f"  • Files: {len(package_files)}")
+            print(f"  • Size: {file_size:,} bytes ({file_size/1024:.1f} KB)")
+            print(f"  • Location: {output_file}")
+
+            return True
+
+        except Exception as e:
+            print(f"❌ Failed to create MCPB package: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+
+    def validate_package(self, package_path: Path) -> bool:
+        """Validate the created MCPB package."""
+        try:
+            with zipfile.ZipFile(package_path, 'r') as zipf:
+                # Check for required files
+                required_files = [
+                    "manifest.json",
+                    "src/davinci_resolve_mcp/server.py"
+                ]
+
+                package_files = zipf.namelist()
+                missing_files = [f for f in required_files if f not in package_files]
+
+                if missing_files:
+                    print(f"❌ Missing required files in package: {', '.join(missing_files)}")
+                    return False
+
+                # Validate manifest
+                with zipf.open("manifest.json") as f:
+                    manifest = json.loads(f.read().decode('utf-8'))
+
+                if manifest.get("name") != "davinci-resolve-mcp":
+                    print("❌ Package name mismatch in manifest")
+                    return False
+
+                print("✅ Package validation successful")
+                return True
+
+        except Exception as e:
+            print(f"❌ Package validation failed: {e}")
+            return False
+
 
 def main():
-    """Main function to build the MCPB package."""
-    print("\n=== Building DaVinci Resolve MCPB Package (NO dependencies) ===\n")
+    """Main MCPB packaging function."""
+    print("\n🚀 DaVinci Resolve MCP - MCPB Package Builder")
+    print("=" * 50)
 
-    # Set up paths
     repo_root = Path(__file__).parent.absolute()
-    output_dir = repo_root / "dist"
+    packager = MCPBPackager(repo_root)
 
-    # Create the MCPB package
-    success = create_mcpb_package(repo_root, output_dir)
-
-    if success:
-        print("\n[SUCCESS] MCPB package created successfully!")
-    else:
-        print("\n[ERROR] Failed to create MCPB package")
+    # Validation phase
+    print("\n1️⃣  Validation Phase")
+    if not packager.validate_manifest():
+        print("\n❌ Validation failed. Aborting build.")
         sys.exit(1)
+
+    # Preparation phase
+    print("\n2️⃣  Preparation Phase")
+    packager.ensure_directories()
+
+    # Collection phase
+    print("\n3️⃣  File Collection Phase")
+    files_to_package = packager.collect_package_files()
+
+    if not files_to_package:
+        print("\n❌ No files collected for packaging. Aborting.")
+        sys.exit(1)
+
+    # Build phase
+    print("\n4️⃣  Build Phase")
+    success = packager.create_package(files_to_package)
+
+    if not success:
+        print("\n❌ Build failed.")
+        sys.exit(1)
+
+    # Validation phase
+    print("\n5️⃣  Validation Phase")
+    manifest_path = packager.mcpb_dir / "manifest.json"
+    with open(manifest_path, 'r', encoding='utf-8') as f:
+        manifest = json.load(f)
+
+    package_name = manifest.get('name', 'davinci-resolve-mcp')
+    package_version = manifest.get('version', '0.1.0')
+    package_path = packager.dist_dir / f"{package_name}-{package_version}.mcpb"
+
+    if not packager.validate_package(package_path):
+        print("\n❌ Package validation failed.")
+        sys.exit(1)
+
+    print("\n🎉 MCPB Package Build Complete!"    print(f"📦 Package: {package_path}")
+    print("\n✨ Features included:"    print("  • FastMCP 2.14.3 conversational tools")
+    print("  • SEP-1577 sampling capabilities")
+    print("  • Agentic workflow orchestration")
+    print("  • Portmanteau tool design")
+    print("  • Professional video editing automation")
+
+    print("\n📋 Next steps:"    print("  1. Test the package in your MCP environment")
+    print("  2. Distribute via MCP registry or direct download")
+    print("  3. Check compatibility with target DaVinci Resolve versions")
+
 
 if __name__ == "__main__":
     main()

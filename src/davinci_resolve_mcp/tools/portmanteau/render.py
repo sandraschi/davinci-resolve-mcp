@@ -73,10 +73,10 @@ def setup_render_portmanteau(app):
             resolve_render("job_status", job_id=1)
         """
         from ..render_tools import (
-            render_timeline,
-            get_render_presets,
-            render_with_preset,
-            get_render_job_status,
+            render_timeline_impl as render_timeline,
+            get_render_presets_impl as get_render_presets,
+            render_with_preset_impl as render_with_preset,
+            get_render_job_status_impl as get_render_job_status,
             RenderFormat,
             RenderCodec,
         )
@@ -117,24 +117,23 @@ def setup_render_portmanteau(app):
                 return {"status": "error", "message": "output_path required for timeline render"}
             format_enum = format_map.get(format.lower(), RenderFormat.MP4)
             return await render_timeline(
-                output_path, format_enum, codec_enum, resolution,
-                frame_rate, timeline_name, use_timeline_name, custom_name, overwrite
+                app, output_path, format_enum, codec_enum, preset_name, custom_name, timeline_name
             )
 
         elif action == "presets":
-            return await get_render_presets()
+            return await get_render_presets(app)
 
         elif action == "with_preset":
             if not preset_name or not output_path:
                 return {"status": "error", "message": "preset_name and output_path required"}
             return await render_with_preset(
-                preset_name, output_path, timeline_name, use_timeline_name, custom_name, overwrite
+                app, preset_name, output_path, timeline_name
             )
 
         elif action == "job_status":
             if job_id is None:
                 return {"status": "error", "message": "job_id required for job_status"}
-            return await get_render_job_status(job_id)
+            return await get_render_job_status(app, str(job_id))
 
         else:
             return {"status": "error", "message": f"Unknown action: {action}"}

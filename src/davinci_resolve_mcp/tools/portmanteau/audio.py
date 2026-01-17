@@ -72,10 +72,10 @@ def setup_audio_portmanteau(app):
             resolve_audio("normalize", track_indices=[1, 2, 3])
         """
         from ..audio_tools import (
-            get_audio_tracks,
-            add_audio_effect,
-            adjust_audio_levels,
-            normalize_audio,
+            get_audio_tracks_impl as get_audio_tracks,
+            add_audio_effect_impl as add_audio_effect,
+            adjust_audio_levels_impl as adjust_audio_levels,
+            normalize_audio_impl as normalize_audio,
             AudioEffectType,
         )
 
@@ -96,17 +96,17 @@ def setup_audio_portmanteau(app):
         }
 
         if action == "get_tracks":
-            return await get_audio_tracks(timeline_name)
+            return await get_audio_tracks(app, timeline_name)
 
         elif action == "add_effect":
             effect_enum = effect_map.get(effect_type.lower(), AudioEffectType.EQ)
-            return await add_audio_effect(effect_enum, track_index, preset, parameters, timeline_name)
+            return await add_audio_effect(app, effect_enum, track_index, parameters, timeline_name)
 
         elif action == "adjust_levels":
-            return await adjust_audio_levels(track_index, volume, pan, mute, solo, timeline_name)
+            return await adjust_audio_levels(app, track_index, volume, pan, mute, timeline_name)
 
         elif action == "normalize":
-            return await normalize_audio(target_level, track_indices, timeline_name)
+            return await normalize_audio(app, track_indices, target_level, timeline_name)
 
         else:
             return {"status": "error", "message": f"Unknown action: {action}"}

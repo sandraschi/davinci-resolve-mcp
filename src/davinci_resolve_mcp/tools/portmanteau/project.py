@@ -1,7 +1,7 @@
 """
 DaVinci Resolve Project Portmanteau Tool.
 
-Consolidates project management operations into a single tool.
+Consolidates project management operations into a single tool with conversational returns.
 """
 import logging
 from typing import Any, Dict, Literal, Optional
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def setup_project_portmanteau(app):
-    """Register the project portmanteau tool."""
+    """Register the project portmanteau tool with conversational capabilities."""
 
     @app.tool()
     async def resolve_project(
@@ -25,7 +25,7 @@ def setup_project_portmanteau(app):
         """
         Comprehensive project management for DaVinci Resolve.
 
-        PORTMANTEAU PATTERN: Consolidates 5 project tools into 1.
+        PORTMANTEAU PATTERN: Consolidates 5 project tools into 1 with conversational responses.
 
         SUPPORTED ACTIONS:
         - create: Create new project (requires: name)
@@ -44,7 +44,7 @@ def setup_project_portmanteau(app):
             settings: Settings dict. Required for: update_settings
 
         Returns:
-            Dict with operation results
+            Dict with conversational response and operation results
 
         Examples:
             # Create 4K project
@@ -63,36 +63,144 @@ def setup_project_portmanteau(app):
             resolve_project("update_settings", settings={"timelineFrameRate": "30"})
         """
         from ..project_tools import (
-            create_project,
-            open_project,
-            list_projects,
-            get_project_settings,
-            update_project_settings,
+            create_project_impl as create_project,
+            open_project_impl as open_project,
+            list_projects_impl as list_projects,
+            get_project_settings_impl as get_project_settings,
+            update_project_settings_impl as update_project_settings,
         )
 
         if action == "create":
             if not name:
-                return {"status": "error", "message": "name is required for create action"}
-            return await create_project(name, frame_rate, width, height, template)
+                return {
+                    "success": False,
+                    "error": "name parameter is required for create action",
+                    "message": "Please provide a project name to create a new project."
+                }
+
+            result = await create_project(app, name, frame_rate, width, height, template)
+            if result.get("status") == "success":
+                resolution = f"{width}x{height}"
+                message = f"Created new project '{name}' with {resolution} resolution at {frame_rate}fps"
+                if template:
+                    message += f" using '{template}' template"
+                return {
+                    "success": True,
+                    "operation": "project_create",
+                    "message": message,
+                    "project_name": name,
+                    "resolution": resolution,
+                    "frame_rate": frame_rate,
+                    "template": template
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.get("message", "Unknown error"),
+                    "message": f"Failed to create project '{name}': {result.get('message', 'Unknown error')}"
+                }
 
         elif action == "open":
             if not name:
-                return {"status": "error", "message": "name is required for open action"}
-            return await open_project(name)
+                return {
+                    "success": False,
+                    "error": "name parameter is required for open action",
+                    "message": "Please provide a project name to open."
+                }
+
+            result = await open_project(app, name)
+            if result.get("status") == "success":
+                return {
+                    "success": True,
+                    "operation": "project_open",
+                    "message": f"Opened project '{name}' successfully",
+                    "project_name": name
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.get("message", "Unknown error"),
+                    "message": f"Failed to open project '{name}': {result.get('message', 'Unknown error')}"
+                }
 
         elif action == "list":
-            return await list_projects()
+            result = await list_projects(app)
+            if result.get("status") == "success":
+                projects = result.get("projects", [])
+                count = len(projects)
+                message = f"Found {count} project{'s' if count != 1 else ''}"
+                if count > 0:
+                    message += f": {', '.join(projects[:5])}{'...' if count > 5 else ''}"
+
+                return {
+                    "success": True,
+                    "operation": "project_list",
+                    "message": message,
+                    "project_count": count,
+                    "projects": projects
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.get("message", "Unknown error"),
+                    "message": f"Failed to list projects: {result.get('message', 'Unknown error')}"
+                }
 
         elif action == "get_settings":
-            return await get_project_settings()
+            result = await get_project_settings(app)
+            if result.get("status") == "success":
+                settings_data = result.get("settings", {})
+                message = "Retrieved current project settings"
+                if settings_data:
+                    timeline_fps = settings_data.get("timelineFrameRate")
+                    if timeline_fps:
+                        message += f" (timeline: {timeline_fps}fps)"
+
+                return {
+                    "success": True,
+                    "operation": "project_get_settings",
+                    "message": message,
+                    "settings": settings_data
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.get("message", "Unknown error"),
+                    "message": f"Failed to get project settings: {result.get('message', 'Unknown error')}"
+                }
 
         elif action == "update_settings":
             if not settings:
-                return {"status": "error", "message": "settings dict is required for update_settings action"}
-            return await update_project_settings(settings)
+                return {
+                    "success": False,
+                    "error": "settings parameter is required for update_settings action",
+                    "message": "Please provide a settings dictionary to update project settings."
+                }
+
+            result = await update_project_settings(app, settings)
+            if result.get("status") == "success":
+                setting_keys = list(settings.keys())
+                message = f"Updated project settings: {', '.join(setting_keys)}"
+
+                return {
+                    "success": True,
+                    "operation": "project_update_settings",
+                    "message": message,
+                    "updated_settings": setting_keys,
+                    "settings": settings
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.get("message", "Unknown error"),
+                    "message": f"Failed to update project settings: {result.get('message', 'Unknown error')}"
+                }
 
         else:
-            return {"status": "error", "message": f"Unknown action: {action}"}
+            return {
+                "success": False,
+                "error": f"Unknown action: {action}",
+                "message": f"Unsupported action '{action}'. Supported actions: create, open, list, get_settings, update_settings"
+            }
 
-    logger.info("Registered resolve_project portmanteau tool")
-
+    logger.info("Registered resolve_project portmanteau tool with conversational returns")
