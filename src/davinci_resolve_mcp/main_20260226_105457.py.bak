@@ -1,0 +1,177 @@
+#!/usr/bin/env python3
+"""
+DaVinci Resolve MCP - CLI Entry Point
+
+This module provides the command-line interface for the DaVinci Resolve MCP server.
+"""
+import asyncio
+import logging
+import sys
+from typing import Optional
+
+import typer
+from rich.console import Console
+from rich.logging import RichHandler
+
+from .transport import run_server, run_server_async
+from .server import start_server, app as mcp_app, initialize_server
+from .connection.environment import ResolveEnvironment
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(rich_tracebacks=True)]
+)
+logger = logging.getLogger("davinci_resolve_mcp")
+
+# Create Typer app
+app = typer.Typer(
+    name="davinci-resolve-mcp",
+    help="DaVinci Resolve MCP Server - Control DaVinci Resolve through AI agents",
+    add_completion=False
+)
+
+# Global console instance for consistent output
+console = Console()
+
+
+def version_callback(value: bool):
+    """Display version and exit."""
+    if value:
+        from importlib.metadata import version
+        v = version("davinci-resolve-mcp")
+        console.print(f"DaVinci Resolve MCP v{v}")
+        raise typer.Exit()
+
+
+@app.command()
+def start(
+    host: str = typer.Option("127.0.0.1", "--host", "-h", help="Host to bind the server to"),
+    port: int = typer.Option(8000, "--port", "-p", help="Port to run the server on"),
+    debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug mode"),
+    version: Optional[bool] = typer.Option(
+        None, "--version", "-v", 
+        help="Show version and exit",
+        callback=version_callback,
+        is_eager=True
+    )
+):
+    """Start the DaVinci Resolve MCP server."""
+    # Set log level based on debug flag
+    log_level = logging.DEBUG if debug else logging.INFO
+    logger.setLevel(log_level)
+    
+    # Verify DaVinci Resolve environment
+    try:
+        console.print("🔍 Verifying DaVinci Resolve environment...")
+        env = ResolveEnvironment()
+        install_path = env.detect_resolve_installation()
+        if install_path:
+            console.print(f"✅ Found DaVinci Resolve at {install_path}")
+        else:
+            console.print("⚠️  DaVinci Resolve not detected - some features may not work")
+    except Exception as e:
+        console.print(f"❌ Error: {str(e)}", style="red")
+        if debug:
+            logger.exception("Detailed error:")
+        raise typer.Exit(1)
+    
+    # Start the server
+    console.print(f"🚀 Starting DaVinci Resolve MCP server on {host}:{port}")
+    try:
+        run_server(run_mcp, server_name="davinci-resolve-mcp")
+    except KeyboardInterrupt:
+        console.print("\n👋 Shutting down server...")
+    except Exception as e:
+        console.print(f"❌ Server error: {str(e)}", style="red")
+        if debug:
+            logger.exception("Detailed error:")
+        raise typer.Exit(1)
+
+
+@app.command()
+def mcp():
+    """Run the MCP server in stdio mode for Claude Desktop."""
+    # Remove RichHandler - it breaks in MCP stdio (stdout reserved for JSON-RPC)
+    root = logging.getLogger()
+    root.handlers.clear()
+    root.addHandler(logging.StreamHandler(sys.stderr))
+
+    # Import structlog for MCP mode (structured logging to stderr)
+    import structlog
+
+    # Configure structlog for MCP mode (JSON to stderr only)
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.UnicodeDecoder(),
+            structlog.processors.JSONRenderer()
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+    
+    mcp_logger = structlog.get_logger(__name__)
+
+    # Initialize the server (lazy initialization - don't fail if DaVinci Resolve not running)
+    try:
+        initialize_server()
+        mcp_logger.info("Server initialized successfully")
+    except Exception as e:
+        # Log but don't exit - allow server to start and tools will report errors
+        mcp_logger.warning("Server initialization warning", error=str(e), 
+                          message="Server will start but some tools may not work until DaVinci Resolve is available")
+
+    # Run the MCP server in stdio mode
+    try:
+        # Run the FastMCP 2.14.1 app in stdio mode
+        async def run_mcp():
+            run_server(mcp_app, server_name="davinci-resolve-mcp")
+        
+        run_server(run_mcp, server_name="davinci-resolve-mcp")
+    except KeyboardInterrupt:
+        mcp_logger.info("MCP server stopped by user")
+    except Exception as e:
+        mcp_logger.error("MCP server error", error=str(e))
+        sys.exit(1)
+
+
+@app.command()
+def check():
+    """Check the DaVinci Resolve environment and connection."""
+    console.print("🔍 Checking DaVinci Resolve environment...")
+    try:
+        env = ResolveEnvironment()
+        install_path = env.detect_resolve_installation()
+        is_running = env.check_resolve_running()
+        
+        console.print("✅ [green]DaVinci Resolve Environment:[/green]")
+        console.print(f"   • Install Path: {install_path or 'Not Found'}")
+        console.print(f"   • Running: {'✅ Yes' if is_running else '❌ No'}")
+        
+        if not install_path:
+            console.print("\n❌ [yellow]Warning:[/yellow] DaVinci Resolve installation not detected.")
+            console.print("   Make sure DaVinci Resolve is installed.")
+            raise typer.Exit(1)
+        
+        if not is_running:
+            console.print("\n⚠️  [yellow]Warning:[/yellow] DaVinci Resolve is not running.")
+            console.print("   Start DaVinci Resolve before using the MCP server.")
+            
+    except Exception as e:
+        console.print(f"❌ [red]Error:[/red] {str(e)}")
+        raise typer.Exit(1)
+
+
+if __name__ == "__main__":
+    app()

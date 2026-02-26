@@ -1,0 +1,35 @@
+{
+    "name": "davinci-resolve-mcp",
+    "version": "0.1.0",
+    "type": "server",
+    "runtime": "python",
+    "entry_point": "src/davinci_mcp/server.py",
+    "dependencies": [
+        "fastmcp>=2.14.4,<3.0.0"
+    ],
+    "build": {
+        "include": [
+            "src/**/*",
+            "README.md",
+            "LICENSE"
+        ],
+        "exclude": [
+            "tests/",
+            ".git/",
+            "__pycache__/",
+            "*.pyc",
+            ".venv/",
+            "dist/",
+            "build/",
+            "target/",
+            "docs/",
+            "scripts/",
+            "*.dxt"
+        ]
+    },
+    "scripts": {
+        "build": "mcpb build",
+        "pack": "mcpb pack . dist/davinci-resolve-mcp.mcpb",
+        "test": "python -m pytest"
+    }
+}
