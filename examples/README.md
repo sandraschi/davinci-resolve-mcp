@@ -22,6 +22,27 @@ Advanced configuration with explicit paths and environment variables.
 
 ## Common Configurations
 
+### Cursor IDE Setup
+Add to Cursor settings (`mcp` key in settings.json):
+
+```json
+{
+  "mcp": {
+    "davinci-resolve-mcp": {
+      "command": "python",
+      "args": ["run_mcp.py"],
+      "cwd": "D:/Dev/repos/davinci-resolve-mcp",
+      "env": {
+        "PYTHONPATH": "D:/Dev/repos/davinci-resolve-mcp/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
+```
+
+See `CURSOR_FIX.md` in the project root for full Cursor setup and troubleshooting.
+
 ### Development Setup
 For developers working on the MCP server:
 
@@ -30,10 +51,10 @@ For developers working on the MCP server:
   "mcpServers": {
     "davinci-resolve-dev": {
       "command": "python",
-      "args": ["-m", "davinci_resolve_mcp.server"],
-      "cwd": "/path/to/project/src",
+      "args": ["run_mcp.py"],
+      "cwd": "/path/to/davinci-resolve-mcp",
       "env": {
-        "PYTHONPATH": "/path/to/project/src",
+        "PYTHONPATH": "/path/to/davinci-resolve-mcp/src",
         "LOG_LEVEL": "DEBUG"
       }
     }

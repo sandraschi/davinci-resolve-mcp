@@ -6,7 +6,8 @@ the DaVinci Resolve MCP system. These types provide the foundation for all other
 """
 from typing import Dict, Any, Optional, List
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
+from pydantic.functional_serializers import field_serializer
 from datetime import datetime
 
 class ErrorCode(str, Enum):
@@ -392,13 +393,15 @@ class ResolveObject(BaseModel):
         description="Timestamp when the object was last modified"
     )
     
-    class Config:
-        extra = "allow"
-        json_encoders = {
-            datetime: lambda v: v.isoformat() if v else None
-        }
-        allow_population_by_field_name = True
-        validate_assignment = True
+    model_config = ConfigDict(
+        extra="allow",
+        populate_by_name=True,
+        validate_assignment=True,
+    )
+
+    @field_serializer("created_at", "modified_at", when_used="json")
+    def serialize_datetime(self, value: Optional[datetime]) -> Optional[str]:
+        return value.isoformat() if value else None
 
 
 class TimeCode(BaseModel):

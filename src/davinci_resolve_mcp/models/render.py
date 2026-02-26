@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Any, Union
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from .common import ResolveObject, TimeCode, Resolution, FrameRate
 from .timeline import Timeline
 
@@ -136,12 +136,13 @@ class RenderPreset(ResolveObject):
         description="Custom settings"
     )
     
-    @validator('bitrate', always=True)
-    def validate_bitrate(cls, v, values):
+    @field_validator('bitrate', mode='before')
+    @classmethod
+    def validate_bitrate(cls, v, info):
         """Validate bitrate based on codec and format."""
-        if v is None and 'codec' in values:
+        if v is None and info.data and 'codec' in info.data:
             # Set default bitrates for common codecs
-            codec = values.get('codec')
+            codec = info.data.get('codec')
             if codec in [RenderCodec.H264, RenderCodec.H265]:
                 return 8000  # 8 Mbps default for H.264/265
             elif codec in [RenderCodec.PRO_RES_422, RenderCodec.PRO_RES_422_LT]:

@@ -82,22 +82,36 @@ davinci-resolve-mcp --version
 
 You should see the installed version number displayed.
 
-## Integration with Claude Desktop
+## Integration with MCP Clients
 
-To use DaVinci Resolve MCP with Claude Desktop:
+### Claude Desktop
 
 1. Open Claude Desktop.
 2. Go to Settings > MCP Configuration.
-3. Add a new MCP server with the following settings:
-   ```json
-   {
-     "name": "DaVinci Resolve",
-     "command": "davinci-resolve-mcp",
-     "args": ["start"],
-     "enabled": true
-   }
-   ```
-4. Save the configuration and restart Claude Desktop.
+3. Add: `"davinci-resolve": { "command": "davinci-resolve-mcp", "args": ["mcp"] }`
+4. Restart Claude Desktop.
+
+### Cursor IDE
+
+Add to Cursor settings (`mcp` key):
+
+```json
+{
+  "mcp": {
+    "davinci-resolve-mcp": {
+      "command": "python",
+      "args": ["run_mcp.py"],
+      "cwd": "D:/path/to/davinci-resolve-mcp",
+      "env": {
+        "PYTHONPATH": "D:/path/to/davinci-resolve-mcp/src",
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
+```
+
+See [CURSOR_FIX.md](CURSOR_FIX.md) for full setup and troubleshooting.
 
 ## Troubleshooting
 

@@ -5,27 +5,29 @@ Server does not start in Cursor IDE when using the MCP configuration.
 
 ## Solution
 
-The server has been updated to use structured logging and proper FastMCP 2.14.1 async startup. Use one of these configurations:
+The server has been updated with fixes for Cursor stdio compatibility. Use one of these configurations:
 
-### Option 1: Direct Script (Recommended for Cursor)
+### Option 1: Direct Script (Recommended)
 
-Add to your Cursor MCP settings (`.cursor/mcp.json` or Cursor settings):
+Add to Cursor settings (`File > Preferences > Cursor Settings` or `settings.json` under `mcp` key):
 
 ```json
 {
-  "mcpServers": {
+  "mcp": {
     "davinci-resolve-mcp": {
       "command": "python",
       "args": ["run_mcp.py"],
-      "cwd": "${workspaceFolder}/davinci-resolve-mcp",
+      "cwd": "D:/Dev/repos/davinci-resolve-mcp",
       "env": {
-        "PYTHONPATH": "${workspaceFolder}/davinci-resolve-mcp/src",
+        "PYTHONPATH": "D:/Dev/repos/davinci-resolve-mcp/src",
         "PYTHONUNBUFFERED": "1"
       }
     }
   }
 }
 ```
+
+Replace `D:/Dev/repos/davinci-resolve-mcp` with your actual path.
 
 ### Option 2: Module Format (Requires Package Installation)
 
@@ -33,12 +35,13 @@ If the package is installed (`pip install -e .`):
 
 ```json
 {
-  "mcpServers": {
+  "mcp": {
     "davinci-resolve-mcp": {
       "command": "python",
-      "args": ["-m", "davinci_resolve_mcp.main", "mcp"],
+      "args": ["-m", "davinci_resolve_mcp"],
+      "cwd": "D:/Dev/repos/davinci-resolve-mcp",
       "env": {
-        "PYTHONPATH": "${workspaceFolder}/davinci-resolve-mcp/src",
+        "PYTHONPATH": "D:/Dev/repos/davinci-resolve-mcp/src",
         "PYTHONUNBUFFERED": "1"
       }
     }
@@ -46,20 +49,38 @@ If the package is installed (`pip install -e .`):
 }
 ```
 
-## Changes Made
+### Option 3: CLI Command (Package Installed)
 
-1. **Structured Logging**: Replaced standard logging with `structlog` (JSON to stderr only)
-2. **Lazy Initialization**: Server can start even if DaVinci Resolve is not running
-3. **Async Startup**: Uses `run_stdio_async()` for FastMCP 2.14.1 compliance
-4. **Error Handling**: Initialization errors are logged but don't prevent server startup
+```json
+{
+  "mcp": {
+    "davinci-resolve-mcp": {
+      "command": "davinci-resolve-mcp",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+## Fixes Applied (2025-02-03)
+
+1. **`__main__.py`**: Added so `python -m davinci_resolve_mcp` works (Cursor may use this format)
+2. **RichHandler removal**: RichHandler conflicts with MCP stdio (stdout reserved for JSON-RPC). Replaced with plain StreamHandler(stderr) in MCP mode
+3. **Lazy initialization**: Server starts even if DaVinci Resolve is not running
+4. **Async startup**: Uses `run_stdio_async()` for FastMCP 2.14.1+ compliance
 
 ## Testing
-
-Test the server startup:
 
 ```powershell
 cd D:\Dev\repos\davinci-resolve-mcp
 python run_mcp.py
+```
+
+Or with module format:
+
+```powershell
+$env:PYTHONPATH = "D:\Dev\repos\davinci-resolve-mcp\src"
+python -m davinci_resolve_mcp
 ```
 
 The server should start and wait for MCP protocol messages on stdin. Press Ctrl+C to stop.
@@ -67,13 +88,13 @@ The server should start and wait for MCP protocol messages on stdin. Press Ctrl+
 ## Troubleshooting
 
 1. **Import Errors**: Ensure `PYTHONPATH` includes the `src` directory
-2. **DaVinci Resolve Not Running**: Server will start but tools will report errors when used
-3. **Module Not Found**: Use `run_mcp.py` script instead of module format
-4. **Structured Logs**: Check stderr for JSON-formatted log messages
+2. **DaVinci Resolve Not Running**: Server starts but tools report errors when used
+3. **Module Not Found**: Use `run_mcp.py` (Option 1) or `pip install -e .`
+4. **Cursor uses wrong command**: Cursor may run `python -m davinci_resolve_mcp`; `__main__.py` makes this work
+5. **Logs**: Check `%APPDATA%\Cursor\logs\` and `MCP user-davinci-resolve-mcp.log` for errors
 
 ## Notes
 
 - Server uses structured logging (JSON) to stderr only
 - MCP protocol uses stdout for communication
 - DaVinci Resolve connection is lazy - tools handle connection errors gracefully
-- Server lifespan manages startup/shutdown lifecycle

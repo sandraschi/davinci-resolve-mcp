@@ -98,6 +98,18 @@ This guide provides solutions to common issues you might encounter while using t
    pip install davinci-resolve-mcp
    ```
 
+### Cursor IDE: Server Does Not Start
+
+**Symptoms:**
+- davinci-resolve-mcp does not appear in Cursor MCP tools
+- "No module named davinci_resolve_mcp.__main__" in logs
+
+**Solutions:**
+1. See [CURSOR_FIX.md](CURSOR_FIX.md) for full setup
+2. Use `run_mcp.py` with explicit cwd and PYTHONPATH in Cursor settings
+3. Ensure `pip install -e .` if using `python -m davinci_resolve_mcp`
+4. Check `%APPDATA%\Cursor\logs\MCP user-davinci-resolve-mcp.log` for errors
+
 ## Project and Media Issues
 
 ### Project Won't Open

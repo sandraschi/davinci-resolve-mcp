@@ -10,7 +10,7 @@ readme = "README.md"
 authors = [
     {name = "Sandra Schieder", email = "sandra@sandraschi.dev"},
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.12"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -33,7 +33,7 @@ classifiers = [
 
 dependencies = [
     # Core dependencies
-    "fastmcp>=2.14.3,<2.15.0",
+    "fastmcp>=2.14.5,<2.15.0",
     "structlog>=23.0.0",
     "fastapi>=0.95.0",
     "uvicorn[standard]>=0.22.0",
@@ -62,7 +62,10 @@ Issues = "https://github.com/sandraschi/davinci-resolve-mcp/issues"
 Source = "https://github.com/sandraschi/davinci-resolve-mcp"
 
 [project.scripts]
-davinci-resolve-mcp = "davinci_resolve_mcp.main:main"`r`nbuild-mcpb = "build_mcpb:main"`r`nbuild-zed-extension = "scripts.build_zed:main"`r`ninstall-pre-commit = "scripts.install_precommit:main"
+davinci-resolve-mcp = "davinci_resolve_mcp.main:main"
+build-mcpb = "build_mcpb:main"
+build-zed-extension = "scripts.build_zed:main"
+install-pre-commit = "scripts.install_precommit:main"
 
 [project.optional-dependencies]
 dev = [
@@ -92,7 +95,6 @@ dev = [
     "mkdocs-redirects>=1.1.2",
     
     # Type stubs
-    "types-python-dotenv>=1.0.0",
     "types-psutil>=5.9.0",
     "types-python-dateutil>=2.8.0",
     "types-requests>=2.28.0",
@@ -274,3 +276,15 @@ log_level = "INFO"
 max_workers = 4
 request_timeout = 120.0
 resolve_timeout = 60.0
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "S"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"

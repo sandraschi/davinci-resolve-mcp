@@ -13,6 +13,7 @@ import typer
 from rich.console import Console
 from rich.logging import RichHandler
 
+from .transport import run_server, run_server_async
 from .server import start_server, app as mcp_app, initialize_server
 from .connection.environment import ResolveEnvironment
 
@@ -80,7 +81,7 @@ def start(
     # Start the server
     console.print(f"🚀 Starting DaVinci Resolve MCP server on {host}:{port}")
     try:
-        asyncio.run(start_server(host=host, port=port))
+        run_server(run_mcp, server_name="davinci-resolve-mcp")
     except KeyboardInterrupt:
         console.print("\n👋 Shutting down server...")
     except Exception as e:
@@ -93,9 +94,14 @@ def start(
 @app.command()
 def mcp():
     """Run the MCP server in stdio mode for Claude Desktop."""
+    # Remove RichHandler - it breaks in MCP stdio (stdout reserved for JSON-RPC)
+    root = logging.getLogger()
+    root.handlers.clear()
+    root.addHandler(logging.StreamHandler(sys.stderr))
+
     # Import structlog for MCP mode (structured logging to stderr)
     import structlog
-    
+
     # Configure structlog for MCP mode (JSON to stderr only)
     structlog.configure(
         processors=[
@@ -130,9 +136,9 @@ def mcp():
     try:
         # Run the FastMCP 2.14.1 app in stdio mode
         async def run_mcp():
-            await mcp_app.run_stdio_async()
+            run_server(mcp_app, server_name="davinci-resolve-mcp")
         
-        asyncio.run(run_mcp())
+        run_server(run_mcp, server_name="davinci-resolve-mcp")
     except KeyboardInterrupt:
         mcp_logger.info("MCP server stopped by user")
     except Exception as e:
@@ -167,5 +173,10 @@ def check():
         raise typer.Exit(1)
 
 
-if __name__ == "__main__":
+def main():
+    """Entry point for the davinci-resolve-mcp console script."""
     app()
+
+
+if __name__ == "__main__":
+    main()

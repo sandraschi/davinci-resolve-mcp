@@ -1,7 +1,7 @@
 # DaVinci Resolve MCP
 
 [![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/sandraschi/davinci-resolve-mcp)
-[![FastMCP](https://img.shields.io/badge/FastMCP-2.14.3-green.svg)](https://github.com/jlowin/fastmcp)
+[![FastMCP](https://img.shields.io/badge/FastMCP-2.14.5-green.svg)](https://github.com/jlowin/fastmcp)
 [![DaVinci Resolve](https://img.shields.io/badge/DaVinci%20Resolve-18+-red.svg)](https://www.blackmagicdesign.com/products/davinciresolve)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -29,14 +29,15 @@
 
 ## Overview
 
-DaVinci Resolve MCP is the first comprehensive Model Context Protocol (MCP) server for Blackmagic Design's DaVinci Resolve, enabling AI agents to control professional video editing workflows through natural language commands. Built with FastMCP 2.14.3, it provides conversational tool returns, sampling capabilities, and agentic workflow orchestration.
+DaVinci Resolve MCP is the first comprehensive Model Context Protocol (MCP) server for Blackmagic Design's DaVinci Resolve, enabling AI agents to control professional video editing workflows through natural language commands. Built with FastMCP 2.14.5, it provides conversational tool returns, fully asynchronous LLM-driven sampling capabilities, and agentic workflow orchestration.
 
 ### What Makes This Revolutionary
 
 - **Natural Language Control**: Transform complex video editing operations into simple conversations
-- **FastMCP 2.14.3 Compliance**: Latest MCP protocol with conversational tools and SEP-1577 sampling
+- **FastMCP 2.14.5 Compliance**: Latest MCP protocol with conversational tools and SEP-1577 true LLM sampling
 - **Portmanteau Design**: 7 consolidated tools preventing interface explosion while maintaining full functionality
-- **Agentic Orchestration**: LLM-driven autonomous workflow execution
+- **Agentic Orchestration**: True sampling-driven autonomous workflow execution using `Context.session.create_message`
+- **Contextual Help**: Multi-level contextual help tool (`beginner`, `intermediate`, `advanced`, `developer`) exposed natively
 - **Professional Grade**: Supports 4K, 8K, HDR workflows with frame-accurate editing
 
 ### Supported Workflows
@@ -59,7 +60,7 @@ DaVinci Resolve MCP is the first comprehensive Model Context Protocol (MCP) serv
 - **Context Awareness**: Understands project state and suggests optimal actions
 
 ### ⚡ High Performance
-- **FastMCP 2.14.3**: Latest protocol with sampling and conversational capabilities
+- **FastMCP 2.14.5**: Latest protocol with native sampling and conversational capabilities
 - **Efficient Architecture**: Portmanteau design reduces API complexity by 73%
 - **Optimized Operations**: Batch processing and parallel execution support
 
@@ -85,24 +86,24 @@ DaVinci Resolve MCP is the first comprehensive Model Context Protocol (MCP) serv
 
 ## Architecture
 
-### FastMCP 2.14.3 Integration
+### FastMCP 2.14.5 Integration
 
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│   Claude/Groq   │───▶│  FastMCP 2.14.3  │───▶│ DaVinci Resolve │
+│   Claude/Groq   │───▶│  FastMCP 2.14.5  │───▶│ DaVinci Resolve │
 │   AI Agent      │    │  Server           │    │   API           │
 └─────────────────┘    └──────────────────┘    └─────────────────┘
                               │
                               ▼
                        ┌──────────────────┐
                        │ Portmanteau      │
-                       │ Tools (7 total)  │
+                       │ Tools (8 total)  │
                        └──────────────────┘
 ```
 
 ### Tool Architecture
 
-The server implements a portmanteau design consolidating 26 individual tools into 7 logical groups:
+The server implements a portmanteau design consolidating 26 individual tools into 8 logical groups:
 
 1. **resolve_project**: Project lifecycle management
 2. **resolve_media**: Media pool operations and organization
@@ -111,6 +112,7 @@ The server implements a portmanteau design consolidating 26 individual tools int
 5. **resolve_audio**: Audio processing and mixing
 6. **resolve_render**: Rendering and export operations
 7. **resolve_system**: System utilities and information
+8. **resolve_help**: Built-in multi-level help system
 
 ### Conversational Returns
 
@@ -143,8 +145,28 @@ result = await agentic_resolve_workflow(
 
 ---
 
-## Installation
+## 🚀 Installation
 
+### Prerequisites
+- [uv](https://docs.astral.sh/uv/) installed (RECOMMENDED)
+- Python 3.12+
+
+### 📦 Quick Start
+Run immediately via `uvx`:
+```bash
+uvx davinci-resolve-mcp
+```
+
+### 🎯 Claude Desktop Integration
+Add to your `claude_desktop_config.json`:
+```json
+"mcpServers": {
+  "davinci-resolve-mcp": {
+    "command": "uv",
+    "args": ["--directory", "D:/Dev/repos/davinci-resolve-mcp", "run", "davinci-resolve-mcp"]
+  }
+}
+```
 ### System Requirements
 
 - **DaVinci Resolve**: Version 18.0 or later
@@ -187,13 +209,6 @@ python -m scripts.build_zed
 # Copy dist/davinci-resolve-mcp-zed-extension.zip to Zed extensions directory
 ```
 
-### Post-Installation Setup
-
-1. **Verify DaVinci Resolve**: Ensure DaVinci Resolve is installed and can be launched
-2. **Environment Variables**: Configure connection settings if needed
-3. **Test Connection**: Run `davinci-resolve-mcp check` to verify setup
-
----
 
 ## Configuration
 
@@ -263,21 +278,20 @@ davinci-resolve-mcp start --host 127.0.0.1 --port 8000
 
 ### MCP Integration
 
-Configure your MCP client (Claude Desktop, Zed, etc.):
+Configure your MCP client (Claude Desktop, Cursor, Zed, etc.):
 
 ```json
 {
   "mcpServers": {
     "davinci-resolve": {
-      "command": "python",
-      "args": ["-m", "davinci_resolve_mcp.server"],
-      "env": {
-        "PYTHONPATH": "/path/to/davinci-resolve-mcp/src"
-      }
+      "command": "davinci-resolve-mcp",
+      "args": ["mcp"]
     }
   }
 }
 ```
+
+For Cursor IDE or development from source, see [CURSOR_FIX.md](CURSOR_FIX.md).
 
 ### Example Conversations
 
@@ -477,12 +491,12 @@ git clone https://github.com/sandraschi/davinci-resolve-mcp
 cd davinci-resolve-mcp
 
 # Create virtual environment
-python -m venv venv
+uv venv
 venv\Scripts\activate  # Windows
 # source venv/bin/activate  # Unix
 
 # Install development dependencies
-pip install -e .[dev]
+uv pip install -e .[dev]
 
 # Install pre-commit hooks
 pip install pre-commit
@@ -562,7 +576,7 @@ We welcome contributions from the community. Please see our [Contributing Guide]
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Install development dependencies (`pip install -e .[dev]`)
+3. Install development dependencies (`uv pip install -e .[dev]`)
 4. Install pre-commit hooks (`pre-commit install`)
 5. Make your changes
 6. Run tests (`pytest tests/ -v`)
@@ -629,3 +643,22 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ---
 
 *DaVinci Resolve MCP is not affiliated with Blackmagic Design. DaVinci Resolve is a trademark of Blackmagic Design.*
+
+
+## 🌐 Webapp Dashboard
+
+This MCP server includes a free, premium SOTA web interface for real-time monitoring of your DaVinci Resolve connection and projects.
+
+### Features
+- **Dashboard**: Live connection status, Resolve version, Render Engine status, and current active project.
+- **Projects Library**: Browse available Resolve projects and view the currently loaded project in memory.
+- **Timeline Inspector**: View metadata and track details for your active timeline.
+- **Render Queue**: Monitor rendering jobs.
+
+### Running the Webapp
+By default, the web dashboard runs on port **10842**. The backend API runs on port **10843**.
+
+To start the webapp:
+1. Navigate to the `web_sota` directory.
+2. Run `start.bat` (Windows) or `./start.ps1` (PowerShell).
+3. Open `http://localhost:10842` in your browser.

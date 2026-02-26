@@ -2,8 +2,8 @@
   "mcpServers": {
     "davinci-resolve-advanced": {
       "command": "python",
-      "args": ["-m", "davinci_resolve_mcp.server"],
-      "cwd": "C:\\path\\to\\davinci-resolve-mcp\\src",
+      "args": ["run_mcp.py"],
+      "cwd": "C:\\path\\to\\davinci-resolve-mcp",
       "env": {
         "PYTHONPATH": "C:\\path\\to\\davinci-resolve-mcp\\src",
         "RESOLVE_SCRIPT_API_PATH": "C:\\Program Files\\Blackmagic Design\\DaVinci Resolve\\Support\\Developer\\Scripting",
