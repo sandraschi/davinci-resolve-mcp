@@ -13,7 +13,9 @@ import {
     Server,
     FolderOpen,
     Clock,
-    MonitorPlay
+    MonitorPlay,
+    Music2,
+    HelpCircle
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,11 +30,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         { href: '/', label: 'Overview', icon: LayoutDashboard },
         { href: '/projects', label: 'Projects', icon: FolderOpen },
         { href: '/timeline', label: 'Timeline', icon: Clock },
+        { href: '/fairlight', label: 'Fairlight', icon: Music2 },
         { href: '/render', label: 'Render Queue', icon: MonitorPlay },
         { href: '/tools', label: 'Video Tools', icon: Film },
         { href: '/actions', label: 'Production Actions', icon: Video },
         { href: '/chat', label: 'AI Editor', icon: Bot },
         { href: '/logs', label: 'System Logs', icon: Server },
+        { href: '/help', label: 'Help', icon: HelpCircle },
         { href: '/settings', label: 'Settings', icon: Settings },
     ];
 

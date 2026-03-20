@@ -7,13 +7,10 @@ Status: Production Ready - Actively maintained, SOTA features
 """
 
 import asyncio
-import collections
-import logging
 import os
 import sys
-import time
 from contextlib import asynccontextmanager
-from typing import Any, Dict, List, Optional
+from typing import Dict, Any, Optional
 
 import structlog
 from fastapi import FastAPI
@@ -46,48 +43,6 @@ structlog.configure(
 )
 
 logger = structlog.get_logger(__name__)
-
-# In-memory log ring buffer for System Logs page (max 500 entries)
-_LOG_BUFFER_SIZE = 500
-_log_buffer: collections.deque = collections.deque(maxlen=_LOG_BUFFER_SIZE)
-_log_seq = 0
-
-
-class _LogRingHandler(logging.Handler):
-    """Capture log records into _log_buffer for GET /api/v1/logs."""
-
-    _LEVEL_MAP = {
-        logging.DEBUG: "debug",
-        logging.INFO: "info",
-        logging.WARNING: "warn",
-        logging.ERROR: "error",
-        logging.CRITICAL: "error",
-    }
-
-    def emit(self, record: logging.LogRecord) -> None:
-        global _log_seq
-        try:
-            _log_seq += 1
-            _log_buffer.append({
-                "id": f"{int(record.created * 1000)}-{_log_seq}",
-                "ts": time.strftime("%H:%M:%S", time.localtime(record.created)),
-                "level": self._LEVEL_MAP.get(record.levelno, "info"),
-                "name": record.name,
-                "message": record.getMessage(),
-                "exc": record.exc_text if record.exc_text else None,
-            })
-        except Exception:
-            pass
-
-
-_ring_handler = _LogRingHandler()
-_ring_handler.setFormatter(logging.Formatter("%(message)s"))
-logging.getLogger().addHandler(_ring_handler)
-
-
-def get_log_buffer() -> List[Dict[str, Any]]:
-    """Return recent log entries for the API (newest last)."""
-    return list(_log_buffer)
 
 
 # Global application state
@@ -131,7 +86,6 @@ CORE CAPABILITIES:
 - Color Grading: Apply LUTs, adjust primary/secondary corrections, create color nodes
 - Rendering: Queue render jobs, batch render, monitor progress, export timelines
 - Audio Processing: Adjust levels, apply effects, sync audio, export audio tracks
-- Fairlight (DAW): resolve_fairlight(operation=...) for open_page, get_tracks, set_mute, set_solo, set_volume
 - System Utilities: Get system info, health checks, help system
 
 CONVERSATIONAL FEATURES:
@@ -145,7 +99,8 @@ RESPONSE FORMAT:
 - Success responses include relevant data fields and natural language summaries
 
 PORTMANTEAU DESIGN:
-Tools are consolidated into logical groups (8 portmanteau tools). Each handles multiple related operations via an 'operation' (or 'action') parameter. resolve_fairlight covers Fairlight page and timeline audio (mute, solo, volume).
+Tools are consolidated into logical groups to prevent tool explosion while maintaining full functionality.
+Each portmanteau tool handles multiple related operations through an 'operation' parameter.
 
 USAGE PATTERNS:
 1. Project Setup: Use resolve_project(operation="create") to create projects, resolve_project(operation="open") to open existing ones
@@ -154,7 +109,6 @@ USAGE PATTERNS:
 4. Color Grading: Use resolve_color(operation="apply_lut") for LUTs, resolve_color(operation="adjust_primary") for corrections
 5. Rendering: Use resolve_render(operation="timeline") to queue renders, resolve_render(operation="job_status") to check progress
 6. Audio: Use resolve_audio(operation="adjust_levels") for mixing, resolve_audio(operation="add_effect") for processing
-7. Fairlight: Use resolve_fairlight(operation="open_page") to switch to Fairlight page; resolve_fairlight(operation="get_tracks") for timeline audio; set_mute, set_solo, set_volume for track control
 
 ERROR HANDLING:
 - Connection errors provide DaVinci Resolve startup instructions
@@ -339,7 +293,52 @@ def register_tools():
             from .tools.portmanteau import setup_all_portmanteau_tools
 
             setup_all_portmanteau_tools(app)
-            logger.info("Registered portmanteau tools", count=8)
+            logger.info("Registered portmanteau tools", count=7)
+        else:
+            # Legacy: register individual tools (26 tools)
+            from .tools.help_tool import get_help
+
+            @app.tool()
+            async def help(topic: Optional[str] = None, level: Optional[str] = None) -> str:
+                """Get help and documentation for DaVinci Resolve MCP tools."""
+                return get_help(topic, level)
+
+            @app.tool()
+            async def get_status() -> Dict[str, Any]:
+                """Get the current status of DaVinci Resolve and MCP server."""
+                if not app.state.connection_manager:
+                    return {"status": "error", "message": "Connection manager not initialized"}
+                return app.state.connection_manager.get_status()
+
+            @app.tool()
+            async def health_check() -> Dict[str, Any]:
+                """Perform a comprehensive health check of the system."""
+                if not app.state.connection_manager:
+                    return {"status": "error", "message": "Connection manager not initialized"}
+                return await app.state.connection_manager.health_check()
+
+            from .tools.project_tools import register_tools as register_project_tools
+            from .tools.media_tools import register_tools as register_media_tools
+            from .tools.timeline_tools import register_tools as register_timeline_tools
+            from .tools.render_tools import register_tools as register_render_tools
+            from .tools.audio_tools import register_tools as register_audio_tools
+            from .tools.color_tools import register_tools as register_color_tools
+
+            # Call each registration function (they return app but we ignore the return value)
+            _ = register_project_tools(app)
+            _ = register_media_tools(app)
+            _ = register_timeline_tools(app)
+            _ = register_render_tools(app)
+            _ = register_audio_tools(app)
+            _ = register_color_tools(app)
+            logger.info("Registered individual tools", count=26)
+
+        if tool_mode == "portmanteau":
+            # Use consolidated portmanteau tools (7 tools)
+            from .tools.portmanteau import setup_all_portmanteau_tools
+
+            setup_all_portmanteau_tools(app)
+            logger.info("Registered portmanteau tools", count=7)
         else:
             # Legacy: register individual tools (26 tools)
             from .tools.help_tool import get_help
@@ -392,38 +391,59 @@ def register_tools():
         raise
 
 
-def start_server(host: str | None = None, port: int | None = None, debug: bool | None = None) -> None:
+async def start_server(host: str = None, port: int = None, debug: bool = None):
     """
-    Start the HTTP API server (api_app) for the SOTA webapp.
+    Start the FastMCP server.
 
     Args:
         host: Host to bind the server to (default: from config or "0.0.0.0")
         port: Port to run the server on (default: from config or 8000)
         debug: Enable debug mode with verbose logging (default: from config or False)
     """
-    import uvicorn
+    try:
+        # Get configuration from environment or use defaults
+        host = host or os.getenv("HOST", "0.0.0.0")
+        port = port or int(os.getenv("PORT", "8000"))
+        debug = debug if debug is not None else os.getenv("DEBUG", "false").lower() == "true"
 
-    host = host or os.getenv("HOST", "0.0.0.0")
-    port = port or int(os.getenv("PORT", "8000"))
-    debug = debug if debug is not None else os.getenv("DEBUG", "false").lower() == "true"
+        logger.info(f"Starting DaVinci Resolve MCP server on {host}:{port} (debug: {debug})")
 
-    logger.info("Starting DaVinci Resolve MCP API on %s:%s (debug: %s)", host, port, debug)
+        # Configure uvicorn
+        uvicorn_config = uvicorn.Config(
+            api_app,
+            host=host,
+            port=port,
+            log_level="debug" if debug else "info",
+            reload=debug,
+            workers=1,  # We manage our own concurrency
+        )
 
-    uvicorn.run(
-        api_app,
-        host=host,
-        port=port,
-        log_level="debug" if debug else "info",
-        reload=debug,
-    )
+        # Create and run the server
+        server = uvicorn.Server(uvicorn_config)
+
+        # Register signal handlers
+        loop = asyncio.get_event_loop()
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            loop.add_signal_handler(sig, lambda: asyncio.create_task(server.shutdown()))
+
+        # Run the server
+        loop.run_until_complete(server.serve())
+
+    except Exception as e:
+        logger.error(f"Failed to start server: {str(e)}")
+        logger.exception("Server error:")
+        raise
 
 
 if __name__ == "__main__":
     import argparse
+    import uvicorn
+    import asyncio
+    import signal
     import os
     import sys
 
-    parser = argparse.ArgumentParser(description="DaVinci Resolve MCP API server for webapp")
+    parser = argparse.ArgumentParser(description="DaVinci Resolve MCP Server")
     parser.add_argument("--host", type=str, help="Host to bind to (overrides HOST env var)")
     parser.add_argument("--port", type=int, help="Port to listen on (overrides PORT env var)")
     parser.add_argument(
@@ -433,6 +453,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # Set environment variables from command line args
     if args.host:
         os.environ["HOST"] = args.host
     if args.port:
@@ -443,14 +464,9 @@ if __name__ == "__main__":
         os.environ["CONFIG_PATH"] = args.config
 
     try:
-        initialize_server()
-    except Exception as e:
-        logger.warning("Server init warning (Resolve may be unavailable): %s", e)
-
-    try:
         start_server()
     except KeyboardInterrupt:
         logger.info("Server stopped by user")
     except Exception as e:
-        logger.error("Server error: %s", str(e))
+        logger.error(f"Server error: {str(e)}")
         sys.exit(1)

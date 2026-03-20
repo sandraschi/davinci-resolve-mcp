@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "davinci-resolve-mcp-dupe": {
+      "command": "uv",
+      "args": ["run", "davinci-resolve-mcp"],
+      "cwd": "D:\\Dev\\repos\\davinci-resolve-mcp",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}

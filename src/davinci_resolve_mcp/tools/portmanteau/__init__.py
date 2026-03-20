@@ -10,6 +10,7 @@ from .timeline import setup_timeline_portmanteau
 from .color import setup_color_portmanteau
 from .render import setup_render_portmanteau
 from .audio import setup_audio_portmanteau
+from .fairlight import setup_fairlight_portmanteau
 from .system import setup_system_portmanteau
 
 
@@ -21,6 +22,7 @@ def setup_all_portmanteau_tools(app):
     setup_color_portmanteau(app)
     setup_render_portmanteau(app)
     setup_audio_portmanteau(app)
+    setup_fairlight_portmanteau(app)
     setup_system_portmanteau(app)
 
 
@@ -32,6 +34,7 @@ __all__ = [
     "setup_color_portmanteau",
     "setup_render_portmanteau",
     "setup_audio_portmanteau",
+    "setup_fairlight_portmanteau",
     "setup_system_portmanteau",
 ]
 

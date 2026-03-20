@@ -173,34 +173,11 @@ def setup_system_portmanteau(app):
                 "help_text": help_text
             }
 
-        elif action == "host_status":
-            from ...connection.host_app_probe import probe_host_app
-            from ...connection.resolve_probe_config import RESOLVE_PROBE_CONFIG
-            status = probe_host_app(**RESOLVE_PROBE_CONFIG)
-            return {
-                "success": True,
-                "operation": "host_status",
-                "message": status.message,
-                **status.to_dict(),
-            }
-
-        elif action == "host_launch":
-            from ...connection.host_app_probe import probe_host_app, launch_app
-            from ...connection.resolve_probe_config import RESOLVE_PROBE_CONFIG
-            status = probe_host_app(**RESOLVE_PROBE_CONFIG)
-            ok, msg = launch_app(status)
-            return {
-                "success": ok,
-                "operation": "host_launch",
-                "message": msg,
-                "previous_state": status.state.value,
-            }
-
         else:
             return {
                 "success": False,
                 "error": f"Unknown action: {action}",
-                "message": f"Unsupported action '{action}'. Supported: info, status, health, help, host_status, host_launch"
+                "message": f"Unsupported action '{action}'. Supported actions: info, status, health, help"
             }
 
     logger.info("Registered resolve_system portmanteau tool with conversational returns")

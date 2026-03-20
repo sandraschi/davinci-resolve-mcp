@@ -1,0 +1,38 @@
+# davinci-resolve-mcp
+> > **Purpose**: Comprehensive GitHub configuration guide to avoid hours of trial-and-error setup. > > **Copy this to new MCP repos** to get everything right the first time! --- 1. [Quick Setup Checklis...
+
+This project includes automated llms.txt generation for AI accessibility.
+
+## Docs
+- [Readme](docs\github\README.md): > **Purpose**: Comprehensive GitHub configuration guide to avoid hours of trial-and-error setup.
+- [Readme](docs\mcp-technical\README.md): **Technical guides for MCP server development, deployment, and troubleshooting**
+- [Readme](README.md): [![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/sandraschi/davi...
+- [Readme](docs\development\README.md): **Guides, best practices, and lessons learned for developing notepadpp-mcp**
+- [Readme](docs\notepadpp\README.md): **Everything you need to know about Notepad++ - from history to advanced usage**
+- [Readme](docs\glama\README.md): This directory contains documentation related to achieving GLAMA AI Gold standard status for the Adv...
+- [Readme](docs\mcpb-packaging\README.md): **Complete guide to packaging and distributing MCP servers with MCPB**
+- [Readme](docs\glama-platform\README.md): **Complete guide to achieving and maintaining Gold Status on Glama.ai**
+- [Readme](docs\repository-protection\README.md): **Complete guide to keeping your notepadpp-mcp repository safe**
+- [Installation](INSTALLATION.md): This guide provides detailed instructions for installing and setting up the DaVinci Resolve MCP pack...
+
+## Api
+- [Routes](src\davinci_resolve_mcp\api\routes.py): Api definitions and implementations
+- [  Init  ](src\davinci_resolve_mcp\api\__init__.py): Api definitions and implementations
+- [Routes](src\davinci_resolve_mcp\api\routes.py): Routes definitions and implementations
+- [Color](src\davinci_resolve_mcp\models\color.py): Models definitions and implementations
+- [  Init  ](src\davinci_resolve_mcp\models\__init__.py): Models definitions and implementations
+- [Project](src\davinci_resolve_mcp\models\project.py): Models definitions and implementations
+
+## Examples
+- [Examples](examples/): Example code and implementations
+- [Usage Examples](USAGE_EXAMPLES.md): Example usage and code samples
+
+## Configuration
+- [Pyproject](pyproject.toml): Python project configuration and dependencies
+- [Package](web_sota\package.json): Node.js project configuration and dependencies
+- [Config](.git\config): Application configuration files
+
+## Optional
+- [Changelog](CHANGELOG.md): Project changelog information
+- [Contributing](CONTRIBUTING.md): Project contributing information
+- [License](LICENSE): Project license information

@@ -9,7 +9,12 @@ The server has been updated with fixes for Cursor stdio compatibility. Use one o
 
 ### Option 1: Direct Script (Recommended)
 
-Add to Cursor settings (`File > Preferences > Cursor Settings` or `settings.json` under `mcp` key):
+**`run_mcp.py` exists in the repo root.** Use either:
+
+- **Project-level:** Copy `.cursor/mcp.json.example` to `.cursor/mcp.json` and set `cwd` to your repo path, or add the block below to your project's `.cursor/mcp.json`.
+- **Global:** Add to `%APPDATA%\Cursor\mcp.json` (Windows) or `~/.cursor/mcp.json` (macOS/Linux). Use the `mcpServers` key.
+
+Add to Cursor MCP config (`.cursor/mcp.json` or global mcp.json):
 
 ```json
 {
