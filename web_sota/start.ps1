@@ -30,8 +30,20 @@ Write-Host "Checking for port squatters on $FrontendPort and $BackendPort..."
 Stop-PortProcess -Port $BackendPort
 Stop-PortProcess -Port $FrontendPort
 
+# Prefer .venv\python.exe -m ... so we do not run `uv sync` (which replaces Scripts\davinci-resolve-mcp.exe).
+# That step fails with Windows error 32 if Cursor/MCP or another instance still loads that .exe.
+$venvPython = Join-Path $RepoRoot ".venv\Scripts\python.exe"
 Write-Host "Starting Python backend on port $BackendPort ..."
-$backendProc = Start-Process -FilePath "uv" -ArgumentList "run", "python", "-m", "davinci_resolve_mcp.run_api", "--port", "$BackendPort", "--host", "127.0.0.1" -WorkingDirectory $RepoRoot -PassThru -NoNewWindow
+if (Test-Path $venvPython) {
+    $backendProc = Start-Process -FilePath $venvPython `
+        -ArgumentList "-m", "davinci_resolve_mcp.run_api", "--port", "$BackendPort", "--host", "127.0.0.1" `
+        -WorkingDirectory $RepoRoot -PassThru -NoNewWindow
+} else {
+    $env:UV_NO_SYNC = "1"
+    $backendProc = Start-Process -FilePath "uv" `
+        -ArgumentList "run", "python", "-m", "davinci_resolve_mcp.run_api", "--port", "$BackendPort", "--host", "127.0.0.1" `
+        -WorkingDirectory $RepoRoot -PassThru -NoNewWindow
+}
 $env:PORT = "$BackendPort"
 $env:HOST = "127.0.0.1"
 

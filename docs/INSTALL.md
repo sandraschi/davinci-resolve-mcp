@@ -71,6 +71,8 @@ API **10843**, Vite **10842** (fleet range 10700–10800; see [WEBAPP_PORTS.md](
 3. In `web_sota/`, run `start.ps1` or `start.bat` so the Vite dev server proxies `/api` to **10843**.
 4. Open `http://127.0.0.1:10842` (or the host shown in the terminal).
 
+If `uv` fails with **error 32** on `davinci-resolve-mcp.exe`, another process (often an MCP client using `uv run` for this repo) still has that launcher open. Close that client or stop the extra process; `web_sota\start.ps1` uses `.venv\Scripts\python.exe` on purpose to avoid reinstalling that script.
+
 ## System requirements (typical)
 
 | Resource | Notes |
