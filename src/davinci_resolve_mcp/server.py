@@ -151,26 +151,8 @@ RESOLUTION / COLOR:
 # Initialize application state
 app.state = AppState()
 
-# Initialize FastAPI app for the web dashboard (ports 10842/10843 per WEBAPP_PORTS.md)
-from .api.routes import router as api_router
-
-api_app = FastAPI(
-    title="DaVinci Resolve MCP API",
-    description="HTTP API for the DaVinci Resolve MCP web dashboard (FastMCP 3.1+ stack).",
-    version="1.0.0",
-)
-
-# Add CORS middleware for the frontend
-api_app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Include the API routes
-api_app.include_router(api_router, prefix="/api/v1")
+# HTTP routes: must load after FastMCP `app` exists (routes import `app`). `api_app` is built after `initialize_server`.
+from .api.routes import router as api_router  # noqa: E402
 
 # Note: FastMCP handles exceptions differently than FastAPI
 # Error handling is done at the tool level using the handle_errors decorator
@@ -222,6 +204,43 @@ def initialize_server():
     except Exception as e:
         logger.error("Failed to initialize server", error=str(e))
         raise
+
+
+@asynccontextmanager
+async def api_lifespan(_http: FastAPI):
+    """Initialize shared MCP state in the ASGI process.
+
+    Uvicorn ``--reload`` (DEBUG) and some workers import ``api_app`` without re-running
+    ``run_api``'s ``__main__`` block, so ``initialize_server()`` never ran — connection
+    manager stayed None and the dashboard always showed disconnected.
+    """
+    if app.state.connection_manager is None:
+        try:
+            initialize_server()
+        except Exception as e:
+            logger.warning(
+                "api_lifespan: initialize_server skipped or failed (Resolve may be unavailable)",
+                error=str(e),
+            )
+    yield
+
+
+api_app = FastAPI(
+    title="DaVinci Resolve MCP API",
+    description="HTTP API for the DaVinci Resolve MCP web dashboard (FastMCP 3.1+ stack).",
+    version="1.0.0",
+    lifespan=api_lifespan,
+)
+
+api_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+api_app.include_router(api_router, prefix="/api/v1")
 
 
 # Note: Server initialization is handled in main.py and the MCP command

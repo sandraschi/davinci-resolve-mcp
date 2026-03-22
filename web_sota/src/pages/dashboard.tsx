@@ -2,12 +2,19 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, GitMerge, Box, Cpu, Loader2 } from "lucide-react";
 
+interface ManagerStatus {
+    status?: string;
+    resolve_running?: boolean;
+    api_available?: boolean;
+}
+
 interface ResolveInfo {
     status: string;
     version?: string;
     project_name?: string | null;
     is_rendering?: boolean;
     message?: string;
+    manager_status?: ManagerStatus;
 }
 
 export function Dashboard() {
@@ -32,6 +39,14 @@ export function Dashboard() {
     }, []);
 
     const isConnected = info?.status === 'connected';
+    const disconnectHint = (() => {
+        if (isConnected || !info) return null;
+        if (info.message) return info.message;
+        const m = info.manager_status;
+        if (m?.resolve_running === false) return 'DaVinci Resolve is not running (or not detected).';
+        if (m?.api_available === false) return 'Scripting API not available — enable external scripting in Resolve preferences.';
+        return null;
+    })();
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -130,6 +145,11 @@ export function Dashboard() {
                                 <p className="text-xs text-slate-400">
                                     Scripting bridge {isConnected ? 'active' : 'inactive'}
                                 </p>
+                                {!isConnected && disconnectHint ? (
+                                    <p className="text-xs text-amber-200/90 mt-2 leading-snug" title={disconnectHint}>
+                                        {disconnectHint}
+                                    </p>
+                                ) : null}
                             </>
                         )}
                     </CardContent>
