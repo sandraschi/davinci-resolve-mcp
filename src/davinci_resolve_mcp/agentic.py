@@ -6,7 +6,7 @@ Implements SEP-1577 for conversational orchestration and intelligent tool sequen
 """
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from fastmcp import Context
 
@@ -18,11 +18,11 @@ def register_agentic_tools():
 
     async def agentic_resolve_workflow(
         workflow_prompt: str,
-        available_tools: List[str],
+        available_tools: list[str],
         ctx: Context,
         max_iterations: int = 5,
         context_level: str = "comprehensive",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute agentic DaVinci Resolve workflows using FastMCP 2.14.5 sampling with tools.
 
         This tool demonstrates SEP-1577 by enabling the server's LLM to autonomously
@@ -125,13 +125,13 @@ def register_agentic_tools():
 
     @app.tool()
     async def intelligent_video_processing(
-        projects: List[Dict[str, Any]],
+        projects: list[dict[str, Any]],
         processing_goal: str,
-        available_operations: List[str],
+        available_operations: list[str],
         ctx: Context,
         processing_strategy: str = "adaptive",
         quality_priority: str = "balanced",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Intelligent batch video project processing using FastMCP 2.14.5 sampling with tools.
 
         This tool uses the client's LLM to intelligently decide how to process batches
@@ -244,7 +244,7 @@ def register_agentic_tools():
         ctx: Context,
         context_level: str = "comprehensive",
         expertise_level: str = "intermediate",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Conversational DaVinci Resolve assistant with natural language responses.
 
         Provides human-like interaction for DaVinci Resolve video editing with detailed
@@ -362,7 +362,7 @@ def _analyze_workflow_type(workflow_prompt: str) -> str:
         return "general_editing"
 
 
-def _recommend_tools_for_workflow(workflow_type: str, available_tools: List[str]) -> List[str]:
+def _recommend_tools_for_workflow(workflow_type: str, available_tools: list[str]) -> list[str]:
     """Recommend optimal tools for workflow type."""
     tool_mapping = {
         "rendering": ["resolve_render", "resolve_system"],
@@ -378,7 +378,7 @@ def _recommend_tools_for_workflow(workflow_type: str, available_tools: List[str]
     return [tool for tool in recommended if tool in available_tools]
 
 
-def _analyze_projects_for_processing(projects: List[Dict[str, Any]]) -> Dict[str, Any]:
+def _analyze_projects_for_processing(projects: list[dict[str, Any]]) -> dict[str, Any]:
     """Analyze project characteristics for processing optimization."""
     if not projects:
         return {"error": "No projects provided"}
@@ -396,7 +396,7 @@ def _analyze_projects_for_processing(projects: List[Dict[str, Any]]) -> Dict[str
     }
 
 
-def _determine_optimal_strategy(analysis: Dict[str, Any], requested_strategy: str) -> str:
+def _determine_optimal_strategy(analysis: dict[str, Any], requested_strategy: str) -> str:
     """Determine optimal processing strategy based on analysis."""
     if requested_strategy != "adaptive":
         return requested_strategy
@@ -410,7 +410,7 @@ def _determine_optimal_strategy(analysis: Dict[str, Any], requested_strategy: st
         return "parallel"  # Faster for simple operations
 
 
-def _analyze_user_query(user_query: str) -> Dict[str, Any]:
+def _analyze_user_query(user_query: str) -> dict[str, Any]:
     """Analyze user query to understand intent (simulating LLM analysis)."""
     query_lower = user_query.lower()
 
@@ -437,7 +437,7 @@ def _analyze_user_query(user_query: str) -> Dict[str, Any]:
     }
 
 
-def _suggest_workflow_for_query(analysis: Dict[str, Any], expertise_level: str) -> Dict[str, Any]:
+def _suggest_workflow_for_query(analysis: dict[str, Any], expertise_level: str) -> dict[str, Any]:
     """Suggest optimal workflow based on query analysis."""
     intent = analysis.get("intent", "general_assistance")
 

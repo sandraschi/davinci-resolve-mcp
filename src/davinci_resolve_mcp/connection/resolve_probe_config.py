@@ -22,7 +22,9 @@ RESOLVE_PROBE_CONFIG = dict(
         Path("C:/Program Files/DaVinci Resolve/Resolve.exe"),
         # macOS
         Path("/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/MacOS/Resolve"),
-        Path("/Applications/DaVinci Resolve Studio/DaVinci Resolve Studio.app/Contents/MacOS/Resolve"),
+        Path(
+            "/Applications/DaVinci Resolve Studio/DaVinci Resolve Studio.app/Contents/MacOS/Resolve"
+        ),
         # Linux
         Path("/opt/resolve/bin/resolve"),
         Path("/usr/local/resolve/bin/resolve"),
@@ -30,7 +32,5 @@ RESOLVE_PROBE_CONFIG = dict(
     # Resolve scripting API listens on this port when running with scripting enabled
     check_port=9990,
     download_url="https://www.blackmagicdesign.com/products/davinciresolve",
-    launch_cmd=[
-        str(Path(f"{_prog_files}/Blackmagic Design/DaVinci Resolve/Resolve.exe"))
-    ],
+    launch_cmd=[str(Path(f"{_prog_files}/Blackmagic Design/DaVinci Resolve/Resolve.exe"))],
 )

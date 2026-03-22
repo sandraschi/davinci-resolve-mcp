@@ -33,7 +33,7 @@ classifiers = [
 
 dependencies = [
     # Core dependencies
-    "fastmcp>=2.14.5,<2.15.0",
+    "fastmcp>=3.1.0,<4",
     "structlog>=23.0.0",
     "fastapi>=0.95.0",
     "uvicorn[standard]>=0.22.0",

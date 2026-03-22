@@ -12,10 +12,10 @@ import os
 import platform
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TypeVar, Union
+from typing import Any, TypeVar
 
 import yaml
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -64,13 +64,13 @@ class ResolveEnvironmentConfig(BaseModel):
     the DaVinci Resolve Python API.
     """
 
-    script_api_path: Optional[Path] = Field(
+    script_api_path: Path | None = Field(
         default=None, description="Path to DaVinci Resolve's Python modules"
     )
-    script_lib_path: Optional[Path] = Field(
+    script_lib_path: Path | None = Field(
         default=None, description="Path to additional script libraries"
     )
-    python_path_additions: List[Path] = Field(
+    python_path_additions: list[Path] = Field(
         default_factory=list, description="Additional paths to add to PYTHONPATH"
     )
 
@@ -78,7 +78,7 @@ class ResolveEnvironmentConfig(BaseModel):
 
     @field_validator("script_api_path", "script_lib_path", mode="before")
     @classmethod
-    def validate_paths(cls, v: Any) -> Optional[Path]:
+    def validate_paths(cls, v: Any) -> Path | None:
         """Convert string paths to Path objects."""
         if v is None or isinstance(v, Path):
             return v
@@ -146,7 +146,7 @@ class LoggingConfig(BaseModel):
 
     level: str = Field(default="INFO")
     format: str = Field(default="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    file_path: Optional[str] = None
+    file_path: str | None = None
     max_file_size_mb: int = Field(default=10, ge=1, le=100)
     backup_count: int = Field(default=5, ge=1, le=20)
 
@@ -182,8 +182,8 @@ class DaVinciResolveConfig(BaseModel):
     request_timeout: float = Field(default=120.0, ge=30.0, le=600.0)
 
     # Resolve installation paths (will be auto-detected)
-    resolve_executable: Optional[str] = None
-    resolve_installation_path: Optional[str] = None
+    resolve_executable: str | None = None
+    resolve_installation_path: str | None = None
 
     model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 
@@ -239,7 +239,7 @@ class DaVinciResolveConfig(BaseModel):
         except Exception:
             return False
 
-    def _get_default_paths(self, system: str) -> tuple[Optional[str], Optional[str]]:
+    def _get_default_paths(self, system: str) -> tuple[str | None, str | None]:
         """Get default installation paths for different operating systems."""
 
         if system == "windows":
@@ -260,7 +260,7 @@ class DaVinciResolveConfig(BaseModel):
         return api_path, lib_path
 
     @classmethod
-    def load_from_file(cls, config_path: Union[str, Path]) -> "DaVinciResolveConfig":
+    def load_from_file(cls, config_path: str | Path) -> DaVinciResolveConfig:
         """
         Load configuration from YAML file.
 
@@ -279,13 +279,13 @@ class DaVinciResolveConfig(BaseModel):
         if not config_path.exists():
             raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
-        with open(config_path, "r", encoding="utf-8") as f:
+        with open(config_path, encoding="utf-8") as f:
             config_data = yaml.safe_load(f)
 
         return cls(**config_data)
 
     @classmethod
-    def load_default(cls, config_name: str = "config.yaml") -> "DaVinciResolveConfig":
+    def load_default(cls, config_name: str = "config.yaml") -> DaVinciResolveConfig:
         """
         Load configuration from default locations.
 
@@ -316,7 +316,7 @@ class DaVinciResolveConfig(BaseModel):
         # Return default configuration if no file found
         return cls()
 
-    def save_to_file(self, config_path: Union[str, Path]) -> None:
+    def save_to_file(self, config_path: str | Path) -> None:
         """
         Save configuration to YAML file.
 
@@ -344,7 +344,7 @@ class DaVinciResolveConfig(BaseModel):
         with open(config_path, "w", encoding="utf-8") as f:
             yaml.dump(config_dict, f, default_flow_style=False, indent=2)
 
-    def validate_configuration(self) -> Dict[str, bool]:
+    def validate_configuration(self) -> dict[str, bool]:
         """
         Validate configuration settings.
 

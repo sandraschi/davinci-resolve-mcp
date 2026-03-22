@@ -5,6 +5,7 @@ This module provides the plugin setup function for FastMCP integration.
 """
 
 import logging
+
 from .server import app
 
 logger = logging.getLogger(__name__)

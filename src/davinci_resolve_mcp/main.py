@@ -7,15 +7,15 @@ This module provides the command-line interface for the DaVinci Resolve MCP serv
 
 import logging
 import sys
-from typing import Optional
 
 import typer
 from rich.console import Console
 from rich.logging import RichHandler
 
-from .transport import run_server
-from .server import app as mcp_app, initialize_server, api_app, start_server
 from .connection.environment import ResolveEnvironment
+from .server import app as mcp_app
+from .server import initialize_server, start_server
+from .transport import run_server
 
 # Configure logging
 logging.basicConfig(
@@ -49,12 +49,10 @@ def version_callback(value: bool):
 
 @app.command()
 def start(
-    host: str = typer.Option(
-        "127.0.0.1", "--host", "-h", help="Host to bind the server to"
-    ),
+    host: str = typer.Option("127.0.0.1", "--host", "-h", help="Host to bind the server to"),
     port: int = typer.Option(8000, "--port", "-p", help="Port to run the server on"),
     debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug mode"),
-    version: Optional[bool] = typer.Option(
+    version: bool | None = typer.Option(
         None,
         "--version",
         "-v",
@@ -76,9 +74,7 @@ def start(
         if install_path:
             console.print(f"✅ Found DaVinci Resolve at {install_path}")
         else:
-            console.print(
-                "⚠️  DaVinci Resolve not detected - some features may not work"
-            )
+            console.print("⚠️  DaVinci Resolve not detected - some features may not work")
     except Exception as e:
         console.print(f"❌ Error: {str(e)}", style="red")
         if debug:
@@ -161,14 +157,13 @@ def mcp():
 
 @app.command()
 def web(
-    host: str = typer.Option(
-        "127.0.0.1", "--host", "-h", help="Host to bind the API server to"
-    ),
+    host: str = typer.Option("127.0.0.1", "--host", "-h", help="Host to bind the API server to"),
     port: int = typer.Option(10843, "--port", "-p", help="Port for the webapp API (default 10843)"),
     debug: bool = typer.Option(False, "--debug", "-d", help="Enable debug mode"),
 ):
     """Start the HTTP API server for the SOTA webapp (Vite proxy targets this port)."""
     import os
+
     os.environ["HOST"] = host
     os.environ["PORT"] = str(port)
     if debug:
@@ -208,9 +203,7 @@ def check():
             raise typer.Exit(1)
 
         if not is_running:
-            console.print(
-                "\n⚠️  [yellow]Warning:[/yellow] DaVinci Resolve is not running."
-            )
+            console.print("\n⚠️  [yellow]Warning:[/yellow] DaVinci Resolve is not running.")
             console.print("   Start DaVinci Resolve before using the MCP server.")
 
     except Exception as e:

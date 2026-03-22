@@ -13,7 +13,6 @@ import subprocess
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import psutil
 
@@ -45,11 +44,11 @@ class HostAppStatus:
     state: AppState
     app_name: str
     message: str = ""
-    version: Optional[str] = None
-    install_path: Optional[Path] = None
-    pid: Optional[int] = None
+    version: str | None = None
+    install_path: Path | None = None
+    pid: int | None = None
     download_url: str = ""
-    launch_cmd: Optional[list] = field(default=None)
+    launch_cmd: list | None = field(default=None)
 
     @property
     def can_launch(self) -> bool:
@@ -83,9 +82,9 @@ def probe_host_app(
     process_names: list[str],
     install_paths: list,
     download_url: str = "",
-    launch_cmd: Optional[list] = None,
-    check_port: Optional[int] = None,
-    http_health_url: Optional[str] = None,
+    launch_cmd: list | None = None,
+    check_port: int | None = None,
+    http_health_url: str | None = None,
 ) -> HostAppStatus:
     """
     Probe a host application and return its current lifecycle state.
@@ -160,6 +159,7 @@ def probe_host_app(
     if http_health_url is not None:
         try:
             import httpx
+
             r = httpx.get(http_health_url, timeout=2.0)
             r.raise_for_status()
         except Exception as exc:

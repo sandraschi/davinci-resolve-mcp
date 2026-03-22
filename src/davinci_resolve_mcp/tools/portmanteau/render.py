@@ -3,8 +3,9 @@ DaVinci Resolve Render Portmanteau Tool.
 
 Consolidates rendering operations into a single tool.
 """
+
 import logging
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
@@ -15,18 +16,18 @@ def setup_render_portmanteau(app):
     @app.tool()
     async def resolve_render(
         action: Literal["timeline", "presets", "with_preset", "job_status"],
-        output_path: Optional[str] = None,
+        output_path: str | None = None,
         format: str = "mp4",
-        codec: Optional[str] = None,
-        resolution: Optional[str] = None,
-        frame_rate: Optional[float] = None,
-        timeline_name: Optional[str] = None,
+        codec: str | None = None,
+        resolution: str | None = None,
+        frame_rate: float | None = None,
+        timeline_name: str | None = None,
         use_timeline_name: bool = True,
-        custom_name: Optional[str] = None,
+        custom_name: str | None = None,
         overwrite: bool = False,
-        preset_name: Optional[str] = None,
-        job_id: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        preset_name: str | None = None,
+        job_id: int | None = None,
+    ) -> dict[str, Any]:
         """
         Comprehensive rendering and export for DaVinci Resolve.
 
@@ -73,12 +74,20 @@ def setup_render_portmanteau(app):
             resolve_render("job_status", job_id=1)
         """
         from ..render_tools import (
-            render_timeline_impl as render_timeline,
-            get_render_presets_impl as get_render_presets,
-            render_with_preset_impl as render_with_preset,
-            get_render_job_status_impl as get_render_job_status,
-            RenderFormat,
             RenderCodec,
+            RenderFormat,
+        )
+        from ..render_tools import (
+            get_render_job_status_impl as get_render_job_status,
+        )
+        from ..render_tools import (
+            get_render_presets_impl as get_render_presets,
+        )
+        from ..render_tools import (
+            render_timeline_impl as render_timeline,
+        )
+        from ..render_tools import (
+            render_with_preset_impl as render_with_preset,
         )
 
         # Map format string to enum
@@ -126,9 +135,7 @@ def setup_render_portmanteau(app):
         elif action == "with_preset":
             if not preset_name or not output_path:
                 return {"status": "error", "message": "preset_name and output_path required"}
-            return await render_with_preset(
-                app, preset_name, output_path, timeline_name
-            )
+            return await render_with_preset(app, preset_name, output_path, timeline_name)
 
         elif action == "job_status":
             if job_id is None:
@@ -139,4 +146,3 @@ def setup_render_portmanteau(app):
             return {"status": "error", "message": f"Unknown action: {action}"}
 
     logger.info("Registered resolve_render portmanteau tool")
-

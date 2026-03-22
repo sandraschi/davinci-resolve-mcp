@@ -3,8 +3,9 @@ DaVinci Resolve Project Portmanteau Tool.
 
 Consolidates project management operations into a single tool with conversational returns.
 """
+
 import logging
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
@@ -15,13 +16,13 @@ def setup_project_portmanteau(app):
     @app.tool()
     async def resolve_project(
         action: Literal["create", "open", "list", "get_settings", "update_settings"],
-        name: Optional[str] = None,
+        name: str | None = None,
         frame_rate: float = 24.0,
         width: int = 1920,
         height: int = 1080,
-        template: Optional[str] = None,
-        settings: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        template: str | None = None,
+        settings: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Comprehensive project management for DaVinci Resolve.
 
@@ -64,9 +65,17 @@ def setup_project_portmanteau(app):
         """
         from ..project_tools import (
             create_project_impl as create_project,
-            open_project_impl as open_project,
-            list_projects_impl as list_projects,
+        )
+        from ..project_tools import (
             get_project_settings_impl as get_project_settings,
+        )
+        from ..project_tools import (
+            list_projects_impl as list_projects,
+        )
+        from ..project_tools import (
+            open_project_impl as open_project,
+        )
+        from ..project_tools import (
             update_project_settings_impl as update_project_settings,
         )
 
@@ -75,13 +84,15 @@ def setup_project_portmanteau(app):
                 return {
                     "success": False,
                     "error": "name parameter is required for create action",
-                    "message": "Please provide a project name to create a new project."
+                    "message": "Please provide a project name to create a new project.",
                 }
 
             result = await create_project(app, name, frame_rate, width, height, template)
             if result.get("status") == "success":
                 resolution = f"{width}x{height}"
-                message = f"Created new project '{name}' with {resolution} resolution at {frame_rate}fps"
+                message = (
+                    f"Created new project '{name}' with {resolution} resolution at {frame_rate}fps"
+                )
                 if template:
                     message += f" using '{template}' template"
                 return {
@@ -91,13 +102,13 @@ def setup_project_portmanteau(app):
                     "project_name": name,
                     "resolution": resolution,
                     "frame_rate": frame_rate,
-                    "template": template
+                    "template": template,
                 }
             else:
                 return {
                     "success": False,
                     "error": result.get("message", "Unknown error"),
-                    "message": f"Failed to create project '{name}': {result.get('message', 'Unknown error')}"
+                    "message": f"Failed to create project '{name}': {result.get('message', 'Unknown error')}",
                 }
 
         elif action == "open":
@@ -105,7 +116,7 @@ def setup_project_portmanteau(app):
                 return {
                     "success": False,
                     "error": "name parameter is required for open action",
-                    "message": "Please provide a project name to open."
+                    "message": "Please provide a project name to open.",
                 }
 
             result = await open_project(app, name)
@@ -114,13 +125,13 @@ def setup_project_portmanteau(app):
                     "success": True,
                     "operation": "project_open",
                     "message": f"Opened project '{name}' successfully",
-                    "project_name": name
+                    "project_name": name,
                 }
             else:
                 return {
                     "success": False,
                     "error": result.get("message", "Unknown error"),
-                    "message": f"Failed to open project '{name}': {result.get('message', 'Unknown error')}"
+                    "message": f"Failed to open project '{name}': {result.get('message', 'Unknown error')}",
                 }
 
         elif action == "list":
@@ -137,13 +148,13 @@ def setup_project_portmanteau(app):
                     "operation": "project_list",
                     "message": message,
                     "project_count": count,
-                    "projects": projects
+                    "projects": projects,
                 }
             else:
                 return {
                     "success": False,
                     "error": result.get("message", "Unknown error"),
-                    "message": f"Failed to list projects: {result.get('message', 'Unknown error')}"
+                    "message": f"Failed to list projects: {result.get('message', 'Unknown error')}",
                 }
 
         elif action == "get_settings":
@@ -160,13 +171,13 @@ def setup_project_portmanteau(app):
                     "success": True,
                     "operation": "project_get_settings",
                     "message": message,
-                    "settings": settings_data
+                    "settings": settings_data,
                 }
             else:
                 return {
                     "success": False,
                     "error": result.get("message", "Unknown error"),
-                    "message": f"Failed to get project settings: {result.get('message', 'Unknown error')}"
+                    "message": f"Failed to get project settings: {result.get('message', 'Unknown error')}",
                 }
 
         elif action == "update_settings":
@@ -174,7 +185,7 @@ def setup_project_portmanteau(app):
                 return {
                     "success": False,
                     "error": "settings parameter is required for update_settings action",
-                    "message": "Please provide a settings dictionary to update project settings."
+                    "message": "Please provide a settings dictionary to update project settings.",
                 }
 
             result = await update_project_settings(app, settings)
@@ -187,20 +198,20 @@ def setup_project_portmanteau(app):
                     "operation": "project_update_settings",
                     "message": message,
                     "updated_settings": setting_keys,
-                    "settings": settings
+                    "settings": settings,
                 }
             else:
                 return {
                     "success": False,
                     "error": result.get("message", "Unknown error"),
-                    "message": f"Failed to update project settings: {result.get('message', 'Unknown error')}"
+                    "message": f"Failed to update project settings: {result.get('message', 'Unknown error')}",
                 }
 
         else:
             return {
                 "success": False,
                 "error": f"Unknown action: {action}",
-                "message": f"Unsupported action '{action}'. Supported actions: create, open, list, get_settings, update_settings"
+                "message": f"Unsupported action '{action}'. Supported actions: create, open, list, get_settings, update_settings",
             }
 
     logger.info("Registered resolve_project portmanteau tool with conversational returns")

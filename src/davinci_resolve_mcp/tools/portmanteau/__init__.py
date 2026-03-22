@@ -4,14 +4,15 @@ DaVinci Resolve MCP Portmanteau Tools.
 Consolidated tool interfaces following FastMCP 2.13+ best practices.
 Reduces 26 individual tools to 7 portmanteau tools.
 """
-from .project import setup_project_portmanteau
-from .media import setup_media_portmanteau
-from .timeline import setup_timeline_portmanteau
-from .color import setup_color_portmanteau
-from .render import setup_render_portmanteau
+
 from .audio import setup_audio_portmanteau
+from .color import setup_color_portmanteau
 from .fairlight import setup_fairlight_portmanteau
+from .media import setup_media_portmanteau
+from .project import setup_project_portmanteau
+from .render import setup_render_portmanteau
 from .system import setup_system_portmanteau
+from .timeline import setup_timeline_portmanteau
 
 
 def setup_all_portmanteau_tools(app):
@@ -37,4 +38,3 @@ __all__ = [
     "setup_fairlight_portmanteau",
     "setup_system_portmanteau",
 ]
-

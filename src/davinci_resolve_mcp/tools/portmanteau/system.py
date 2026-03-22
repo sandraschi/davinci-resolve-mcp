@@ -3,8 +3,9 @@ DaVinci Resolve System Portmanteau Tool.
 
 Consolidates system/utility operations into a single tool with conversational returns.
 """
+
 import logging
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +16,9 @@ def setup_system_portmanteau(app):
     @app.tool()
     async def resolve_system(
         action: Literal["info", "status", "health", "help", "host_status", "host_launch"],
-        topic: Optional[str] = None,
-        level: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        topic: str | None = None,
+        level: str | None = None,
+    ) -> dict[str, Any]:
         """
         System information and utilities for DaVinci Resolve MCP.
 
@@ -57,14 +58,22 @@ def setup_system_portmanteau(app):
             # Get Resolve info from app state
             try:
                 from ...server import app as server_app
+
                 if server_app.state.connection_manager:
-                    resolve = server_app.state.connection_manager.get_connection()
+                    mgr = server_app.state.connection_manager
+                    if not await mgr.ensure_connection():
+                        return {
+                            "success": False,
+                            "error": "not_connected",
+                            "message": "Could not connect to DaVinci Resolve. Start Resolve and enable scripting API access.",
+                        }
+                    resolve = mgr.get_connection()
                     project_manager = resolve.GetProjectManager()
                     current_project = project_manager.GetCurrentProject()
 
                     version = resolve.GetVersionString()
-                    api_version = getattr(resolve, 'GetApiVersion', lambda: "N/A")()
-                    is_rendering = getattr(resolve, 'IsRenderingInProgress', lambda: False)()
+                    api_version = getattr(resolve, "GetApiVersion", lambda: "N/A")()
+                    is_rendering = getattr(resolve, "IsRenderingInProgress", lambda: False)()
                     project_name = current_project.GetName() if current_project else None
 
                     message = f"DaVinci Resolve {version} connected"
@@ -86,18 +95,19 @@ def setup_system_portmanteau(app):
                     return {
                         "success": False,
                         "error": "Connection manager not initialized",
-                        "message": "Unable to connect to DaVinci Resolve. Please ensure it's running and accessible."
+                        "message": "Unable to connect to DaVinci Resolve. Please ensure it's running and accessible.",
                     }
             except Exception as e:
                 return {
                     "success": False,
                     "error": str(e),
-                    "message": f"Failed to get DaVinci Resolve information: {str(e)}"
+                    "message": f"Failed to get DaVinci Resolve information: {str(e)}",
                 }
 
         elif action == "status":
             try:
                 from ...server import app as server_app
+
                 if server_app.state.connection_manager:
                     status_data = server_app.state.connection_manager.get_status()
                     message = "DaVinci Resolve MCP server is running"
@@ -110,24 +120,25 @@ def setup_system_portmanteau(app):
                         "success": True,
                         "operation": "system_status",
                         "message": message,
-                        "status_data": status_data
+                        "status_data": status_data,
                     }
                 else:
                     return {
                         "success": False,
                         "error": "Connection manager not initialized",
-                        "message": "Server connection manager is not available."
+                        "message": "Server connection manager is not available.",
                     }
             except Exception as e:
                 return {
                     "success": False,
                     "error": str(e),
-                    "message": f"Failed to get system status: {str(e)}"
+                    "message": f"Failed to get system status: {str(e)}",
                 }
 
         elif action == "health":
             try:
                 from ...server import app as server_app
+
                 if server_app.state.connection_manager:
                     health_data = await server_app.state.connection_manager.health_check()
                     is_healthy = health_data.get("overall_status") == "healthy"
@@ -142,19 +153,19 @@ def setup_system_portmanteau(app):
                         "operation": "health_check",
                         "message": message,
                         "healthy": is_healthy,
-                        "health_data": health_data
+                        "health_data": health_data,
                     }
                 else:
                     return {
                         "success": False,
                         "error": "Connection manager not initialized",
-                        "message": "Cannot perform health check - connection manager unavailable."
+                        "message": "Cannot perform health check - connection manager unavailable.",
                     }
             except Exception as e:
                 return {
                     "success": False,
                     "error": str(e),
-                    "message": f"Health check failed: {str(e)}"
+                    "message": f"Health check failed: {str(e)}",
                 }
 
         elif action == "help":
@@ -170,12 +181,13 @@ def setup_system_portmanteau(app):
                 "success": True,
                 "operation": "help",
                 "message": message,
-                "help_text": help_text
+                "help_text": help_text,
             }
 
         elif action == "host_status":
             from ...connection.host_app_probe import probe_host_app
             from ...connection.resolve_probe_config import RESOLVE_PROBE_CONFIG
+
             status = probe_host_app(**RESOLVE_PROBE_CONFIG)
             return {
                 "success": True,
@@ -185,8 +197,9 @@ def setup_system_portmanteau(app):
             }
 
         elif action == "host_launch":
-            from ...connection.host_app_probe import probe_host_app, launch_app
+            from ...connection.host_app_probe import launch_app, probe_host_app
             from ...connection.resolve_probe_config import RESOLVE_PROBE_CONFIG
+
             status = probe_host_app(**RESOLVE_PROBE_CONFIG)
             ok, msg = launch_app(status)
             return {
@@ -200,7 +213,7 @@ def setup_system_portmanteau(app):
             return {
                 "success": False,
                 "error": f"Unknown action: {action}",
-                "message": f"Unsupported action '{action}'. Supported: info, status, health, help, host_status, host_launch"
+                "message": f"Unsupported action '{action}'. Supported: info, status, health, help, host_status, host_launch",
             }
 
     logger.info("Registered resolve_system portmanteau tool with conversational returns")

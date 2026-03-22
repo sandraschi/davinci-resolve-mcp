@@ -31,27 +31,28 @@ __version__ = "0.1.0"
 __author__ = "Sandra Schieder"
 __email__ = "sandra@sandraschi.dev"
 
-from typing import Union
+from .tools import UserLevel, get_help
 
 # Import the help system
-from .tools import help as _help_tool, get_help, UserLevel
+from .tools import help as _help_tool
 
 # Re-export commonly used components for easier access
 __all__ = [
-    "help",                     # Help function
-    "get_help",                 # Help function
-    "UserLevel",                # User level enum
+    "help",  # Help function
+    "get_help",  # Help function
+    "UserLevel",  # User level enum
 ]
 
+
 # Create a more user-friendly help function that delegates to the help tool
-def help(topic: str = None, level: Union[str, UserLevel] = None) -> str:
+def help(topic: str = None, level: str | UserLevel = None) -> str:
     """
     Display help information for the DaVinci Resolve MCP package.
-    
+
     Args:
         topic: The topic to get help on. If None, shows general help.
         level: The user level for the help content ('beginner', 'intermediate', 'advanced', or 'developer').
-    
+
     Returns:
         str: The formatted help text.
     """

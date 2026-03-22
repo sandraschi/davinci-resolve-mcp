@@ -3,8 +3,9 @@ DaVinci Resolve Timeline Portmanteau Tool.
 
 Consolidates timeline editing operations into a single tool.
 """
+
 import logging
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
@@ -15,17 +16,17 @@ def setup_timeline_portmanteau(app):
     @app.tool()
     async def resolve_timeline(
         action: Literal["create", "info", "add_clip", "cut", "set_playhead"],
-        name: Optional[str] = None,
-        timeline_name: Optional[str] = None,
+        name: str | None = None,
+        timeline_name: str | None = None,
         frame_rate: float = 24.0,
         width: int = 1920,
         height: int = 1080,
         start_frame: int = 0,
-        clip_path: Optional[str] = None,
+        clip_path: str | None = None,
         track_index: int = 1,
         track_type: str = "video",
-        frame: Optional[int] = None,
-    ) -> Dict[str, Any]:
+        frame: int | None = None,
+    ) -> dict[str, Any]:
         """
         Comprehensive timeline editing for DaVinci Resolve.
 
@@ -71,12 +72,22 @@ def setup_timeline_portmanteau(app):
             resolve_timeline("set_playhead", frame=500)
         """
         from ..timeline_tools import (
-            create_timeline_impl as create_timeline,
-            get_timeline_info_impl as get_timeline_info,
-            add_clip_to_timeline_impl as add_clip_to_timeline,
-            cut_clip_impl as cut_clip,
-            set_timeline_playhead_impl as set_timeline_playhead,
             TrackType,
+        )
+        from ..timeline_tools import (
+            add_clip_to_timeline_impl as add_clip_to_timeline,
+        )
+        from ..timeline_tools import (
+            create_timeline_impl as create_timeline,
+        )
+        from ..timeline_tools import (
+            cut_clip_impl as cut_clip,
+        )
+        from ..timeline_tools import (
+            get_timeline_info_impl as get_timeline_info,
+        )
+        from ..timeline_tools import (
+            set_timeline_playhead_impl as set_timeline_playhead,
         )
 
         # Map track_type string to enum
@@ -85,7 +96,9 @@ def setup_timeline_portmanteau(app):
         if action == "create":
             if not name:
                 return {"status": "error", "message": "name is required for create action"}
-            return await create_timeline(app, name, frame_rate, width, height, start_frame, timeline_name)
+            return await create_timeline(
+                app, name, frame_rate, width, height, start_frame, timeline_name
+            )
 
         elif action == "info":
             return await get_timeline_info(app, timeline_name)
@@ -93,7 +106,9 @@ def setup_timeline_portmanteau(app):
         elif action == "add_clip":
             if not clip_path:
                 return {"status": "error", "message": "clip_path is required for add_clip action"}
-            return await add_clip_to_timeline(app, clip_path, track_index, track_type_enum, start_frame, timeline_name)
+            return await add_clip_to_timeline(
+                app, clip_path, track_index, track_type_enum, start_frame, timeline_name
+            )
 
         elif action == "cut":
             if frame is None:
@@ -109,4 +124,3 @@ def setup_timeline_portmanteau(app):
             return {"status": "error", "message": f"Unknown action: {action}"}
 
     logger.info("Registered resolve_timeline portmanteau tool")
-

@@ -4,15 +4,20 @@ Timeline-related data models for DaVinci Resolve.
 This module contains data models for managing timelines, tracks, clips, and edits
 in DaVinci Resolve projects.
 """
-from typing import Dict, List, Optional, Any
+
 from datetime import datetime
 from enum import Enum
+from typing import Any
+
 from pydantic import Field
-from .common import ResolveObject, TimeCode, Resolution, FrameRate
+
+from .common import FrameRate, Resolution, ResolveObject, TimeCode
 from .media import MediaItem
+
 
 class TrackType(str, Enum):
     """Types of tracks in a timeline."""
+
     VIDEO = "video"
     AUDIO = "audio"
     SUBTITLE = "subtitle"
@@ -36,10 +41,11 @@ class TrackType(str, Enum):
     FUSION_3D_TRANSFORM = "fusion_3d_transform"
     FUSION_3D_VERTEX = "fusion_3d_vertex"
 
+
 class Track(ResolveObject):
     """
     Represents a track in a DaVinci Resolve timeline.
-    
+
     Attributes:
         name: Name of the track
         track_type: Type of track (video, audio, etc.)
@@ -62,6 +68,7 @@ class Track(ResolveObject):
         is_audio_71: Whether the track is 7.1 audio
         is_audio_ambisonic: Whether the track is ambisonic audio
     """
+
     name: str = Field(..., description="Name of the track")
     track_type: TrackType = Field(..., description="Type of track")
     index: int = Field(..., ge=1, description="Track index (1-based)")
@@ -71,22 +78,22 @@ class Track(ResolveObject):
     height: int = Field(default=50, ge=20, le=200, description="Track height in pixels")
     is_targeted: bool = Field(default=False, description="Targeted for edits")
     is_visible: bool = Field(default=True, description="Track visibility")
-    
+
     @property
     def is_audio_track(self) -> bool:
         """Check if this is an audio track."""
         return self.track_type == TrackType.AUDIO
-    
+
     @property
     def is_video_track(self) -> bool:
         """Check if this is a video track."""
         return self.track_type == TrackType.VIDEO
-    
+
     @property
     def is_subtitle_track(self) -> bool:
         """Check if this is a subtitle track."""
         return self.track_type == TrackType.SUBTITLE
-    
+
     @property
     def is_fusion_track(self) -> bool:
         """Check if this is a Fusion track."""
@@ -96,7 +103,7 @@ class Track(ResolveObject):
 class TimelineItem(ResolveObject):
     """
     Represents an item on a timeline track in DaVinci Resolve.
-    
+
     Attributes:
         name: Name of the timeline item
         media_item: Reference to the source media item
@@ -129,13 +136,14 @@ class TimelineItem(ResolveObject):
         is_audio_71: Whether the item's audio is 7.1
         is_audio_ambisonic: Whether the item's audio is ambisonic
     """
+
     name: str = Field(..., description="Name of the timeline item")
-    media_item: Optional[MediaItem] = Field(default=None, description="Source media item")
+    media_item: MediaItem | None = Field(default=None, description="Source media item")
     track_index: int = Field(..., ge=1, description="Track index (1-based)")
     start_frame: int = Field(..., ge=0, description="Start frame in timeline")
     end_frame: int = Field(..., ge=0, description="End frame in timeline")
     in_point: int = Field(default=0, ge=0, description="In point in source")
-    out_point: Optional[int] = Field(default=None, ge=0, description="Out point in source")
+    out_point: int | None = Field(default=None, ge=0, description="Out point in source")
     speed: float = Field(default=1.0, gt=0, description="Playback speed")
     is_reversed: bool = Field(default=False, description="Reversed status")
     is_nesting: bool = Field(default=False, description="Nested timeline flag")
@@ -151,14 +159,14 @@ class TimelineItem(ResolveObject):
     is_solo: bool = Field(default=False, description="Solo status")
     is_selected: bool = Field(default=False, description="Selected status")
     is_visible: bool = Field(default=True, description="Visibility status")
-    
+
     @property
     def duration_frames(self) -> int:
         """Duration of the item in frames."""
         return self.end_frame - self.start_frame
-    
+
     @property
-    def source_duration_frames(self) -> Optional[int]:
+    def source_duration_frames(self) -> int | None:
         """Duration of the source media in frames."""
         if self.out_point is not None and self.in_point is not None:
             return self.out_point - self.in_point
@@ -168,7 +176,7 @@ class TimelineItem(ResolveObject):
 class TimelineMarker(ResolveObject):
     """
     Represents a marker on a timeline in DaVinci Resolve.
-    
+
     Attributes:
         name: Name of the marker
         frame: Frame number where the marker is placed
@@ -179,11 +187,12 @@ class TimelineMarker(ResolveObject):
         is_selected: Whether the marker is selected
         is_visible: Whether the marker is visible
     """
+
     name: str = Field(..., description="Name of the marker")
     frame: int = Field(..., ge=0, description="Frame number")
     duration: int = Field(default=1, ge=1, description="Duration in frames")
     color: str = Field(default="Red", description="Marker color")
-    note: Optional[str] = Field(default=None, description="Marker note")
+    note: str | None = Field(default=None, description="Marker note")
     chapter: bool = Field(default=False, description="Chapter marker flag")
     is_selected: bool = Field(default=False, description="Selected status")
     is_visible: bool = Field(default=True, description="Visibility status")
@@ -192,7 +201,7 @@ class TimelineMarker(ResolveObject):
 class Timeline(ResolveObject):
     """
     Represents a timeline in DaVinci Resolve.
-    
+
     Attributes:
         name: Name of the timeline
         frame_rate: Frame rate of the timeline
@@ -214,31 +223,32 @@ class Timeline(ResolveObject):
         is_audio_71: Whether the timeline's audio is 7.1
         is_audio_ambisonic: Whether the timeline's audio is ambisonic
     """
+
     name: str = Field(..., description="Name of the timeline")
     frame_rate: FrameRate = Field(..., description="Frame rate")
     resolution: Resolution = Field(..., description="Resolution")
     start_timecode: TimeCode = Field(..., description="Starting timecode")
     duration: TimeCode = Field(..., description="Duration")
-    tracks: List[Track] = Field(default_factory=list, description="List of tracks")
-    markers: List[TimelineMarker] = Field(default_factory=list, description="List of markers")
+    tracks: list[Track] = Field(default_factory=list, description="List of tracks")
+    markers: list[TimelineMarker] = Field(default_factory=list, description="List of markers")
     is_active: bool = Field(default=False, description="Active timeline flag")
     is_sequence: bool = Field(default=True, description="Sequence timeline flag")
     is_multicam: bool = Field(default=False, description="Multicam timeline flag")
     is_compound: bool = Field(default=False, description="Compound clip flag")
     is_nested: bool = Field(default=False, description="Nested timeline flag")
-    
-    def get_track(self, track_type: TrackType, index: int) -> Optional[Track]:
+
+    def get_track(self, track_type: TrackType, index: int) -> Track | None:
         """Get a track by type and index."""
         for track in self.tracks:
             if track.track_type == track_type and track.index == index:
                 return track
         return None
-    
-    def get_tracks_by_type(self, track_type: TrackType) -> List[Track]:
+
+    def get_tracks_by_type(self, track_type: TrackType) -> list[Track]:
         """Get all tracks of a specific type."""
         return [track for track in self.tracks if track.track_type == track_type]
-    
-    def get_markers_in_range(self, start_frame: int, end_frame: int) -> List[TimelineMarker]:
+
+    def get_markers_in_range(self, start_frame: int, end_frame: int) -> list[TimelineMarker]:
         """Get all markers within a frame range."""
         return [m for m in self.markers if start_frame <= m.frame <= end_frame]
 
@@ -246,7 +256,7 @@ class Timeline(ResolveObject):
 class EditOperation(ResolveObject):
     """
     Represents an edit operation on a timeline.
-    
+
     Attributes:
         operation_type: Type of edit operation
         timeline: Reference to the timeline being edited
@@ -260,14 +270,15 @@ class EditOperation(ResolveObject):
         timestamp: When the operation was performed
         user: User who performed the operation
     """
+
     operation_type: str = Field(..., description="Type of edit operation")
     timeline: Timeline = Field(..., description="Target timeline")
     track_index: int = Field(..., ge=1, description="Target track index")
     start_frame: int = Field(..., ge=0, description="Start frame")
     end_frame: int = Field(..., ge=0, description="End frame")
-    in_point: Optional[int] = Field(default=None, ge=0, description="In point in source")
-    out_point: Optional[int] = Field(default=None, ge=0, description="Out point in source")
-    media_item: Optional[MediaItem] = Field(default=None, description="Source media item")
-    parameters: Dict[str, Any] = Field(default_factory=dict, description="Operation parameters")
+    in_point: int | None = Field(default=None, ge=0, description="In point in source")
+    out_point: int | None = Field(default=None, ge=0, description="Out point in source")
+    media_item: MediaItem | None = Field(default=None, description="Source media item")
+    parameters: dict[str, Any] = Field(default_factory=dict, description="Operation parameters")
     timestamp: datetime = Field(default_factory=datetime.now, description="Operation timestamp")
-    user: Optional[str] = Field(default=None, description="User who performed the operation")
+    user: str | None = Field(default=None, description="User who performed the operation")

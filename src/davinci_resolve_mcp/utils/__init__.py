@@ -8,7 +8,7 @@ from .helpers import *
 __all__ = [
     # Exceptions
     "DaVinciResolveMCPError",
-    "ResolveConnectionError", 
+    "ResolveConnectionError",
     "ResolveNotRunningError",
     "ResolveAPIError",
     "ProjectNotFoundError",
@@ -28,7 +28,6 @@ __all__ = [
     "InsufficientPermissionsError",
     "UnsupportedFormatError",
     "ResourceNotAvailableError",
-    
     # Helpers
     "validate_file_path",
     "validate_resolution",

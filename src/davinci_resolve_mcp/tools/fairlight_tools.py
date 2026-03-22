@@ -5,20 +5,34 @@ Fairlight is the DAW/audio page inside Resolve. Uses the same Resolve Scripting 
 (OpenPage("fairlight"), timeline audio track APIs). Operations for Fairlight page,
 timeline audio tracks, mute/solo, and level control.
 """
+
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ..utils.exceptions import ResolveOperationError
 
 logger = logging.getLogger(__name__)
 
 
-async def fairlight_open_page_impl(app) -> Dict[str, Any]:
+async def _ensure_resolve(app) -> None:
+    """
+    Ensure the Resolve connection manager has an active Scripting API session.
+
+    Raises:
+        ResolveOperationError: If the manager is missing or connection fails.
+    """
+    connection = app.state.connection_manager
+    if not connection:
+        raise ResolveOperationError("Connection manager not initialized")
+    if not await connection.ensure_connection():
+        raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+
+async def fairlight_open_page_impl(app) -> dict[str, Any]:
     """Switch Resolve UI to the Fairlight page."""
     try:
+        await _ensure_resolve(app)
         connection = app.state.connection_manager
-        if not connection or not connection.resolve:
-            raise ResolveOperationError("Not connected to DaVinci Resolve")
         resolve = connection.get_connection()
         if hasattr(resolve, "OpenPage"):
             resolve.OpenPage("fairlight")
@@ -30,13 +44,12 @@ async def fairlight_open_page_impl(app) -> Dict[str, Any]:
 
 
 async def fairlight_get_timeline_tracks_impl(
-    app, timeline_name: Optional[str] = None
-) -> Dict[str, Any]:
+    app, timeline_name: str | None = None
+) -> dict[str, Any]:
     """Get audio track list for current or named timeline (Fairlight context)."""
     try:
+        await _ensure_resolve(app)
         connection = app.state.connection_manager
-        if not connection or not connection.resolve:
-            raise ResolveOperationError("Not connected to DaVinci Resolve")
         project = connection.get_current_project()
         if not project:
             raise ResolveOperationError("No project is currently open")
@@ -49,14 +62,26 @@ async def fairlight_get_timeline_tracks_impl(
         audio_count = timeline.GetTrackCount("audio")
         tracks = []
         for i in range(1, audio_count + 1):
-            name = timeline.GetTrackName("audio", i) if hasattr(timeline, "GetTrackName") else f"Audio {i}"
-            tracks.append({
-                "index": i,
-                "name": name or f"Audio {i}",
-                "muted": timeline.GetIsTrackMuted("audio", i) if hasattr(timeline, "GetIsTrackMuted") else False,
-                "solo": timeline.GetIsTrackSolo("audio", i) if hasattr(timeline, "GetIsTrackSolo") else False,
-                "locked": timeline.GetIsTrackLocked("audio", i) if hasattr(timeline, "GetIsTrackLocked") else False,
-            })
+            name = (
+                timeline.GetTrackName("audio", i)
+                if hasattr(timeline, "GetTrackName")
+                else f"Audio {i}"
+            )
+            tracks.append(
+                {
+                    "index": i,
+                    "name": name or f"Audio {i}",
+                    "muted": timeline.GetIsTrackMuted("audio", i)
+                    if hasattr(timeline, "GetIsTrackMuted")
+                    else False,
+                    "solo": timeline.GetIsTrackSolo("audio", i)
+                    if hasattr(timeline, "GetIsTrackSolo")
+                    else False,
+                    "locked": timeline.GetIsTrackLocked("audio", i)
+                    if hasattr(timeline, "GetIsTrackLocked")
+                    else False,
+                }
+            )
         return {
             "status": "success",
             "timeline_name": timeline.GetName(),
@@ -72,17 +97,20 @@ async def fairlight_set_track_mute_impl(
     app,
     track_index: int,
     mute: bool,
-    timeline_name: Optional[str] = None,
-) -> Dict[str, Any]:
+    timeline_name: str | None = None,
+) -> dict[str, Any]:
     """Set mute state for an audio track."""
     try:
+        await _ensure_resolve(app)
         connection = app.state.connection_manager
-        if not connection or not connection.resolve:
-            raise ResolveOperationError("Not connected to DaVinci Resolve")
         project = connection.get_current_project()
         if not project:
             raise ResolveOperationError("No project is currently open")
-        timeline = project.GetTimelineByName(timeline_name) if timeline_name else project.GetCurrentTimeline()
+        timeline = (
+            project.GetTimelineByName(timeline_name)
+            if timeline_name
+            else project.GetCurrentTimeline()
+        )
         if not timeline:
             raise ResolveOperationError("No timeline is currently open")
         if hasattr(timeline, "SetTrackMute"):
@@ -98,17 +126,20 @@ async def fairlight_set_track_solo_impl(
     app,
     track_index: int,
     solo: bool,
-    timeline_name: Optional[str] = None,
-) -> Dict[str, Any]:
+    timeline_name: str | None = None,
+) -> dict[str, Any]:
     """Set solo state for an audio track."""
     try:
+        await _ensure_resolve(app)
         connection = app.state.connection_manager
-        if not connection or not connection.resolve:
-            raise ResolveOperationError("Not connected to DaVinci Resolve")
         project = connection.get_current_project()
         if not project:
             raise ResolveOperationError("No project is currently open")
-        timeline = project.GetTimelineByName(timeline_name) if timeline_name else project.GetCurrentTimeline()
+        timeline = (
+            project.GetTimelineByName(timeline_name)
+            if timeline_name
+            else project.GetCurrentTimeline()
+        )
         if not timeline:
             raise ResolveOperationError("No timeline is currently open")
         if hasattr(timeline, "SetTrackSolo"):
@@ -124,17 +155,20 @@ async def fairlight_set_track_volume_impl(
     app,
     track_index: int,
     volume: float,
-    timeline_name: Optional[str] = None,
-) -> Dict[str, Any]:
+    timeline_name: str | None = None,
+) -> dict[str, Any]:
     """Set volume for an audio track (0.0 to 2.0)."""
     try:
+        await _ensure_resolve(app)
         connection = app.state.connection_manager
-        if not connection or not connection.resolve:
-            raise ResolveOperationError("Not connected to DaVinci Resolve")
         project = connection.get_current_project()
         if not project:
             raise ResolveOperationError("No project is currently open")
-        timeline = project.GetTimelineByName(timeline_name) if timeline_name else project.GetCurrentTimeline()
+        timeline = (
+            project.GetTimelineByName(timeline_name)
+            if timeline_name
+            else project.GetCurrentTimeline()
+        )
         if not timeline:
             raise ResolveOperationError("No timeline is currently open")
         volume = max(0.0, min(2.0, float(volume)))

@@ -6,14 +6,13 @@ This module implements the FastMCP server for DaVinci Resolve integration.
 Status: Production Ready - Actively maintained, SOTA features
 """
 
-import asyncio
 import collections
 import logging
 import os
 import sys
 import time
 from contextlib import asynccontextmanager
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import structlog
 from fastapi import FastAPI
@@ -21,9 +20,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastmcp import FastMCP
 from pydantic import BaseModel, Field
 
-from .connection.manager import ResolveConnectionManager, ResolveConnectionPool
 from .config import DaVinciResolveConfig, load_default
-from .utils.error_handling import create_tool
+from .connection.manager import ResolveConnectionManager, ResolveConnectionPool
 from .utils.exceptions import ResolveConnectionError
 
 # Configure structured logging (JSON to stderr only)
@@ -68,14 +66,16 @@ class _LogRingHandler(logging.Handler):
         global _log_seq
         try:
             _log_seq += 1
-            _log_buffer.append({
-                "id": f"{int(record.created * 1000)}-{_log_seq}",
-                "ts": time.strftime("%H:%M:%S", time.localtime(record.created)),
-                "level": self._LEVEL_MAP.get(record.levelno, "info"),
-                "name": record.name,
-                "message": record.getMessage(),
-                "exc": record.exc_text if record.exc_text else None,
-            })
+            _log_buffer.append(
+                {
+                    "id": f"{int(record.created * 1000)}-{_log_seq}",
+                    "ts": time.strftime("%H:%M:%S", time.localtime(record.created)),
+                    "level": self._LEVEL_MAP.get(record.levelno, "info"),
+                    "name": record.name,
+                    "message": record.getMessage(),
+                    "exc": record.exc_text if record.exc_text else None,
+                }
+            )
         except Exception:
             pass
 
@@ -85,7 +85,7 @@ _ring_handler.setFormatter(logging.Formatter("%(message)s"))
 logging.getLogger().addHandler(_ring_handler)
 
 
-def get_log_buffer() -> List[Dict[str, Any]]:
+def get_log_buffer() -> list[dict[str, Any]]:
     """Return recent log entries for the API (newest last)."""
     return list(_log_buffer)
 
@@ -95,9 +95,9 @@ class AppState:
     """Global application state."""
 
     def __init__(self):
-        self.config: Optional[DaVinciResolveConfig] = None
-        self.connection_manager: Optional[ResolveConnectionManager] = None
-        self.connection_pool: Optional[ResolveConnectionPool] = None
+        self.config: DaVinciResolveConfig | None = None
+        self.connection_manager: ResolveConnectionManager | None = None
+        self.connection_pool: ResolveConnectionPool | None = None
         self.should_exit = False
 
 
@@ -255,7 +255,7 @@ def initialize_server():
 
 
 @app.tool()
-async def get_resolve_info() -> Dict[str, Any]:
+async def get_resolve_info() -> dict[str, Any]:
     """
     Get information about the connected DaVinci Resolve instance.
 
@@ -277,6 +277,9 @@ async def get_resolve_info() -> Dict[str, Any]:
     if not app.state.connection_manager:
         raise ResolveConnectionError("Connection manager not initialized")
 
+    if not await app.state.connection_manager.ensure_connection():
+        raise ResolveConnectionError("Could not connect to DaVinci Resolve")
+
     resolve = app.state.connection_manager.get_connection()
     project_manager = resolve.GetProjectManager()
     current_project = project_manager.GetCurrentProject()
@@ -293,7 +296,7 @@ async def get_resolve_info() -> Dict[str, Any]:
 
 
 @app.tool()
-async def list_projects() -> Dict[str, Any]:
+async def list_projects() -> dict[str, Any]:
     """
     List all available projects in DaVinci Resolve.
 
@@ -311,6 +314,9 @@ async def list_projects() -> Dict[str, Any]:
     """
     if not app.state.connection_manager:
         raise ResolveConnectionError("Connection manager not initialized")
+
+    if not await app.state.connection_manager.ensure_connection():
+        raise ResolveConnectionError("Could not connect to DaVinci Resolve")
 
     resolve = app.state.connection_manager.get_connection()
     project_manager = resolve.GetProjectManager()
@@ -345,30 +351,30 @@ def register_tools():
             from .tools.help_tool import get_help
 
             @app.tool()
-            async def help(topic: Optional[str] = None, level: Optional[str] = None) -> str:
+            async def help(topic: str | None = None, level: str | None = None) -> str:
                 """Get help and documentation for DaVinci Resolve MCP tools."""
                 return get_help(topic, level)
 
             @app.tool()
-            async def get_status() -> Dict[str, Any]:
+            async def get_status() -> dict[str, Any]:
                 """Get the current status of DaVinci Resolve and MCP server."""
                 if not app.state.connection_manager:
                     return {"status": "error", "message": "Connection manager not initialized"}
                 return app.state.connection_manager.get_status()
 
             @app.tool()
-            async def health_check() -> Dict[str, Any]:
+            async def health_check() -> dict[str, Any]:
                 """Perform a comprehensive health check of the system."""
                 if not app.state.connection_manager:
                     return {"status": "error", "message": "Connection manager not initialized"}
                 return await app.state.connection_manager.health_check()
 
-            from .tools.project_tools import register_tools as register_project_tools
-            from .tools.media_tools import register_tools as register_media_tools
-            from .tools.timeline_tools import register_tools as register_timeline_tools
-            from .tools.render_tools import register_tools as register_render_tools
             from .tools.audio_tools import register_tools as register_audio_tools
             from .tools.color_tools import register_tools as register_color_tools
+            from .tools.media_tools import register_tools as register_media_tools
+            from .tools.project_tools import register_tools as register_project_tools
+            from .tools.render_tools import register_tools as register_render_tools
+            from .tools.timeline_tools import register_tools as register_timeline_tools
 
             # Call each registration function (they return app but we ignore the return value)
             _ = register_project_tools(app)
@@ -392,7 +398,9 @@ def register_tools():
         raise
 
 
-def start_server(host: str | None = None, port: int | None = None, debug: bool | None = None) -> None:
+def start_server(
+    host: str | None = None, port: int | None = None, debug: bool | None = None
+) -> None:
     """
     Start the HTTP API server (api_app) for the SOTA webapp.
 

@@ -3,6 +3,7 @@ Run the HTTP API server for the SOTA webapp only.
 Use: python -m davinci_resolve_mcp.run_api --port 10843 --host 127.0.0.1
 Avoids RuntimeWarning from running server.py as __main__ (double-import).
 """
+
 import argparse
 import os
 import sys
@@ -30,7 +31,10 @@ if __name__ == "__main__":
         initialize_server()
     except Exception as e:
         import logging
-        logging.getLogger(__name__).warning("Server init warning (Resolve may be unavailable): %s", e)
+
+        logging.getLogger(__name__).warning(
+            "Server init warning (Resolve may be unavailable): %s", e
+        )
 
     try:
         start_server()
@@ -38,5 +42,6 @@ if __name__ == "__main__":
         pass
     except Exception as e:
         import logging
+
         logging.getLogger(__name__).error("Server error: %s", e)
         sys.exit(1)

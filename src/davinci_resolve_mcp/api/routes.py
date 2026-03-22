@@ -23,6 +23,7 @@ async def health_check():
 # Local LLM (Ollama proxy)
 # ---------------------------------------------------------------------------
 
+
 @router.get("/llm/models")
 async def llm_models():
     """List available models from Ollama."""
@@ -31,7 +32,10 @@ async def llm_models():
             r = await client.get(f"{OLLAMA_URL}/api/tags")
             r.raise_for_status()
             data = r.json()
-            return {"models": [m.get("name") for m in data.get("models", [])], "ollama_url": OLLAMA_URL}
+            return {
+                "models": [m.get("name") for m in data.get("models", [])],
+                "ollama_url": OLLAMA_URL,
+            }
     except Exception as e:
         return {"models": [], "ollama_url": OLLAMA_URL, "error": str(e)}
 
@@ -76,6 +80,7 @@ async def llm_generate(body: dict):
 # Logs
 # ---------------------------------------------------------------------------
 
+
 @router.get("/logs")
 async def get_logs():
     """Return in-memory log buffer (real server logs, not mock)."""
@@ -97,17 +102,18 @@ async def get_resolve_info():
         if not hasattr(mcp_app, "state") or not mcp_app.state.connection_manager:
             return {"status": "disconnected", "message": "Connection manager not initialized"}
 
-        status = mcp_app.state.connection_manager.get_status()
-
-        # Also try to get the detailed info tool if possible
-        info_tool = mcp_app.get_tool("get_resolve_info")
-        if info_tool and hasattr(info_tool, "fn"):
-            # We would normally call info_tool.fn() but it requires context.
-            pass
+        mgr = mcp_app.state.connection_manager
+        if not await mgr.ensure_connection():
+            info = mgr.get_status()
+            return {
+                "status": "disconnected",
+                "message": "Could not connect to DaVinci Resolve (see manager status)",
+                "manager_status": info,
+            }
 
         # Manually fetch since we have connection manager
         try:
-            resolve = mcp_app.state.connection_manager.get_connection()
+            resolve = mgr.get_connection()
             project_manager = resolve.GetProjectManager()
             current_project = project_manager.GetCurrentProject()
             return {
@@ -119,7 +125,7 @@ async def get_resolve_info():
                 else False,
             }
         except Exception as e:
-            return {"status": "error", "message": str(e), "manager_status": status}
+            return {"status": "error", "message": str(e), "manager_status": mgr.get_status()}
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -134,7 +140,11 @@ async def get_projects():
         if not hasattr(mcp_app, "state") or not mcp_app.state.connection_manager:
             return {"current_project": None, "projects": []}
 
-        resolve = mcp_app.state.connection_manager.get_connection()
+        mgr = mcp_app.state.connection_manager
+        if not await mgr.ensure_connection():
+            return {"current_project": None, "projects": [], "error": "not_connected"}
+
+        resolve = mgr.get_connection()
         project_manager = resolve.GetProjectManager()
 
         current_project = project_manager.GetCurrentProject()
@@ -156,7 +166,11 @@ async def get_timeline_info():
         if not hasattr(mcp_app, "state") or not mcp_app.state.connection_manager:
             return {"timeline": None}
 
-        resolve = mcp_app.state.connection_manager.get_connection()
+        mgr = mcp_app.state.connection_manager
+        if not await mgr.ensure_connection():
+            return {"timeline": None, "error": "not_connected"}
+
+        resolve = mgr.get_connection()
         project_manager = resolve.GetProjectManager()
         project = project_manager.GetCurrentProject()
 

@@ -3,12 +3,13 @@ DaVinci Resolve Fairlight Portmanteau Tool.
 
 Consolidates Fairlight (DAW) operations: open page, get tracks, mute, solo, volume.
 """
+
 import logging
-from typing import Any, Dict, Literal, Optional
+from typing import Any, Literal
 
 from ..fairlight_tools import (
-    fairlight_open_page_impl,
     fairlight_get_timeline_tracks_impl,
+    fairlight_open_page_impl,
     fairlight_set_track_mute_impl,
     fairlight_set_track_solo_impl,
     fairlight_set_track_volume_impl,
@@ -29,12 +30,12 @@ def setup_fairlight_portmanteau(app):
             "set_solo",
             "set_volume",
         ],
-        timeline_name: Optional[str] = None,
+        timeline_name: str | None = None,
         track_index: int = 1,
         mute: bool = False,
         solo: bool = False,
-        volume: Optional[float] = None,
-    ) -> Dict[str, Any]:
+        volume: float | None = None,
+    ) -> dict[str, Any]:
         """
         Fairlight (DAW) operations in DaVinci Resolve.
 

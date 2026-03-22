@@ -5,22 +5,19 @@ This module provides a help system that offers self-documentation with support f
 multiple user levels and context-aware help.
 """
 
-from enum import Enum
-from typing import Dict, List, Optional, Type, Union
 import inspect
 from dataclasses import dataclass, field
-from typing import TypeVar, Generic
-
-from fastmcp import Context
+from enum import Enum
+from typing import Generic, TypeVar
 
 from ..models import (
-    ResolveObject,
-    ProjectInfo,
-    MediaPool,
-    Timeline,
-    RenderQueue,
-    ColorGrade,
     AudioMixer,
+    ColorGrade,
+    MediaPool,
+    ProjectInfo,
+    RenderQueue,
+    ResolveObject,
+    Timeline,
 )
 from ..server import app
 
@@ -43,9 +40,9 @@ class HelpContent(Generic[T]):
 
     name: str
     description: str
-    content: Dict[UserLevel, str] = field(default_factory=dict)
-    examples: Dict[UserLevel, List[str]] = field(default_factory=dict)
-    related: List[str] = field(default_factory=list)
+    content: dict[UserLevel, str] = field(default_factory=dict)
+    examples: dict[UserLevel, list[str]] = field(default_factory=dict)
+    related: list[str] = field(default_factory=list)
 
     def add_content(self, level: UserLevel, content: str) -> "HelpContent":
         """Add content for a specific user level."""
@@ -81,10 +78,10 @@ class HelpTool:
             user_level: The default user level for help content.
         """
         self.user_level = user_level
-        self._help_content: Dict[str, HelpContent] = {}
+        self._help_content: dict[str, HelpContent] = {}
         self._load_builtin_help()
 
-    def set_user_level(self, level: Union[UserLevel, str]) -> None:
+    def set_user_level(self, level: UserLevel | str) -> None:
         """
         Set the user level for help content.
 
@@ -131,7 +128,7 @@ class HelpTool:
 
         # Add more common tasks...
 
-    def _add_class_help(self, cls: Type, description: str) -> None:
+    def _add_class_help(self, cls: type, description: str) -> None:
         """Add help content for a class."""
         class_name = cls.__name__
         docstring = inspect.getdoc(cls) or ""
@@ -167,9 +164,9 @@ class HelpTool:
         self,
         name: str,
         description: str,
-        content: Dict[UserLevel, str],
-        examples: Dict[UserLevel, List[str]],
-        related: List[str],
+        content: dict[UserLevel, str],
+        examples: dict[UserLevel, list[str]],
+        related: list[str],
     ) -> None:
         """Add help content for a specific task."""
         help_content = HelpContent(
@@ -177,7 +174,7 @@ class HelpTool:
         )
         self._help_content[name.lower()] = help_content
 
-    def get_help(self, topic: Optional[str] = None, level: Optional[UserLevel] = None) -> str:
+    def get_help(self, topic: str | None = None, level: UserLevel | None = None) -> str:
         """
         Get help for a specific topic or general help if no topic is provided.
 
@@ -308,7 +305,7 @@ To change the user level, use 'set_user_level("beginner"|"intermediate"|"advance
 
         return help_text
 
-    def __call__(self, topic: Optional[str] = None) -> str:
+    def __call__(self, topic: str | None = None) -> str:
         """Make the help tool callable as help(topic)."""
         return self.get_help(topic)
 
@@ -321,7 +318,7 @@ To change the user level, use 'set_user_level("beginner"|"intermediate"|"advance
 help = HelpTool()
 
 
-def get_help(topic: Optional[str] = None, level: Optional[Union[UserLevel, str]] = None) -> str:
+def get_help(topic: str | None = None, level: UserLevel | str | None = None) -> str:
     """
     Get help for a topic at a specific user level.
 
@@ -342,7 +339,7 @@ def get_help(topic: Optional[str] = None, level: Optional[Union[UserLevel, str]]
 
 
 @app.tool()
-async def resolve_help(topic: Optional[str] = None, level: str = "intermediate") -> str:
+async def resolve_help(topic: str | None = None, level: str = "intermediate") -> str:
     """
     Get help and documentation for the DaVinci Resolve MCP.
 

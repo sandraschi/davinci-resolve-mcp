@@ -3,8 +3,9 @@ DaVinci Resolve Audio Portmanteau Tool.
 
 Consolidates audio operations into a single tool.
 """
+
 import logging
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 logger = logging.getLogger(__name__)
 
@@ -15,18 +16,18 @@ def setup_audio_portmanteau(app):
     @app.tool()
     async def resolve_audio(
         action: Literal["get_tracks", "add_effect", "adjust_levels", "normalize"],
-        timeline_name: Optional[str] = None,
+        timeline_name: str | None = None,
         track_index: int = 1,
         effect_type: str = "eq",
-        preset: Optional[str] = None,
-        parameters: Optional[Dict[str, Any]] = None,
-        volume: Optional[float] = None,
-        pan: Optional[float] = None,
-        mute: Optional[bool] = None,
-        solo: Optional[bool] = None,
+        preset: str | None = None,
+        parameters: dict[str, Any] | None = None,
+        volume: float | None = None,
+        pan: float | None = None,
+        mute: bool | None = None,
+        solo: bool | None = None,
         target_level: float = -23.0,
-        track_indices: Optional[List[int]] = None,
-    ) -> Dict[str, Any]:
+        track_indices: list[int] | None = None,
+    ) -> dict[str, Any]:
         """
         Comprehensive audio processing for DaVinci Resolve.
 
@@ -72,11 +73,19 @@ def setup_audio_portmanteau(app):
             resolve_audio("normalize", track_indices=[1, 2, 3])
         """
         from ..audio_tools import (
-            get_audio_tracks_impl as get_audio_tracks,
-            add_audio_effect_impl as add_audio_effect,
-            adjust_audio_levels_impl as adjust_audio_levels,
-            normalize_audio_impl as normalize_audio,
             AudioEffectType,
+        )
+        from ..audio_tools import (
+            add_audio_effect_impl as add_audio_effect,
+        )
+        from ..audio_tools import (
+            adjust_audio_levels_impl as adjust_audio_levels,
+        )
+        from ..audio_tools import (
+            get_audio_tracks_impl as get_audio_tracks,
+        )
+        from ..audio_tools import (
+            normalize_audio_impl as normalize_audio,
         )
 
         # Map effect_type string to enum
@@ -112,4 +121,3 @@ def setup_audio_portmanteau(app):
             return {"status": "error", "message": f"Unknown action: {action}"}
 
     logger.info("Registered resolve_audio portmanteau tool")
-
