@@ -1,63 +1,22 @@
-# Central Documentation Rules
+# DaVinci Resolve MCP — Cursor rules
 
-## Rule #1: Read Central Docs First
+## Central documentation (read first)
 
-**BEFORE making any changes or starting work, ALWAYS:**
+Fleet **2026** standards live in **MCP Central Docs** (local clone):
 
-1. **Read the Central Documentation README:**
-   - Location: `D:\Dev\repos\mcp-central-docs\README.md`
-   - This shows all important documentation "branches" (folder trees)
-   - Navigate from there to find specific information
+`D:\Dev\repos\mcp-central-docs\`
 
-2. **Follow Documentation Branches:**
-   - Central docs are organized by topic (Anthropic ecosystem, Google ecosystem, patterns, projects, etc.)
-   - Each branch has its own README explaining what's inside
-   - Use the branch structure to find relevant docs
+**Hub:** `standards\AGENT_PROTOCOLS.md` — links to all modular standards.
 
-3. **Check for Existing Patterns:**
-   - Look in `docs/patterns/` for design patterns
-   - Check `templates/` for reusable templates
-   - Review `docs/projects/` for similar project examples
+**Most relevant for this repo:**
 
-4. **Avoid Duplication:**
-   - Search existing docs before creating new ones
-   - Update existing docs rather than creating duplicates
-   - Reference central docs instead of copying content
+- `standards\SOTA_REQUIREMENTS.md` — FastMCP **3.1+** (prompts, resources, `ctx.sample()`, skills provider)
+- `standards\TOOL_DESIGN_STANDARDS.md` — portmanteau tools, docstrings, args
+- `standards\WEBAPP_STANDARDS.md` — dashboard rules; ports **10700–10800**; this project **10842** / **10843**
+- `operations\WEBAPP_PORTS.md` — port registry
+- `standards\PACKAGING_STANDARDS.md` — uv, justfile, `llms.txt` + `llms-full.txt`, glama, MCPB
+- `standards\CODE_QUALITY_STANDARDS.md` — Ruff, pre-commit, optional `ty`
 
----
+## Shell (Windows)
 
-## Documentation Branches (from Central README)
-
-### Core Standards
-- `STANDARDS.md` - Documentation quality standards
-- `STRUCTURE.md` - Directory layout guide
-- `CONTRIBUTING.md` - How to contribute
-
-### Anthropic Ecosystem (`docs/anthropic-ecosystem/`)
-- MCP Protocol, FastMCP, MCPB, Claude Desktop, Glama
-
-### Google Ecosystem (`docs/google-ecosystem/`)
-- Gemini 3, Antigravity IDE, Nano Banana Pro, DeepMind, TPU infrastructure
-
-### Patterns (`docs/patterns/`)
-- Design patterns for MCP servers and development
-
-### Projects (`docs/projects/`)
-- myai, veogen, mywienerlinien, autohotkey
-
-### Monitoring (`monitoring/`)
-- Prometheus/Grafana/Loki stack
-
-### Templates (`templates/`)
-- Reusable templates and scripts
-
----
-
-## Quick Reference
-
-**Central Docs Location:** `D:\Dev\repos\mcp-central-docs\`
-
-**Start Here:** `D:\Dev\repos\mcp-central-docs\README.md`
-
-**When in doubt:** Read the central README and navigate from there.
-
+PowerShell: use `;` to chain commands; avoid bash-only syntax in scripts.

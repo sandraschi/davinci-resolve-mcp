@@ -1,7 +1,7 @@
 """
 DaVinci Resolve MCP Portmanteau Tools.
 
-Consolidated tool interfaces following FastMCP 2.13+ best practices.
+Consolidated tool interfaces (fleet: TOOL_DESIGN_STANDARDS.md, FastMCP 3.1+).
 Reduces 26 individual tools to 7 portmanteau tools.
 """
 

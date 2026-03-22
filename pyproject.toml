@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "davinci-resolve-mcp"
 version = "0.1.0"
-description = "FastMCP server for professional video editing using DaVinci Resolve"
+description = "FastMCP 3.1+ MCP server for DaVinci Resolve (fleet standards: mcp-central-docs)"
 readme = "README.md"
 authors = [
     {name = "Sandra Schieder", email = "sandra@sandraschi.dev"},

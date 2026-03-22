@@ -1,9 +1,8 @@
 """
-DaVinci Resolve MCP - FastMCP 2.14.3 Server
+DaVinci Resolve MCP — FastMCP 3.1+ server.
 
-This module implements the FastMCP server for DaVinci Resolve integration.
-
-Status: Production Ready - Actively maintained, SOTA features
+Implements the MCP server for DaVinci Resolve. Fleet standards: MCP Central Docs
+(`standards/AGENT_PROTOCOLS.md`, `standards/SOTA_REQUIREMENTS.md`).
 """
 
 import collections
@@ -104,9 +103,9 @@ class AppState:
 # Server lifespan for startup/shutdown lifecycle
 @asynccontextmanager
 async def server_lifespan(app: FastMCP):
-    """Server lifespan context manager for FastMCP 2.14.3+."""
+    """Server lifespan context manager for FastMCP 3.1+."""
     # Startup
-    logger.info("Starting DaVinci Resolve MCP Server", version="0.1.0", fastmcp_version="2.14.5")
+    logger.info("Starting DaVinci Resolve MCP Server", version="0.1.0", fastmcp_version="3.1+")
     try:
         yield
     finally:
@@ -114,76 +113,50 @@ async def server_lifespan(app: FastMCP):
         logger.info("Shutting down DaVinci Resolve MCP Server")
 
 
-# Initialize the FastMCP 2.14.5 app with conversational features
+# Initialize the FastMCP 3.1+ app (see MCP Central Docs: standards/SOTA_REQUIREMENTS.md)
 app = FastMCP(
     "DaVinci Resolve MCP",
-    instructions="""You are DaVinci Resolve MCP, a comprehensive FastMCP 2.14.5 server for professional video editing automation using DaVinci Resolve.
+    instructions="""You are DaVinci Resolve MCP, a FastMCP 3.1+ server for DaVinci Resolve automation via the Model Context Protocol.
 
-FASTMCP 2.14.5 FEATURES:
-- Conversational tool returns for natural AI interaction
-- Sampling capabilities for agentic workflows and complex video editing operations
-- Portmanteau design preventing tool explosion while maintaining full functionality
+FASTMCP 3.1+ (fleet 2026 alignment):
+- Tools: portmanteau resolve_* tools with operation parameters; structured dict responses
+- Sampling: use Context.sample() / agentic tools when the host supports MCP sampling (see SOTA_REQUIREMENTS.md §2)
+- Prompts & skills: register when exposed; clients may list MCP prompts and skill:// resources per WEBAPP_STANDARDS / packaging docs
 
 CORE CAPABILITIES:
-- Project Management: Create, open, list projects with professional settings
-- Media Operations: Import media, organize folders, search and manage media pool
-- Timeline Editing: Create timelines, add clips, perform cuts and edits
-- Color Grading: Apply LUTs, adjust primary/secondary corrections, create color nodes
-- Rendering: Queue render jobs, batch render, monitor progress, export timelines
-- Audio Processing: Adjust levels, apply effects, sync audio, export audio tracks
-- Fairlight (DAW): resolve_fairlight(operation=...) for open_page, get_tracks, set_mute, set_solo, set_volume
-- System Utilities: Get system info, health checks, help system
-
-CONVERSATIONAL FEATURES:
-- Tools return natural language responses alongside structured data
-- Sampling allows autonomous orchestration of complex editing workflows
-- Agentic capabilities for intelligent video production pipelines
+- Project: create, open, list projects
+- Media: import, folders, media pool search
+- Timeline: timelines, clips, edits
+- Color: LUTs, primaries/secondaries, nodes
+- Render: queue jobs, monitor, export
+- Audio: levels, effects, sync
+- Fairlight: resolve_fairlight(operation=open_page|get_tracks|set_mute|set_solo|set_volume, ...)
+- System: resolve_system, health, help
 
 RESPONSE FORMAT:
-- All tools return dictionaries with 'success' boolean and 'message' for conversational responses
-- Error responses include 'error' field with descriptive message
-- Success responses include relevant data fields and natural language summaries
+- Prefer dicts with success, message, and task-specific fields; errors include error when applicable
 
 PORTMANTEAU DESIGN:
-Tools are consolidated into logical groups (8 portmanteau tools). Each handles multiple related operations via an 'operation' (or 'action') parameter. resolve_fairlight covers Fairlight page and timeline audio (mute, solo, volume).
-
-USAGE PATTERNS:
-1. Project Setup: Use resolve_project(operation="create") to create projects, resolve_project(operation="open") to open existing ones
-2. Media Management: Use resolve_media(operation="import") to import files, resolve_media(operation="list") to browse media pool
-3. Timeline Editing: Use resolve_timeline(operation="create") to create timelines, resolve_timeline(operation="add_clip") to add clips
-4. Color Grading: Use resolve_color(operation="apply_lut") for LUTs, resolve_color(operation="adjust_primary") for corrections
-5. Rendering: Use resolve_render(operation="timeline") to queue renders, resolve_render(operation="job_status") to check progress
-6. Audio: Use resolve_audio(operation="adjust_levels") for mixing, resolve_audio(operation="add_effect") for processing
-7. Fairlight: Use resolve_fairlight(operation="open_page") to switch to Fairlight page; resolve_fairlight(operation="get_tracks") for timeline audio; set_mute, set_solo, set_volume for track control
-
-ERROR HANDLING:
-- Connection errors provide DaVinci Resolve startup instructions
-- Operation errors specify what failed and how to fix it
-- API errors include troubleshooting steps
-- Direct communication: Clear, actionable feedback
+Eight consolidated tools (resolve_project, resolve_media, resolve_timeline, resolve_color, resolve_render, resolve_audio, resolve_system, resolve_fairlight; plus resolve_help where registered). Each uses an operation (or action) parameter.
 
 TOOL MODES:
-- Portmanteau mode (default): 7 consolidated tools with operation parameters
-- Individual mode: 26 individual tools (set RESOLVE_TOOL_MODE=individual)
+- Portmanteau (default): RESOLVE_TOOL_MODE=portmanteau
+- Individual: RESOLVE_TOOL_MODE=individual (legacy 26-tool surface)
 
-PROFESSIONAL WORKFLOWS:
-- Supports 4K, 8K, HDR workflows
-- Professional color spaces (Rec.709, Rec.2020, P3)
-- Frame-accurate editing and color grading
-- Batch processing for efficiency
-- Multi-format rendering and export""",
+RESOLUTION / COLOR:
+- 4K/8K/HDR and common color spaces (Rec.709, Rec.2020, P3) where Resolve exposes them""",
     lifespan=server_lifespan,
 )
 
 # Initialize application state
 app.state = AppState()
 
-# Initialize FastAPI app for the SOTA web UI
+# Initialize FastAPI app for the web dashboard (ports 10842/10843 per WEBAPP_PORTS.md)
 from .api.routes import router as api_router
 
 api_app = FastAPI(
     title="DaVinci Resolve MCP API",
-    description="API for the DaVinci Resolve SOTA WebApp",
+    description="HTTP API for the DaVinci Resolve MCP web dashboard (FastMCP 3.1+ stack).",
     version="1.0.0",
 )
 
@@ -402,7 +375,7 @@ def start_server(
     host: str | None = None, port: int | None = None, debug: bool | None = None
 ) -> None:
     """
-    Start the HTTP API server (api_app) for the SOTA webapp.
+    Start the HTTP API server (api_app) for the web dashboard.
 
     Args:
         host: Host to bind the server to (default: from config or "0.0.0.0")

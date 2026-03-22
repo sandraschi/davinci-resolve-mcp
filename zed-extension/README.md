@@ -1,12 +1,12 @@
 # DaVinci Resolve MCP - Zed Extension
 
-Professional AI-powered video editing automation for DaVinci Resolve, integrated as a Zed extension.
+DaVinci Resolve MCP packaged as a Zed extension: control Resolve from the editor via MCP.
 
 ## Features
 
 - **Natural Language Control**: Control DaVinci Resolve through conversational AI commands
-- **FastMCP 2.14.3**: Latest MCP protocol with conversational tools and sampling capabilities
-- **Portmanteau Design**: 7 consolidated tools preventing explosion while maintaining full functionality
+- **FastMCP 3.1+**: MCP tools; sampling where the client supports it (see mcp-central-docs `standards/SOTA_REQUIREMENTS.md`)
+- **Portmanteau tools**: Seven consolidated tools grouped by editing area
 - **Agentic Workflows**: SEP-1577 sampling for autonomous orchestration of complex editing tasks
 
 ## Installation
@@ -21,11 +21,11 @@ Professional AI-powered video editing automation for DaVinci Resolve, integrated
 
 - **DaVinci Resolve**: Version 18.0 or later
 - **Python**: 3.8 or later
-- **Zed**: Latest version with MCP support
+- **Zed**: Build with MCP support enabled
 
 ## Usage
 
-Once installed, the extension provides AI-powered assistance for:
+Once installed, the extension exposes MCP tools for:
 
 - **Project Management**: Create, open, and manage DaVinci Resolve projects
 - **Media Operations**: Import, organize, and search media in the media pool
@@ -43,7 +43,7 @@ Once installed, the extension provides AI-powered assistance for:
 
 ## Configuration
 
-The extension automatically detects DaVinci Resolve installations and configures the connection. For advanced configuration, see the main project documentation.
+The extension tries to detect DaVinci Resolve and wire the server. For extra options, see the main project documentation.
 
 ## Troubleshooting
 
