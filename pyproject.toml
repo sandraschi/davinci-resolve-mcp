@@ -8,7 +8,7 @@ version = "0.1.0"
 description = "FastMCP 3.1+ MCP server for DaVinci Resolve (fleet standards: mcp-central-docs)"
 readme = "README.md"
 authors = [
-    {name = "Sandra Schieder", email = "sandra@sandraschi.dev"},
+    {name = "sandraschi", email = "sandra@sandraschi.dev"},
 ]
 requires-python = ">=3.12"
 classifiers = [
@@ -34,6 +34,8 @@ classifiers = [
 dependencies = [
     # Core dependencies
     "fastmcp>=3.1.0,<4",
+    "typer>=0.12.0",
+    "rich>=13.7.0",
     "structlog>=23.0.0",
     "fastapi>=0.95.0",
     "uvicorn[standard]>=0.22.0",

@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "DaVinci Resolve MCP server for AI-assisted video editing",
   "author": {
-    "name": "Sandra Schieder"
+    "name": "sandraschi"
   },
   "license": "MIT",
   "server": {

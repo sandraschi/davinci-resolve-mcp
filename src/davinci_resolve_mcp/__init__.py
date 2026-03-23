@@ -23,12 +23,12 @@ Getting Started:
     >>> help("Project")  # Get help on a specific topic
     >>> get_help("create_project", level="beginner")  # Get help at a specific level
 
-Author: Sandra Schieder
+Author: sandraschi
 License: MIT
 """
 
 __version__ = "0.1.0"
-__author__ = "Sandra Schieder"
+__author__ = "sandraschi"
 __email__ = "sandra@sandraschi.dev"
 
 from .tools import UserLevel, get_help

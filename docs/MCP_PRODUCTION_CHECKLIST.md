@@ -95,7 +95,7 @@ Use this checklist to audit any MCP server repo before marking it production-rea
 **Completed:** 56 / 60
 **Coverage:** 93%
 
-**Auditor:** Sandra Schieder
+**Auditor:** sandraschi
 **Date:** 2025-01-24
 **Repo:** davinci-resolve-mcp
 **Status:** ⬜ In Progress | ⬜ Ready for Review | ✅ Production Ready

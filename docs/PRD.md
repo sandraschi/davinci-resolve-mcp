@@ -3,7 +3,7 @@
 
 **Version:** 0.2.0  
 **Date:** January 17, 2026  
-**Author:** Sandra Schieder  
+**Author:** sandraschi  
 **Status:** Production Ready  
 
 ---
@@ -654,4 +654,4 @@ The focus on conversational interfaces, agentic workflows, and developer experie
 **Document Version:** 0.2.0  
 **Last Updated:** January 17, 2026  
 **Next Review:** March 1, 2026  
-**Document Owner:** Sandra Schieder
+**Document Owner:** sandraschi

@@ -1,7 +1,7 @@
 # DaVinci Resolve MCP - Product Requirements Document (PRD)
 **Version:** 1.0  
 **Date:** 2025-08-13  
-**Product Manager:** Sandra Schieder  
+**Product Manager:** sandraschi  
 **Status:** ACTIVE DEVELOPMENT - 75% COMPLETE
 
 ---
@@ -731,4 +731,4 @@ Establish DaVinci Resolve MCP as the foundation for AI-powered video production,
 ---
 
 *PRD prepared for DaVinci Resolve MCP - The Future of Video Editing*  
-*Product Manager: Sandra Schieder | Target Launch: August 2025*
+*Product Manager: sandraschi | Target Launch: August 2025*

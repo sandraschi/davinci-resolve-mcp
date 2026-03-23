@@ -5496,7 +5496,7 @@ version = "0.1.0"
 description = "FastMCP server for professional video editing using DaVinci Resolve"
 readme = "README.md"
 authors = [
-    {name = "Sandra Schieder", email = "sandra@sandraschi.dev"},
+    {name = "sandraschi", email = "sandra@sandraschi.dev"},
 ]
 requires-python = ">=3.12"
 classifiers = [
@@ -6265,7 +6265,7 @@ Source: LICENSE
 ```
 MIT License
 
-Copyright (c) 2025 Sandra Schieder
+Copyright (c) 2025 sandraschi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
