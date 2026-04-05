@@ -66,6 +66,11 @@ if (-not $BackendStarted) {
     Write-Host "WARNING: Backend did not respond at $ApiHealth within ${MaxWaitSec}s. Frontend may see proxy errors."
 }
 
-Write-Host "Starting Vite frontend on port $FrontendPort ..."
+# 4b. Launch background task to open browser once frontend is ready (Auto-opened by Antigravity)
+$frontendUrl = "http://127.0.0.1:$FrontendPort/"
+$pollAndOpen = "for (`$i = 0; `$i -lt 60; `$i++) { try { `$null = Invoke-WebRequest -Uri '$frontendUrl' -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop; Start-Process '$frontendUrl'; exit } catch { Start-Sleep -Seconds 1 } }"
+Start-Process powershell -ArgumentList "-NoProfile", "-WindowStyle", "Hidden", "-Command", $pollAndOpen
+
+Write-Host "Browser will open automatically when Vite is ready." -ForegroundColor Gray
 Set-Location $WebSotaRoot
 npm run dev

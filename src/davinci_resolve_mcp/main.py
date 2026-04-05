@@ -7,6 +7,8 @@ This module provides the command-line interface for the DaVinci Resolve MCP serv
 
 import logging
 import sys
+from contextlib import contextmanager
+from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -35,6 +37,43 @@ app = typer.Typer(
 
 # Global console instance for consistent output
 console = Console()
+
+
+@contextmanager
+def _stdio_single_instance_lock():
+    """Guard stdio mode with a process lock on Windows (opt-out via env)."""
+    import os
+
+    if os.getenv("DAVINCI_MCP_STDIN_SINGLE_INSTANCE", "1") != "1":
+        yield
+        return
+
+    lock_path = Path.home() / ".davinci-resolve-mcp" / "mcp-stdio.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if os.name == "nt":
+        import msvcrt
+
+        lock_file = open(lock_path, "a+b")
+        try:
+            msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+        except OSError:
+            lock_file.close()
+            console.print(
+                f"Another davinci-resolve-mcp stdio instance is active (lock: {lock_path}).",
+                style="yellow",
+            )
+            raise typer.Exit(1)
+        try:
+            yield
+        finally:
+            try:
+                lock_file.seek(0)
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
+            finally:
+                lock_file.close()
+    else:
+        yield
 
 
 def version_callback(value: bool):
@@ -147,7 +186,8 @@ def mcp():
         stdio=True, http=False, sse=False, host=None, port=None, path=None, debug=False
     )
     try:
-        run_server(mcp_app, args=_stdio_args, server_name="davinci-resolve-mcp")
+        with _stdio_single_instance_lock():
+            run_server(mcp_app, args=_stdio_args, server_name="davinci-resolve-mcp")
     except KeyboardInterrupt:
         mcp_logger.info("MCP server stopped by user")
     except Exception as e:
