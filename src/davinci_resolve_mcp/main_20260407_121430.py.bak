@@ -3,12 +3,6 @@
 DaVinci Resolve MCP - CLI Entry Point
 
 This module provides the command-line interface for the DaVinci Resolve MCP server.
-
-Logging rules:
-- mcp() command: structlog → stderr only. No console.print, no print(). stdout is
-  reserved for JSON-RPC. Logging output appears in the Claude Desktop MCP server log.
-- start/check/web commands: interactive CLI, console.print() is fine.
-- Module level: NO logging.basicConfig here — each command configures its own handlers.
 """
 
 import logging
@@ -18,50 +12,31 @@ from pathlib import Path
 
 import typer
 from rich.console import Console
+from rich.logging import RichHandler
 
 from .connection.environment import ResolveEnvironment
 from .server import app as mcp_app
 from .server import initialize_server, start_server
 from .transport import run_server
 
-# Logger for this module — no handlers configured here; each command sets them up.
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[RichHandler(rich_tracebacks=True)],
+)
 logger = logging.getLogger("davinci_resolve_mcp")
 
-# Typer app
+# Create Typer app
 app = typer.Typer(
     name="davinci-resolve-mcp",
     help="DaVinci Resolve MCP Server - Control DaVinci Resolve through AI agents",
     add_completion=False,
 )
 
-# Console for interactive CLI commands only (start / check / web).
-# NEVER use this in mcp() — stdout is the JSON-RPC channel.
+# Global console instance for consistent output
 console = Console()
-
-
-def _configure_cli_logging(debug: bool = False) -> None:
-    """Set up Rich logging to stderr for interactive CLI commands."""
-    from rich.logging import RichHandler
-
-    level = logging.DEBUG if debug else logging.INFO
-    logging.basicConfig(
-        level=level,
-        format="%(message)s",
-        datefmt="[%X]",
-        handlers=[RichHandler(rich_tracebacks=True, console=Console(stderr=True))],
-        force=True,
-    )
-    logger.setLevel(level)
-
-
-def _configure_mcp_logging() -> None:
-    """Route all logging to stderr for stdio MCP mode (JSON-RPC owns stdout)."""
-    root = logging.getLogger()
-    root.handlers.clear()
-    handler = logging.StreamHandler(sys.stderr)
-    handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
-    root.addHandler(handler)
-    root.setLevel(logging.INFO)
 
 
 @contextmanager
@@ -84,10 +59,9 @@ def _stdio_single_instance_lock():
             msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
         except OSError:
             lock_file.close()
-            logger.error(
-                "davinci-resolve-mcp stdio already running (lock: %s). "
-                "Close other MCP clients or set DAVINCI_MCP_STDIN_SINGLE_INSTANCE=0.",
-                lock_path,
+            console.print(
+                f"Another davinci-resolve-mcp stdio instance is active (lock: {lock_path}).",
+                style="yellow",
             )
             raise typer.Exit(1)
         try:
@@ -127,8 +101,11 @@ def start(
     ),
 ):
     """Start the DaVinci Resolve MCP server."""
-    _configure_cli_logging(debug)
+    # Set log level based on debug flag
+    log_level = logging.DEBUG if debug else logging.INFO
+    logger.setLevel(log_level)
 
+    # Verify DaVinci Resolve environment
     try:
         console.print("🔍 Verifying DaVinci Resolve environment...")
         env = ResolveEnvironment()
@@ -143,6 +120,7 @@ def start(
             logger.exception("Detailed error:")
         raise typer.Exit(1)
 
+    # Start the server
     console.print(f"🚀 Starting DaVinci Resolve MCP server on {host}:{port}")
     try:
         run_server(mcp_app, server_name="davinci-resolve-mcp")
@@ -157,25 +135,49 @@ def start(
 
 @app.command()
 def mcp():
-    """Run the MCP server in stdio mode for Claude Desktop.
+    """Run the MCP server in stdio mode for Claude Desktop."""
+    # Remove RichHandler - it breaks in MCP stdio (stdout reserved for JSON-RPC)
+    root = logging.getLogger()
+    root.handlers.clear()
+    root.addHandler(logging.StreamHandler(sys.stderr))
 
-    stdout is reserved for JSON-RPC. All logging goes to stderr and appears
-    in the Claude Desktop MCP server log file.
-    """
-    # Must be first — before any other code that might log or print.
-    _configure_mcp_logging()
+    # Import structlog for MCP mode (structured logging to stderr)
+    import structlog
 
-    # Initialize the server (lazy — don't fail if DaVinci Resolve not running).
+    # Configure structlog for MCP mode (JSON to stderr only)
+    structlog.configure(
+        processors=[
+            structlog.stdlib.filter_by_level,
+            structlog.stdlib.add_logger_name,
+            structlog.stdlib.add_log_level,
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.TimeStamper(fmt="iso"),
+            structlog.processors.StackInfoRenderer(),
+            structlog.processors.format_exc_info,
+            structlog.processors.UnicodeDecoder(),
+            structlog.processors.JSONRenderer(),
+        ],
+        context_class=dict,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        cache_logger_on_first_use=True,
+    )
+
+    mcp_logger = structlog.get_logger(__name__)
+
+    # Initialize the server (lazy initialization - don't fail if DaVinci Resolve not running)
     try:
         initialize_server()
-        logger.info("Server initialized successfully")
+        mcp_logger.info("Server initialized successfully")
     except Exception as e:
-        logger.warning(
-            "Server initialization warning: %s — server will start but some tools "
-            "may not work until DaVinci Resolve is available.",
-            e,
+        # Log but don't exit - allow server to start and tools will report errors
+        mcp_logger.warning(
+            "Server initialization warning",
+            error=str(e),
+            message="Server will start but some tools may not work until DaVinci Resolve is available",
         )
 
+    # Run the MCP server in stdio mode.
     # Pass pre-built args to bypass argparse re-parsing sys.argv (which still contains
     # the 'mcp' subcommand as an unrecognized positional arg, causing parse failure).
     import argparse as _argparse
@@ -187,9 +189,9 @@ def mcp():
         with _stdio_single_instance_lock():
             run_server(mcp_app, args=_stdio_args, server_name="davinci-resolve-mcp")
     except KeyboardInterrupt:
-        logger.info("MCP server stopped by user")
+        mcp_logger.info("MCP server stopped by user")
     except Exception as e:
-        logger.error("MCP server error: %s", e)
+        mcp_logger.error("MCP server error", error=str(e))
         sys.exit(1)
 
 
@@ -202,7 +204,6 @@ def web(
     """Start the HTTP API server for the SOTA webapp (Vite proxy targets this port)."""
     import os
 
-    _configure_cli_logging(debug)
     os.environ["HOST"] = host
     os.environ["PORT"] = str(port)
     if debug:
@@ -224,7 +225,6 @@ def web(
 @app.command()
 def check():
     """Check the DaVinci Resolve environment and connection."""
-    _configure_cli_logging()
     console.print("🔍 Checking DaVinci Resolve environment...")
     try:
         env = ResolveEnvironment()
@@ -246,8 +246,6 @@ def check():
             console.print("\n⚠️  [yellow]Warning:[/yellow] DaVinci Resolve is not running.")
             console.print("   Start DaVinci Resolve before using the MCP server.")
 
-    except typer.Exit:
-        raise
     except Exception as e:
         console.print(f"❌ [red]Error:[/red] {str(e)}")
         raise typer.Exit(1)
