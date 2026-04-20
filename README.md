@@ -1,5 +1,7 @@
 # DaVinci Resolve MCP
 
+[![FastMCP Version](https://img.shields.io/badge/FastMCP-3.1.0-blue?style=flat-square&logo=python&logoColor=white)](https://github.com/sandraschi/fastmcp) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![Linted with Biome](https://img.shields.io/badge/Linted_with-Biome-60a5fa?style=flat-square&logo=biome&logoColor=white)](https://biomejs.dev/) [![Built with Just](https://img.shields.io/badge/Built_with-Just-000000?style=flat-square&logo=gnu-bash&logoColor=white)](https://github.com/casey/just)
+
 [![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/sandraschi/davinci-resolve-mcp)
 [![FastMCP](https://img.shields.io/badge/FastMCP-3.1+-green.svg)](https://github.com/jlowin/fastmcp)
 [![DaVinci Resolve](https://img.shields.io/badge/DaVinci%20Resolve-18+-red.svg)](https://www.blackmagicdesign.com/products/davinciresolve)
@@ -14,7 +16,7 @@
 
 <p align="center">
   <strong>Drive DaVinci Resolve from your AI assistant</strong><br/>
-  <sub>Model Context Protocol (MCP)  FastMCP 3.1+  Blackmagic scripting API</sub>
+  <sub>Model Context Protocol (MCP)  FastMCP 3.1.0+  Blackmagic scripting API</sub>
 </p>
 
 ---
@@ -66,9 +68,20 @@ Resolve must be running for most operations. Same-machine scripting is the norma
 | **[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)** | Tests, Ruff, builds, contributing |
 | **[docs/README.md](docs/README.md)** | Index of all of the above |
 
-Fleet **2026** conventions (ports, FastMCP 3.1, packaging) are defined in **[mcp-central-docs](https://github.com/sandraschi/mcp-central-docs)**start at [`standards/AGENT_PROTOCOLS.md`](https://github.com/sandraschi/mcp-central-docs/blob/master/standards/AGENT_PROTOCOLS.md). A compact mapping table lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#fleet-standards-2026).
+Fleet **2026** conventions (ports, FastMCP 3.1.0, packaging) are defined in **[mcp-central-docs](https://github.com/sandraschi/mcp-central-docs)**start at [`standards/AGENT_PROTOCOLS.md`](https://github.com/sandraschi/mcp-central-docs/blob/master/standards/AGENT_PROTOCOLS.md). A compact mapping table lives in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md#fleet-standards-2026).
 
 ---
+
+
+## 🛡️ Industrial Quality Stack
+
+This project adheres to **SOTA 14.1** industrial standards for high-fidelity agentic orchestration:
+
+- **Python (Core)**: [Ruff](https://astral.sh/ruff) for linting and formatting. Zero-tolerance for `print` statements in core handlers (`T201`).
+- **Webapp (UI)**: [Biome](https://biomejs.dev/) for sub-millisecond linting. Strict `noConsoleLog` enforcement.
+- **Protocol Compliance**: Hardened `stdout/stderr` isolation to ensure crash-resistant JSON-RPC communication.
+- **Automation**: [Justfile](./justfile) recipes for all fleet operations (`just lint`, `just fix`, `just dev`).
+- **Security**: Automated audits via `bandit` and `safety`.
 
 ## License
 
