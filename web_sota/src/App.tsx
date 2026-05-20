@@ -11,6 +11,7 @@ import { Timeline } from '@/pages/timeline';
 import { Render } from '@/pages/render';
 import { Fairlight } from '@/pages/fairlight';
 import { Help } from '@/pages/help';
+import { Workflows } from '@/pages/workflows';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/timeline" element={<Timeline />} />
           <Route path="/render" element={<Render />} />
           <Route path="/fairlight" element={<Fairlight />} />
+          <Route path="/workflows" element={<Workflows />} />
           <Route path="/tools" element={<Tools />} />
           <Route path="/actions" element={<Actions />} />
           <Route path="/logs" element={<Logs />} />

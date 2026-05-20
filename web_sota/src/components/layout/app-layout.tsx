@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Sidebar } from './sidebar';
 import { Topbar } from './topbar';
+import { ResolveBanner } from './resolve-banner';
 // import { Toaster } from '@/components/ui/toaster';
 
 interface AppLayoutProps {
@@ -30,6 +31,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                     <Topbar />
                     <main className="flex-1 overflow-y-auto p-6 scroll-smooth">
                         <div className="mx-auto max-w-7xl animate-in fade-in duration-500">
+                            <div className="mb-4">
+                                <ResolveBanner />
+                            </div>
                             {children}
                         </div>
                     </main>

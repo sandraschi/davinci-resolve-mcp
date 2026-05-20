@@ -9,7 +9,7 @@ error conditions in the DaVinci Resolve MCP server.
 class DaVinciResolveMCPError(Exception):
     """Base exception for all DaVinci Resolve MCP errors."""
 
-    def __init__(self, message: str, recovery_action: str = None):
+    def __init__(self, message: str, recovery_action: str | None = None):
         """
         Initialize the exception.
 
@@ -87,7 +87,7 @@ class MediaPoolError(DaVinciResolveMCPError):
 class MediaImportError(MediaPoolError):
     """Exception raised when media import fails."""
 
-    def __init__(self, file_path: str, reason: str = None):
+    def __init__(self, file_path: str, reason: str | None = None):
         message = f"Failed to import media: {file_path}"
         if reason:
             message += f" - {reason}"
@@ -158,7 +158,7 @@ class EnvironmentError(DaVinciResolveMCPError):
 class ValidationError(DaVinciResolveMCPError):
     """Exception raised when input validation fails."""
 
-    def __init__(self, field: str, value: any, reason: str = None):
+    def __init__(self, field: str, value: any, reason: str | None = None):
         message = f"Invalid value for {field}: {value}"
         if reason:
             message += f" - {reason}"
@@ -188,7 +188,7 @@ class InsufficientPermissionsError(DaVinciResolveMCPError):
 class UnsupportedFormatError(DaVinciResolveMCPError):
     """Exception raised when file format is not supported."""
 
-    def __init__(self, file_path: str, format_type: str = None):
+    def __init__(self, file_path: str, format_type: str | None = None):
         message = f"Unsupported format: {file_path}"
         if format_type:
             message += f" (detected as {format_type})"

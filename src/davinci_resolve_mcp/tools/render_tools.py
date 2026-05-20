@@ -227,8 +227,8 @@ async def render_timeline_impl(
         }
 
     except Exception as e:
-        logger.error(f"Error rendering timeline: {str(e)}")
-        raise ResolveOperationError(f"Failed to render timeline: {str(e)}")
+        logger.error(f"Error rendering timeline: {e!s}")
+        raise ResolveOperationError(f"Failed to render timeline: {e!s}")
 
 
 async def get_render_presets_impl(app) -> dict[str, Any]:
@@ -264,8 +264,8 @@ async def get_render_presets_impl(app) -> dict[str, Any]:
         return {"status": "success", "presets": preset_list, "count": len(preset_list)}
 
     except Exception as e:
-        logger.error(f"Error getting render presets: {str(e)}")
-        raise ResolveOperationError(f"Failed to get render presets: {str(e)}")
+        logger.error(f"Error getting render presets: {e!s}")
+        raise ResolveOperationError(f"Failed to get render presets: {e!s}")
 
 
 async def render_with_preset_impl(
@@ -323,8 +323,8 @@ async def render_with_preset_impl(
         }
 
     except Exception as e:
-        logger.error(f"Error rendering with preset: {str(e)}")
-        raise ResolveOperationError(f"Failed to render with preset: {str(e)}")
+        logger.error(f"Error rendering with preset: {e!s}")
+        raise ResolveOperationError(f"Failed to render with preset: {e!s}")
 
 
 async def get_render_job_status_impl(app, job_id: str) -> dict[str, Any]:
@@ -355,8 +355,8 @@ async def get_render_job_status_impl(app, job_id: str) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error getting render job status: {str(e)}")
-        raise ResolveOperationError(f"Failed to get render job status: {str(e)}")
+        logger.error(f"Error getting render job status: {e!s}")
+        raise ResolveOperationError(f"Failed to get render job status: {e!s}")
 
 
 def register_tools(app):
@@ -510,7 +510,7 @@ def register_tools(app):
                     }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to render timeline: {str(e)}")
+            raise ResolveOperationError(f"Failed to render timeline: {e!s}")
 
     @app.tool()
     async def get_render_presets() -> list[dict[str, Any]]:
@@ -536,7 +536,7 @@ def register_tools(app):
                 return {"status": "success", "presets": presets}
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to get render presets: {str(e)}")
+            raise ResolveOperationError(f"Failed to get render presets: {e!s}")
 
     @app.tool()
     async def render_with_preset(
@@ -641,7 +641,7 @@ def register_tools(app):
                     }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to render with preset: {str(e)}")
+            raise ResolveOperationError(f"Failed to render with preset: {e!s}")
 
     @app.tool()
     async def get_render_job_status(job_id: int) -> dict[str, Any]:
@@ -673,4 +673,4 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to get render job status: {str(e)}")
+            raise ResolveOperationError(f"Failed to get render job status: {e!s}")

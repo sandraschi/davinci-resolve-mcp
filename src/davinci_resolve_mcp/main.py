@@ -138,7 +138,7 @@ def start(
         else:
             console.print("⚠️  DaVinci Resolve not detected - some features may not work")
     except Exception as e:
-        console.print(f"❌ Error: {str(e)}", style="red")
+        console.print(f"❌ Error: {e!s}", style="red")
         if debug:
             logger.exception("Detailed error:")
         raise typer.Exit(1)
@@ -149,7 +149,7 @@ def start(
     except KeyboardInterrupt:
         console.print("\n👋 Shutting down server...")
     except Exception as e:
-        console.print(f"❌ Server error: {str(e)}", style="red")
+        console.print(f"❌ Server error: {e!s}", style="red")
         if debug:
             logger.exception("Detailed error:")
         raise typer.Exit(1)
@@ -217,7 +217,7 @@ def web(
     except KeyboardInterrupt:
         console.print("\nShutting down...")
     except Exception as e:
-        console.print(f"Server error: {str(e)}", style="red")
+        console.print(f"Server error: {e!s}", style="red")
         raise typer.Exit(1)
 
 
@@ -249,8 +249,394 @@ def check():
     except typer.Exit:
         raise
     except Exception as e:
-        console.print(f"❌ [red]Error:[/red] {str(e)}")
+        console.print(f"❌ [red]Error:[/red] {e!s}")
         raise typer.Exit(1)
+
+
+@app.command()
+def run_script(
+    script_path: str = typer.Argument(..., help="Path to Python script to execute"),
+    project_name: str = typer.Option(None, "--project", "-p", help="Project to open before running script"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be executed without running"),
+):
+    """Execute an arbitrary DaVinci Resolve Python script.
+
+    The script receives pre-initialized 'resolve' and 'project' globals.
+    Use this to run custom Resolve automation scripts through the MCP bridge.
+
+    Examples:
+        davinci-resolve-mcp run-script my_export.py
+        davinci-resolve-mcp run-script batch_render.py --project "MyProject"
+    """
+    _configure_cli_logging()
+
+    script_path = Path(script_path).resolve()
+    if not script_path.exists():
+        console.print(f"❌ [red]Script not found:[/red] {script_path}")
+        raise typer.Exit(1)
+
+    if dry_run:
+        console.print(f"Would execute: {script_path}")
+        console.print(f"Project: {project_name or 'current'}")
+        return
+
+    console.print("⚙️  Setting up Resolve scripting environment...")
+    env = ResolveEnvironment()
+    env.setup_environment_variables()
+
+    if not env.check_resolve_running():
+        console.print("❌ [red]DaVinci Resolve is not running. Start it first.[/red]")
+        raise typer.Exit(1)
+
+    try:
+        import DaVinciResolveScript as dvr_script
+    except ImportError as e:
+        console.print(f"❌ [red]Cannot import DaVinciResolveScript: {e}[/red]")
+        raise typer.Exit(1)
+
+    resolve = dvr_script.scriptapp("Resolve")
+    if not resolve:
+        console.print("❌ [red]Failed to connect to DaVinci Resolve[/red]")
+        raise typer.Exit(1)
+
+    project_manager = resolve.GetProjectManager()
+    project = None
+
+    if project_name:
+        project = project_manager.LoadProject(project_name)
+        if not project:
+            console.print(f"⚠️  Project '{project_name}' not found, creating it...")
+            project = project_manager.CreateProject(project_name)
+        if project:
+            console.print(f"✅ Opened project: {project.GetName()}")
+    else:
+        project = project_manager.GetCurrentProject()
+
+    if project:
+        console.print(f"📂 Current project: {project.GetName()}")
+    else:
+        console.print("⚠️  No project open (some scripts may fail)")
+
+    console.print(f"🚀 Executing: {script_path.name}")
+    console.print("─" * 60)
+
+    script_globals = {
+        "resolve": resolve,
+        "project": project,
+        "project_manager": project_manager,
+        "fusion": resolve.Fusion() if resolve else None,
+        "__name__": "__main__",
+    }
+
+    try:
+        script_code = script_path.read_text(encoding="utf-8")
+        exec(compile(script_code, str(script_path), "exec"), script_globals)
+        console.print("─" * 60)
+        console.print("✅ [green]Script completed successfully[/green]")
+    except Exception as e:
+        console.print("─" * 60)
+        console.print(f"❌ [red]Script error:[/red] {e}")
+        logger.exception("Script execution failed")
+        raise typer.Exit(1)
+
+
+@app.command()
+def render(
+    output_path: str = typer.Argument(..., help="Output file or directory path"),
+    timeline_name: str = typer.Option(None, "--timeline", "-t", help="Timeline to render (uses current if omitted)"),
+    project_name: str = typer.Option(None, "--project", "-p", help="Project to open first"),
+    format: str = typer.Option("mp4", "--format", "-f", help="Output format (mp4, mov, mxf, png, exr)"),
+    codec: str = typer.Option("h264", "--codec", "-c", help="Video codec (h264, h265, prores_422_hq, dnxhd_220)"),
+    resolution: str = typer.Option(None, "--resolution", "-r", help="Output resolution WxH (e.g. 1920x1080)"),
+    frame_rate: float = typer.Option(None, "--fps", help="Output frame rate"),
+    custom_name: str = typer.Option(None, "--name", "-n", help="Custom output filename (without extension)"),
+    overwrite: bool = typer.Option(False, "--overwrite", "-y", help="Overwrite existing output file"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show render settings without starting"),
+):
+    """Render a timeline directly from the command line.
+
+    Examples:
+        davinci-resolve-mcp render C:/output/
+        davinci-resolve-mcp render C:/output/ --timeline "My Edit" --format mov --codec prores_422_hq
+        davinci-resolve-mcp render C:/output/out.mp4 -t "Timeline 1" -r 3840x2160
+    """
+    import os as _os
+    import time as _time
+
+    _configure_cli_logging()
+    env = ResolveEnvironment()
+    env.setup_environment_variables()
+
+    output_path = _os.path.abspath(output_path)
+    output_dir = output_path if _os.path.isdir(output_path) else _os.path.dirname(output_path)
+
+    if not env.check_resolve_running():
+        console.print("❌ [red]DaVinci Resolve is not running. Start it first.[/red]")
+        raise typer.Exit(1)
+
+    try:
+        import DaVinciResolveScript as dvr_script
+    except ImportError as e:
+        console.print(f"❌ [red]Cannot import DaVinciResolveScript: {e}[/red]")
+        raise typer.Exit(1)
+
+    resolve = dvr_script.scriptapp("Resolve")
+    if not resolve:
+        console.print("❌ [red]Failed to connect to DaVinci Resolve[/red]")
+        raise typer.Exit(1)
+
+    project_manager = resolve.GetProjectManager()
+    if project_name:
+        project = project_manager.LoadProject(project_name)
+        if not project:
+            console.print(f"❌ [red]Project '{project_name}' not found[/red]")
+            raise typer.Exit(1)
+    else:
+        project = project_manager.GetCurrentProject()
+        if not project:
+            console.print("❌ [red]No project is open[/red]")
+            raise typer.Exit(1)
+
+    console.print(f"📂 Project: {project.GetName()}")
+
+    if timeline_name:
+        timeline = project.GetTimelineByName(timeline_name)
+        if not timeline:
+            console.print(f"❌ [red]Timeline '{timeline_name}' not found[/red]")
+            raise typer.Exit(1)
+    else:
+        timeline = project.GetCurrentTimeline()
+        if not timeline:
+            console.print("❌ [red]No timeline is open[/red]")
+            raise typer.Exit(1)
+
+    console.print(f"🎬 Timeline: {timeline.GetName()}")
+
+    filename = custom_name or timeline.GetName()
+    if not _os.path.isdir(output_path):
+        filename = _os.path.splitext(_os.path.basename(output_path))[0]
+
+    render_settings = {
+        "TargetDir": output_dir,
+        "CustomName": filename,
+        "FormatWidth": 1920,
+        "FormatHeight": 1080,
+        "FrameRate": frame_rate or float(timeline.GetSetting("timelineFrameRate") or "24.0"),
+        "SelectAllFrames": True,
+        "ExportVideo": True,
+        "ExportAudio": True,
+        "VideoQuality": 0,
+        "AudioBitDepth": 16,
+        "AudioSampleRate": 48000,
+        "ColorSpaceTag": "Same as Project",
+        "GammaTag": "Same as Project",
+        "OverwriteExistingFile": overwrite,
+    }
+
+    if resolution and "x" in resolution:
+        w, h = map(int, resolution.lower().split("x"))
+        render_settings["FormatWidth"] = w
+        render_settings["FormatHeight"] = h
+    else:
+        render_settings["FormatWidth"] = int(timeline.GetSetting("timelineResolutionWidth") or 1920)
+        render_settings["FormatHeight"] = int(timeline.GetSetting("timelineResolutionHeight") or 1080)
+
+    fmt = format.lower()
+    if fmt == "mp4":
+        render_settings["Format"] = "mp4"
+        render_settings["VideoCodec"] = codec or "h264"
+        render_settings["AudioCodec"] = "aac"
+    elif fmt == "mov":
+        render_settings["Format"] = "mov"
+        render_settings["VideoCodec"] = codec or "h264"
+        render_settings["AudioCodec"] = "aac"
+    elif fmt in ("png", "exr", "tiff", "jpeg", "dpx"):
+        render_settings["Format"] = fmt
+        render_settings["ExportAudio"] = False
+    else:
+        render_settings["Format"] = fmt
+        render_settings["VideoCodec"] = codec or "h264"
+
+    if dry_run:
+        console.print("⚙️  [yellow]Dry run — render settings:[/yellow]")
+        for k, v in render_settings.items():
+            console.print(f"   {k}: {v}")
+        console.print(f"   Output: {output_dir}/{filename}.{fmt}")
+        return
+
+    console.print(f"🎯 Output: {output_dir}/{filename}.{fmt}")
+    console.print("🚀 Starting render...")
+
+    job_id = project.AddRenderJob()
+    if job_id == -1:
+        console.print("❌ [red]Failed to create render job[/red]")
+        raise typer.Exit(1)
+
+    for key, value in render_settings.items():
+        try:
+            project.SetRenderSettings(key, value)
+        except Exception:
+            pass
+
+    project.SetCurrentRenderFormatAndCodec(render_settings.get("Format", "mp4"), render_settings.get("VideoCodec", "h264"))
+
+    if not project.StartRendering(job_id):
+        console.print("❌ [red]Failed to start rendering[/red]")
+        raise typer.Exit(1)
+
+    console.print("⏳ Rendering...")
+    while project.IsRenderingInProgress():
+        status = project.GetRenderJobStatus(job_id)
+        if status:
+            pct = status.get("Completion", 0.0)
+            console.print(f"   Progress: {pct:.0f}%", end="\r")
+        _time.sleep(1)
+
+    console.print("")
+    status = project.GetRenderJobStatus(job_id)
+    if status and status.get("Status") == "Complete":
+        console.print(f"✅ [green]Render complete: {output_dir}/{filename}.{fmt}[/green]")
+    else:
+        err = (status or {}).get("Status", "Unknown error")
+        console.print(f"❌ [red]Render failed: {err}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def import_media(
+    paths: list[str] = typer.Argument(..., help="File paths to import"),
+    project_name: str = typer.Option(None, "--project", "-p", help="Project to import into"),
+    folder: str = typer.Option(None, "--folder", "-f", help="Target folder in media pool"),
+    as_sequence: bool = typer.Option(False, "--sequence", "-s", help="Import as image sequence"),
+    list_only: bool = typer.Option(False, "--list", "-l", help="List media in pool instead of importing"),
+):
+    """Import media files into a DaVinci Resolve project or list media pool contents.
+
+    Examples:
+        davinci-resolve-mcp import-media C:/clips/scene1.mp4 C:/clips/scene2.mp4
+        davinci-resolve-mcp import-media C:/frames/*.png --sequence
+        davinci-resolve-mcp import-media --list
+    """
+    _configure_cli_logging()
+    env = ResolveEnvironment()
+    env.setup_environment_variables()
+
+    if not env.check_resolve_running():
+        console.print("❌ [red]DaVinci Resolve is not running. Start it first.[/red]")
+        raise typer.Exit(1)
+
+    try:
+        import DaVinciResolveScript as dvr_script
+    except ImportError as e:
+        console.print(f"❌ [red]Cannot import DaVinciResolveScript: {e}[/red]")
+        raise typer.Exit(1)
+
+    resolve = dvr_script.scriptapp("Resolve")
+    if not resolve:
+        console.print("❌ [red]Failed to connect to DaVinci Resolve[/red]")
+        raise typer.Exit(1)
+
+    project_manager = resolve.GetProjectManager()
+    if project_name:
+        project = project_manager.LoadProject(project_name)
+        if not project:
+            console.print(f"❌ [red]Project '{project_name}' not found[/red]")
+            raise typer.Exit(1)
+    else:
+        project = project_manager.GetCurrentProject()
+        if not project:
+            console.print("❌ [red]No project is open[/red]")
+            raise typer.Exit(1)
+
+    console.print(f"📂 Project: {project.GetName()}")
+    media_pool = project.GetMediaPool()
+    if not media_pool:
+        console.print("❌ [red]Could not access media pool[/red]")
+        raise typer.Exit(1)
+
+    if list_only:
+        root = media_pool.GetRootFolder()
+        clips = media_pool.GetClipList(root) or []
+        if not clips:
+            console.print("📭 Media pool is empty")
+            return
+        console.print(f"📋 Media pool contents ({len(clips)} items):")
+        for clip in clips:
+            name = clip.GetName() if hasattr(clip, "GetName") else "?"
+            console.print(f"   • {name}")
+        return
+
+    if folder:
+        # Navigate to or create target folder
+        root = media_pool.GetRootFolder()
+        subfolders = media_pool.GetSubFolders(root) or {}
+        if folder in subfolders:
+            media_pool.SetCurrentFolder(subfolders[folder])
+        else:
+            media_pool.AddSubFolder(root, folder)
+            subfolders = media_pool.GetSubFolders(root) or {}
+            if folder in subfolders:
+                media_pool.SetCurrentFolder(subfolders[folder])
+
+    valid_paths = [p for p in paths if _os.path.exists(p)]
+    if not valid_paths:
+        console.print("❌ [red]No valid files found[/red]")
+        raise typer.Exit(1)
+
+    console.print(f"📥 Importing {len(valid_paths)} file(s)...")
+    clips = media_pool.ImportMedia(valid_paths)
+    if clips:
+        console.print(f"✅ [green]Imported {len(clips)} clip(s)[/green]")
+        for clip in clips:
+            name = clip.GetName() if hasattr(clip, "GetName") else "?"
+            console.print(f"   • {name}")
+    else:
+        console.print("⚠️  Import returned no clips (may have failed)")
+
+
+@app.command()
+def open_project(
+    name: str = typer.Argument(..., help="Project name to open"),
+    create: bool = typer.Option(False, "--create", "-c", help="Create project if it doesn't exist"),
+):
+    """Open (and optionally create) a DaVinci Resolve project directly from CLI.
+
+    Examples:
+        davinci-resolve-mcp open-project "My Edit"
+        davinci-resolve-mcp open-project "New Project" --create
+    """
+    _configure_cli_logging()
+    env = ResolveEnvironment()
+    env.setup_environment_variables()
+
+    if not env.check_resolve_running():
+        console.print("❌ [red]DaVinci Resolve is not running. Start it first.[/red]")
+        raise typer.Exit(1)
+
+    try:
+        import DaVinciResolveScript as dvr_script
+    except ImportError as e:
+        console.print(f"❌ [red]Cannot import DaVinciResolveScript: {e}[/red]")
+        raise typer.Exit(1)
+
+    resolve = dvr_script.scriptapp("Resolve")
+    if not resolve:
+        console.print("❌ [red]Failed to connect to DaVinci Resolve[/red]")
+        raise typer.Exit(1)
+
+    project_manager = resolve.GetProjectManager()
+    project = project_manager.LoadProject(name)
+    if not project:
+        if create:
+            console.print(f"📁 Creating project: {name}")
+            project = project_manager.CreateProject(name)
+            if project:
+                console.print(f"✅ [green]Created and opened: {project.GetName()}[/green]")
+                return
+        console.print(f"❌ [red]Project '{name}' not found. Use --create to create it.[/red]")
+        raise typer.Exit(1)
+
+    console.print(f"✅ [green]Opened project: {project.GetName()}[/green]")
 
 
 def main():

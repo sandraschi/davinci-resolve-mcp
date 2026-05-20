@@ -69,7 +69,7 @@ class ErrorCode(str, Enum):
 class DaVinciResolveMCPError(Exception):
     """Base exception for all DaVinci Resolve MCP errors."""
 
-    def __init__(self, message: str, recovery_action: str = None):
+    def __init__(self, message: str, recovery_action: str | None = None):
         """
         Initialize the exception.
 
@@ -500,7 +500,7 @@ class TimeCode(BaseModel):
     def to_frames(self, frame_rate: float) -> int:
         """Convert timecode to total number of frames."""
         total_seconds = (self.hours * 3600) + (self.minutes * 60) + self.seconds
-        frames = int(round(total_seconds * frame_rate)) + self.frames
+        frames = round(total_seconds * frame_rate) + self.frames
 
         if self.drop_frame and frame_rate in [29.97, 59.94]:
             # Drop frame calculation for 29.97 or 59.94 fps

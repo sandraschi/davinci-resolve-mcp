@@ -9,6 +9,6 @@ from .help_tool import HelpTool, UserLevel, get_help, help
 __all__ = [
     "HelpTool",
     "UserLevel",
-    "help",
     "get_help",
+    "help",
 ]

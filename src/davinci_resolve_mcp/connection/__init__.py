@@ -8,4 +8,4 @@ DaVinci Resolve API connections.
 from .environment import ResolveEnvironment
 from .manager import ResolveConnectionManager, ResolveConnectionPool
 
-__all__ = ["ResolveEnvironment", "ResolveConnectionManager", "ResolveConnectionPool"]
+__all__ = ["ResolveConnectionManager", "ResolveConnectionPool", "ResolveEnvironment"]

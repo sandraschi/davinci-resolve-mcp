@@ -2,7 +2,6 @@
 Build script for Zed extension packaging.
 """
 
-import shutil
 import zipfile
 from pathlib import Path
 

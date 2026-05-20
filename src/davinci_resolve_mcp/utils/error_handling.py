@@ -54,7 +54,7 @@ def handle_errors(func: F) -> Callable[..., Any]:
 
         except Exception as e:
             # Log the full exception with traceback
-            logger.error(f"Error in {func.__name__}: {str(e)}\n{traceback.format_exc()}")
+            logger.error(f"Error in {func.__name__}: {e!s}\n{traceback.format_exc()}")
 
             # Handle the error using the centralized error handler
             return handle_resolve_error(e)
@@ -103,7 +103,7 @@ def handle_resolve_error(exc: Exception) -> dict:
             details={"original_error": str(exc)},
         ).dict()
     else:
-        logger.error(f"Unhandled exception: {str(exc)}\n{traceback.format_exc()}")
+        logger.error(f"Unhandled exception: {exc!s}\n{traceback.format_exc()}")
         return ErrorResponse(
             error_type="unexpected_error",
             message="An unexpected error occurred",

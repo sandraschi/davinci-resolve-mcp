@@ -1,13 +1,14 @@
 # DaVinci Resolve MCP
 
-[![FastMCP Version](https://img.shields.io/badge/FastMCP-3.1.0-blue?style=flat-square&logo=python&logoColor=white)](https://github.com/sandraschi/fastmcp) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff) [![Linted with Biome](https://img.shields.io/badge/Linted_with-Biome-60a5fa?style=flat-square&logo=biome&logoColor=white)](https://biomejs.dev/) [![Built with Just](https://img.shields.io/badge/Built_with-Just-000000?style=flat-square&logo=gnu-bash&logoColor=white)](https://github.com/casey/just)
+<p align="center">
+  <a href="https://github.com/casey/just"><img src="https://img.shields.io/badge/just-ready_to_go-7c5cfc?style=flat-square&logo=just&logoColor=white" alt="Just"></a>
+  <a href="https://github.com/astral-sh/ruff"><img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff"></a>
+  <a href="https://python.org"><img src="https://img.shields.io/badge/Python-3.13+-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python"></a>
+  <a href="https://github.com/PrefectHQ/fastmcp"><img src="https://img.shields.io/badge/FastMCP-3.2-7c5cfc?style=flat-square" alt="FastMCP"></a>
+</p>
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/sandraschi/davinci-resolve-mcp)
-[![FastMCP](https://img.shields.io/badge/FastMCP-3.1+-green.svg)](https://github.com/jlowin/fastmcp)
-[![DaVinci Resolve](https://img.shields.io/badge/DaVinci%20Resolve-18+-red.svg)](https://www.blackmagicdesign.com/products/davinciresolve)
-[![Python](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/)
-[![License](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI/CD](https://github.com/sandraschi/davinci-resolve-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/sandraschi/davinci-resolve-mcp/actions)
+[![Coverage](https://img.shields.io/badge/API_Coverage-~65%25-10B981?style=flat-square)](https://github.com/sandraschi/davinci-resolve-mcp)
 
 > **[DaVinci Resolve](https://www.blackmagicdesign.com/products/davinciresolve)** is Blackmagic Designs post-production suite: editing, Fusion VFX, color grading, Fairlight audio, and delivery in one timeline.  
 > Its used for everything from YouTube cuts to theatrical finish**this repo** automates a running session through Resolves **Python scripting API**, not a separate cloud service.
@@ -41,21 +42,19 @@
 
 ---
 
-## Quick start
+## Quick Start
 
-1. Install **DaVinci Resolve** and enable **external scripting** (local).  
-2. Clone the repo and install with **uv** (see [docs/INSTALL.md](docs/INSTALL.md)).  
-3. Run the MCP server (stdio for IDEs):
+```powershell
+git clone https://github.com/sandraschi/davinci-resolve-mcp
+cd davinci-resolve-mcp
+just
+```
 
-   ```text
-   uv run davinci-resolve-mcp mcp
-   ```
+This opens an interactive dashboard showing all available commands. Run `just bootstrap` to install dependencies, then `just serve` or `just dev` to start.
 
-4. Point your MCP client at that command (examples in [docs/USAGE.md](docs/USAGE.md)).
+### Manual Setup
 
-Resolve must be running for most operations. Same-machine scripting is the normal setupsee [docs/DAVINCI_RESOLVE.md](docs/DAVINCI_RESOLVE.md).
-
----
+If you don't have `just` installed:
 
 ## Documentation
 
@@ -94,4 +93,8 @@ DaVinci Resolve is a trademark of Blackmagic Design. This project is not affilia
 ## Support
 
 - **Issues:** [github.com/sandraschi/davinci-resolve-mcp/issues](https://github.com/sandraschi/davinci-resolve-mcp/issues)  
-- **Docs site (if published):** [sandraschi.github.io/davinci-resolve-mcp](https://sandraschi.github.io/davinci-resolve-mcp)  
+- **Docs site (if published):** [sandraschi.github.io/davinci-resolve-mcp](https://sandraschi.github.io/davinci-resolve-mcp)
+
+## GitHub Topics
+
+`da-vinci-resolve` `mcp-server` `fastmcp` `video-editing` `color-grading` `fairlight` `model-context-protocol` `python` `automation` `video-production` `post-production` `nle` `fusion-vfx` `blackmagic-design` `ai-automation` `mcp` `agentic-workflow` `resolve-api` `cli-tool` `beta`

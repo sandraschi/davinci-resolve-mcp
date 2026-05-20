@@ -248,7 +248,7 @@ def sanitize_filename(filename: str) -> str:
     return name_part + ext_part
 
 
-def create_temp_file(suffix: str = None, prefix: str = "resolve_mcp_") -> Path:
+def create_temp_file(suffix: str | None = None, prefix: str = "resolve_mcp_") -> Path:
     """
     Create a temporary file.
 

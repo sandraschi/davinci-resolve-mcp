@@ -235,6 +235,22 @@ async def run_server_async(
             path = config["path"]
             endpoint = f"http://{host}:{port}{path}"
             logger.info(f"Running in HTTP Streamable mode: {endpoint}")
+
+            # Inject CORS and Health for Antigravity discovery
+            app = mcp_app.http_app()
+            from fastapi.middleware.cors import CORSMiddleware
+            app.add_middleware(
+                CORSMiddleware,
+                allow_origins=["*"],
+                allow_credentials=True,
+                allow_methods=["*"],
+                allow_headers=["*"],
+            )
+
+            @app.get("/health")
+            async def health():
+                return {"status": "ok", "server": server_name}
+
             await mcp_app.run_http_async(host=host, port=port, path=path)
 
         elif transport == "sse":
@@ -242,7 +258,7 @@ async def run_server_async(
             port = config["port"]
             logger.warning("SSE mode is deprecated. Migrate to HTTP Streamable (--http).")
             logger.info(f"Running in SSE mode: http://{host}:{port}")
-            await mcp_app.run_sse_async(host=host, port=port)
+            await mcp_app.run_async(transport='sse', host=host, port=port)
 
     except asyncio.CancelledError:
         logger.info(f"{server_name} task cancelled")
@@ -253,15 +269,15 @@ async def run_server_async(
 
 # Export public API
 __all__ = [
-    "TransportType",
-    "ENV_TRANSPORT",
     "ENV_HOST",
-    "ENV_PORT",
     "ENV_PATH",
-    "get_transport_config",
+    "ENV_PORT",
+    "ENV_TRANSPORT",
+    "TransportType",
     "create_argument_parser",
-    "resolve_transport",
+    "get_transport_config",
     "resolve_config",
+    "resolve_transport",
     "run_server",
     "run_server_async",
 ]

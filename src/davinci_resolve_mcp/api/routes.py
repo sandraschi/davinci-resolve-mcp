@@ -281,3 +281,40 @@ async def fairlight_set_volume(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+# ── Host App Status & Launch ──────────────────────────────────────────
+
+
+@router.get("/host-status")
+async def get_host_status():
+    """Probe if DaVinci Resolve is installed, running, and reachable (4-state lifecycle)."""
+    try:
+        from ..connection.host_app_probe import probe_host_app
+        from ..connection.resolve_probe_config import RESOLVE_PROBE_CONFIG
+
+        status = probe_host_app(**RESOLVE_PROBE_CONFIG)
+        return {
+            "success": True,
+            **status.to_dict(),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.post("/host/launch")
+async def launch_host():
+    """Launch DaVinci Resolve if installed but not running."""
+    try:
+        from ..connection.host_app_probe import launch_app, probe_host_app
+        from ..connection.resolve_probe_config import RESOLVE_PROBE_CONFIG
+
+        status = probe_host_app(**RESOLVE_PROBE_CONFIG)
+        ok, msg = launch_app(status)
+        return {
+            "success": ok,
+            "message": msg,
+            "previous_state": status.state.value,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e

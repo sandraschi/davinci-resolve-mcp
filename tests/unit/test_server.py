@@ -2,13 +2,13 @@
 Tests for the DaVinci Resolve MCP server.
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-
-from fastmcp import FastMCP
 from fastapi.testclient import TestClient
+from fastmcp import FastMCP
 
-from davinci_resolve_mcp.server import app, AppState, initialize_server
+from davinci_resolve_mcp.server import AppState, initialize_server
 
 
 class TestAppState:

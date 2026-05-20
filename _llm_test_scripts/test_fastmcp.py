@@ -1,6 +1,5 @@
-import sys
 import asyncio
-from typing import Dict, Any
+import sys
 
 # Ensure stdout is configured for UTF-8 to handle checkmark/cross symbols
 sys.stdout.reconfigure(encoding='utf-8')
@@ -23,7 +22,7 @@ def test_imports():
 def test_app_creation():
     try:
         from fastmcp import FastMCP
-        app = FastMCP("TestApp", instructions="Test instructions")
+        FastMCP("TestApp", instructions="Test instructions")
         print("PASS: FastMCP app created successfully")
         return True
     except Exception as e:

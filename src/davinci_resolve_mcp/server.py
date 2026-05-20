@@ -17,6 +17,7 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastmcp import FastMCP
+from fastmcp.server import create_proxy
 from pydantic import BaseModel, Field
 
 from .config import DaVinciResolveConfig, load_default
@@ -131,13 +132,14 @@ CORE CAPABILITIES:
 - Render: queue jobs, monitor, export
 - Audio: levels, effects, sync
 - Fairlight: resolve_fairlight(operation=open_page|get_tracks|set_mute|set_solo|set_volume, ...)
+- Subtitles: resolve_subtitle(action=add|get|edit|delete|import_srt|export_srt, ...)
 - System: resolve_system, health, help
 
 RESPONSE FORMAT:
 - Prefer dicts with success, message, and task-specific fields; errors include error when applicable
 
 PORTMANTEAU DESIGN:
-Eight consolidated tools (resolve_project, resolve_media, resolve_timeline, resolve_color, resolve_render, resolve_audio, resolve_system, resolve_fairlight; plus resolve_help where registered). Each uses an operation (or action) parameter.
+Eight consolidated tools (resolve_project, resolve_media, resolve_timeline, resolve_color, resolve_render, resolve_audio, resolve_system, resolve_fairlight, resolve_subtitle; plus resolve_help where registered). Each uses an operation (or action) parameter.
 
 TOOL MODES:
 - Portmanteau (default): RESOLVE_TOOL_MODE=portmanteau
@@ -147,6 +149,19 @@ RESOLUTION / COLOR:
 - 4K/8K/HDR and common color spaces (Rec.709, Rec.2020, P3) where Resolve exposes them""",
     lifespan=server_lifespan,
 )
+
+# MCP Bridge: proxy upstream servers via MCP_BRIDGE_URLS (comma-separated)
+_bridge_proxies = []
+bridge_urls = os.getenv("MCP_BRIDGE_URLS", "")
+if bridge_urls:
+    for url in bridge_urls.split(","):
+        url = url.strip()
+        if url:
+            try:
+                app.add_provider(create_proxy(url))
+                _bridge_proxies.append(url)
+            except Exception:
+                pass
 
 # Initialize application state
 app.state = AppState()
@@ -337,7 +352,7 @@ def register_tools():
             from .tools.portmanteau import setup_all_portmanteau_tools
 
             setup_all_portmanteau_tools(app)
-            logger.info("Registered portmanteau tools", count=8)
+            logger.info("Registered portmanteau tools", count=9)
         else:
             # Legacy: register individual tools (26 tools)
             from .tools.help_tool import get_help
@@ -366,6 +381,7 @@ def register_tools():
             from .tools.media_tools import register_tools as register_media_tools
             from .tools.project_tools import register_tools as register_project_tools
             from .tools.render_tools import register_tools as register_render_tools
+            from .tools.subtitle_tools import register_tools as register_subtitle_tools
             from .tools.timeline_tools import register_tools as register_timeline_tools
 
             # Call each registration function (they return app but we ignore the return value)
@@ -375,7 +391,8 @@ def register_tools():
             _ = register_render_tools(app)
             _ = register_audio_tools(app)
             _ = register_color_tools(app)
-            logger.info("Registered individual tools", count=26)
+            _ = register_subtitle_tools(app)
+            logger.info("Registered individual tools", count=32)
 
         # Register agentic workflow tools (always, regardless of tool mode)
         from .agentic import register_agentic_tools

@@ -161,8 +161,8 @@ async def create_project_impl(
         }
 
     except Exception as e:
-        logger.error(f"Error creating project: {str(e)}")
-        raise ResolveOperationError(f"Failed to create project: {str(e)}")
+        logger.error(f"Error creating project: {e!s}")
+        raise ResolveOperationError(f"Failed to create project: {e!s}")
 
 
 async def open_project_impl(app, name: str) -> dict[str, Any]:
@@ -209,8 +209,8 @@ async def open_project_impl(app, name: str) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error opening project: {str(e)}")
-        raise ResolveOperationError(f"Failed to open project: {str(e)}")
+        logger.error(f"Error opening project: {e!s}")
+        raise ResolveOperationError(f"Failed to open project: {e!s}")
 
 
 async def list_projects_impl(app) -> dict[str, Any]:
@@ -248,8 +248,8 @@ async def list_projects_impl(app) -> dict[str, Any]:
         return {"status": "success", "projects": project_list, "current_project": current_name}
 
     except Exception as e:
-        logger.error(f"Error listing projects: {str(e)}")
-        raise ResolveOperationError(f"Failed to list projects: {str(e)}")
+        logger.error(f"Error listing projects: {e!s}")
+        raise ResolveOperationError(f"Failed to list projects: {e!s}")
 
 
 async def get_project_settings_impl(app) -> dict[str, Any]:
@@ -292,8 +292,8 @@ async def get_project_settings_impl(app) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error getting project settings: {str(e)}")
-        raise ResolveOperationError(f"Failed to get project settings: {str(e)}")
+        logger.error(f"Error getting project settings: {e!s}")
+        raise ResolveOperationError(f"Failed to get project settings: {e!s}")
 
 
 async def update_project_settings_impl(app, settings: dict[str, Any]) -> dict[str, Any]:
@@ -331,8 +331,8 @@ async def update_project_settings_impl(app, settings: dict[str, Any]) -> dict[st
         }
 
     except Exception as e:
-        logger.error(f"Error updating project settings: {str(e)}")
-        raise ResolveOperationError(f"Failed to update project settings: {str(e)}")
+        logger.error(f"Error updating project settings: {e!s}")
+        raise ResolveOperationError(f"Failed to update project settings: {e!s}")
 
 
 def register_tools(app):
@@ -397,8 +397,8 @@ def register_tools(app):
             }
 
         except Exception as e:
-            logger.error(f"Error creating project: {str(e)}")
-            raise ResolveOperationError(f"Failed to create project: {str(e)}")
+            logger.error(f"Error creating project: {e!s}")
+            raise ResolveOperationError(f"Failed to create project: {e!s}")
 
     @app.tool()
     async def open_project(name: str) -> dict[str, Any]:
@@ -453,8 +453,8 @@ def register_tools(app):
             }
 
         except Exception as e:
-            logger.error(f"Error opening project: {str(e)}")
-            raise ResolveOperationError(f"Failed to open project: {str(e)}")
+            logger.error(f"Error opening project: {e!s}")
+            raise ResolveOperationError(f"Failed to open project: {e!s}")
 
     @app.tool()
     async def list_projects() -> dict[str, Any]:
@@ -508,8 +508,8 @@ def register_tools(app):
             }
 
         except Exception as e:
-            logger.error(f"Error listing projects: {str(e)}")
-            raise ResolveOperationError(f"Failed to list projects: {str(e)}")
+            logger.error(f"Error listing projects: {e!s}")
+            raise ResolveOperationError(f"Failed to list projects: {e!s}")
 
     @app.tool()
     async def get_project_settings() -> dict[str, Any]:
@@ -548,8 +548,8 @@ def register_tools(app):
             return {"status": "success", "project_name": project.GetName(), "settings": settings}
 
         except Exception as e:
-            logger.error(f"Error getting project settings: {str(e)}")
-            raise ResolveOperationError(f"Failed to get project settings: {str(e)}")
+            logger.error(f"Error getting project settings: {e!s}")
+            raise ResolveOperationError(f"Failed to get project settings: {e!s}")
 
     @app.tool()
     async def update_project_settings(settings: dict[str, Any]) -> dict[str, Any]:
@@ -593,7 +593,7 @@ def register_tools(app):
             }
 
         except Exception as e:
-            logger.error(f"Error updating project settings: {str(e)}")
-            raise ResolveOperationError(f"Failed to update project settings: {str(e)}")
+            logger.error(f"Error updating project settings: {e!s}")
+            raise ResolveOperationError(f"Failed to update project settings: {e!s}")
 
     logger.info("Registered project management tools")

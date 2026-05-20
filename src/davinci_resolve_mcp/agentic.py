@@ -119,7 +119,7 @@ def register_agentic_tools():
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Failed to execute agentic workflow: {str(e)}",
+                "error": f"Failed to execute agentic workflow: {e!s}",
                 "message": "An error occurred while setting up the agentic workflow. Please check the workflow prompt and available tools.",
             }
 
@@ -155,7 +155,7 @@ def register_agentic_tools():
             Intelligent batch processing results with detailed orchestration plan
         """
         try:
-            processing_plan = {
+            {
                 "goal": processing_goal,
                 "project_count": len(projects),
                 "available_operations": available_operations,
@@ -234,7 +234,7 @@ def register_agentic_tools():
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Failed to initiate intelligent processing: {str(e)}",
+                "error": f"Failed to initiate intelligent processing: {e!s}",
                 "message": "An error occurred while setting up intelligent video processing. Please verify project data and processing parameters.",
             }
 
@@ -334,7 +334,7 @@ def register_agentic_tools():
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Failed to provide conversational assistance: {str(e)}",
+                "error": f"Failed to provide conversational assistance: {e!s}",
                 "message": "I encountered an error while processing your request. Please try rephrasing your question.",
             }
 

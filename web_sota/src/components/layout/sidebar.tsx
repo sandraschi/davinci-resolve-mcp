@@ -15,7 +15,8 @@ import {
     Clock,
     MonitorPlay,
     Music2,
-    HelpCircle
+    HelpCircle,
+    Brain
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -32,6 +33,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         { href: '/timeline', label: 'Timeline', icon: Clock },
         { href: '/fairlight', label: 'Fairlight', icon: Music2 },
         { href: '/render', label: 'Render Queue', icon: MonitorPlay },
+        { href: '/workflows', label: 'AI Workflows', icon: Brain },
         { href: '/tools', label: 'Video Tools', icon: Film },
         { href: '/actions', label: 'Production Actions', icon: Video },
         { href: '/chat', label: 'AI Editor', icon: Bot },

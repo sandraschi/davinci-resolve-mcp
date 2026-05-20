@@ -160,19 +160,17 @@ async def create_color_node_impl(
     parent_node: str | None = None,
     timeline_name: str | None = None,
 ) -> dict[str, Any]:
-    """
-    Implementation of color node creation (shared between individual and portmanteau tools).
-    """
+    """Implementation of color node creation (shared between individual and portmanteau tools)."""
     try:
         connection = app.state.connection_manager
         if not connection or not connection.resolve:
             raise ResolveOperationError("Not connected to DaVinci Resolve")
 
-        project = connection.current_project
+        resolve = connection.get_connection()
+        project = resolve.GetProjectManager().GetCurrentProject()
         if not project:
             raise ResolveOperationError("No project is currently open")
 
-        # Get the specified timeline or current timeline
         if timeline_name:
             timeline = project.GetTimelineByName(timeline_name)
             if not timeline:
@@ -182,15 +180,45 @@ async def create_color_node_impl(
             if not timeline:
                 raise ResolveOperationError("No timeline is currently open")
 
-        # Get current clip
         current_clip = timeline.GetCurrentVideoItem()
         if not current_clip:
             raise ResolveOperationError("No clip is currently selected")
 
-        # Create color node
-        # Note: This is a simplified implementation as DaVinci Resolve's color API
-        # may not have direct node creation methods in the Python API
+        fusion = resolve.Fusion()
+        if not fusion:
+            raise ResolveOperationError("Could not access Fusion (color grading) interface")
+
+        comp = fusion.GetCurrentComp()
+        if not comp:
+            raise ResolveOperationError("Could not access current composition")
+
+        node_type_map = {
+            ColorCorrectionType.PRIMARY: "Color",
+            ColorCorrectionType.LOG: "ColorCurves",
+            ColorCorrectionType.HDR: "HDRTool",
+            ColorCorrectionType.CURVES: "HueVsCurves",
+            ColorCorrectionType.QUALIFIER: "Qualifier",
+            ColorCorrectionType.WINDOW: "Window",
+            ColorCorrectionType.TRACKER: "Tracker",
+            ColorCorrectionType.BLUR: "Blur",
+            ColorCorrectionType.SHARPEN: "Sharpen",
+            ColorCorrectionType.NOISE_REDUCTION: "NoiseReduction",
+            ColorCorrectionType.RESIZE: "Resize",
+            ColorCorrectionType.LUT: "LUT",
+        }
+
+        node_type_str = node_type_map.get(node_type, "Color")
+        new_node = comp.AddTool(node_type_str, -1, -1)
+        if not new_node:
+            raise ResolveOperationError(f"Failed to create {node_type.value} node")
+
         node_name = name or f"{node_type.value.title()} Node"
+        new_node.SetAttrs({"TOOLS_Name": node_name})
+
+        if parent_node:
+            parent = comp.FindTool(parent_node)
+            if parent:
+                new_node.Input.ConnectTo(parent.Output)
 
         return {
             "status": "success",
@@ -198,12 +226,13 @@ async def create_color_node_impl(
             "clip_name": current_clip.GetName(),
             "node_name": node_name,
             "node_type": node_type.value,
-            "message": "Color node creation not fully implemented in Python API",
+            "node_id": new_node.GetAttrs()["TOOLS_RegID"],
+            "message": f"Created {node_type.value} color node: {node_name}",
         }
 
     except Exception as e:
-        logger.error(f"Error creating color node: {str(e)}")
-        raise ResolveOperationError(f"Failed to create color node: {str(e)}")
+        logger.error(f"Error creating color node: {e!s}")
+        raise ResolveOperationError(f"Failed to create color node: {e!s}")
 
 
 async def apply_lut_impl(
@@ -213,19 +242,22 @@ async def apply_lut_impl(
     node_name: str | None = None,
     timeline_name: str | None = None,
 ) -> dict[str, Any]:
-    """
-    Implementation of LUT application (shared between individual and portmanteau tools).
-    """
+    """Implementation of LUT application (shared between individual and portmanteau tools)."""
     try:
+        import os as _os
+
         connection = app.state.connection_manager
         if not connection or not connection.resolve:
             raise ResolveOperationError("Not connected to DaVinci Resolve")
 
-        project = connection.current_project
+        resolve = connection.get_connection()
+        project = resolve.GetProjectManager().GetCurrentProject()
         if not project:
             raise ResolveOperationError("No project is currently open")
 
-        # Get the specified timeline or current timeline
+        if not _os.path.exists(lut_path):
+            raise ResolveOperationError(f"LUT file not found: {lut_path}")
+
         if timeline_name:
             timeline = project.GetTimelineByName(timeline_name)
             if not timeline:
@@ -235,35 +267,35 @@ async def apply_lut_impl(
             if not timeline:
                 raise ResolveOperationError("No timeline is currently open")
 
-        # Find the target clip
-        target_clip = None
-        if clip_path:
-            # Navigate to clip (simplified implementation)
-            target_clip = timeline.GetCurrentVideoItem()
-        else:
-            target_clip = timeline.GetCurrentVideoItem()
+        fusion = resolve.Fusion()
+        if not fusion:
+            raise ResolveOperationError("Could not access Fusion (color grading) interface")
 
-        if not target_clip:
-            raise ResolveOperationError("No target clip found")
+        comp = fusion.GetCurrentComp()
+        if not comp:
+            raise ResolveOperationError("Could not access current composition")
 
-        # Apply LUT
-        # Note: This is a simplified implementation as DaVinci Resolve's LUT application
-        # may not have direct methods in the Python API
-        if not os.path.exists(lut_path):
-            raise ResolveOperationError(f"LUT file not found: {lut_path}")
+        lut_node = comp.AddTool("LUT", -1, -1)
+        if not lut_node:
+            raise ResolveOperationError("Failed to create LUT node")
 
+        lut_node.LUTFile = lut_path
+        lut_node.Mix = 1.0
+
+        target_clip = timeline.GetCurrentVideoItem()
         return {
             "status": "success",
             "timeline_name": timeline.GetName(),
-            "clip_name": target_clip.GetName(),
+            "clip_name": target_clip.GetName() if target_clip else "current",
             "lut_path": lut_path,
             "node_name": node_name,
-            "message": "LUT application not fully implemented in Python API",
+            "node_id": lut_node.GetAttrs()["TOOLS_RegID"],
+            "message": f"Applied LUT '{lut_path}'",
         }
 
     except Exception as e:
-        logger.error(f"Error applying LUT: {str(e)}")
-        raise ResolveOperationError(f"Failed to apply LUT: {str(e)}")
+        logger.error(f"Error applying LUT: {e!s}")
+        raise ResolveOperationError(f"Failed to apply LUT: {e!s}")
 
 
 async def set_color_space_impl(
@@ -319,8 +351,8 @@ async def set_color_space_impl(
         }
 
     except Exception as e:
-        logger.error(f"Error setting color space: {str(e)}")
-        raise ResolveOperationError(f"Failed to set color space: {str(e)}")
+        logger.error(f"Error setting color space: {e!s}")
+        raise ResolveOperationError(f"Failed to set color space: {e!s}")
 
 
 async def adjust_color_wheels_impl(
@@ -333,19 +365,17 @@ async def adjust_color_wheels_impl(
     node_name: str | None = None,
     timeline_name: str | None = None,
 ) -> dict[str, Any]:
-    """
-    Implementation of color wheel adjustment (shared between individual and portmanteau tools).
-    """
+    """Implementation of color wheel adjustment (shared between individual and portmanteau tools)."""
     try:
         connection = app.state.connection_manager
         if not connection or not connection.resolve:
             raise ResolveOperationError("Not connected to DaVinci Resolve")
 
-        project = connection.current_project
+        resolve = connection.get_connection()
+        project = resolve.GetProjectManager().GetCurrentProject()
         if not project:
             raise ResolveOperationError("No project is currently open")
 
-        # Get the specified timeline or current timeline
         if timeline_name:
             timeline = project.GetTimelineByName(timeline_name)
             if not timeline:
@@ -355,18 +385,53 @@ async def adjust_color_wheels_impl(
             if not timeline:
                 raise ResolveOperationError("No timeline is currently open")
 
-        # Find the target clip
-        target_clip = None
-        if clip_path:
-            # Navigate to clip (simplified implementation)
-            target_clip = timeline.GetCurrentVideoItem()
-        else:
-            target_clip = timeline.GetCurrentVideoItem()
+        current_clip = timeline.GetCurrentVideoItem()
+        if not current_clip:
+            raise ResolveOperationError("No clip is currently selected")
 
-        if not target_clip:
-            raise ResolveOperationError("No target clip found")
+        fusion = resolve.Fusion()
+        if not fusion:
+            raise ResolveOperationError("Could not access Fusion (color grading) interface")
 
-        # Adjust color wheels
+        comp = fusion.GetCurrentComp()
+        if not comp:
+            raise ResolveOperationError("Could not access current composition")
+
+        color_node = comp.FindTool("ColorCorrector")
+        if not color_node:
+            color_node = comp.AddTool("ColorCorrector", -1, -1)
+            if not color_node:
+                raise ResolveOperationError("Failed to create color correction node")
+
+        if lift:
+            color_node.Lift = [
+                lift.get("r", 0),
+                lift.get("g", 0),
+                lift.get("b", 0),
+                lift.get("y", 0),
+            ]
+        if gamma:
+            color_node.Gamma = [
+                gamma.get("r", 0),
+                gamma.get("g", 0),
+                gamma.get("b", 0),
+                gamma.get("y", 0),
+            ]
+        if gain:
+            color_node.Gain = [
+                gain.get("r", 1),
+                gain.get("g", 1),
+                gain.get("b", 1),
+                gain.get("y", 1),
+            ]
+        if offset:
+            color_node.Offset = [
+                offset.get("r", 0),
+                offset.get("g", 0),
+                offset.get("b", 0),
+                offset.get("y", 0),
+            ]
+
         adjustments = {
             "lift": lift or {},
             "gamma": gamma or {},
@@ -374,20 +439,158 @@ async def adjust_color_wheels_impl(
             "offset": offset or {},
         }
 
-        # Note: This is a simplified implementation as DaVinci Resolve's color correction
-        # API may not have direct color wheel adjustment methods in the Python API
         return {
             "status": "success",
             "timeline_name": timeline.GetName(),
-            "clip_name": target_clip.GetName(),
-            "node_name": node_name,
+            "clip_name": current_clip.GetName(),
+            "node_name": node_name or "ColorCorrector",
             "adjustments": adjustments,
-            "message": "Color wheel adjustment not fully implemented in Python API",
+            "message": "Color wheel adjustments applied",
         }
 
     except Exception as e:
-        logger.error(f"Error adjusting color wheels: {str(e)}")
-        raise ResolveOperationError(f"Failed to adjust color wheels: {str(e)}")
+        logger.error(f"Error adjusting color wheels: {e!s}")
+        raise ResolveOperationError(f"Failed to adjust color wheels: {e!s}")
+
+
+# ── Gallery / Stills Operations ─────────────────────────────────────
+
+
+async def grab_still_impl(
+    app,
+    still_name: str | None = None,
+    timeline_name: str | None = None,
+) -> dict[str, Any]:
+    """Grab a still from the current clip in the Color page."""
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        resolve = connection.get_connection()
+        project = resolve.GetProjectManager().GetCurrentProject()
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        current_clip = timeline.GetCurrentVideoItem()
+        if not current_clip:
+            raise ResolveOperationError("No clip is currently selected")
+
+        if hasattr(project, "GetGallery"):
+            gallery = project.GetGallery()
+            if gallery and hasattr(gallery, "GetCurrentStillAlbum"):
+                album = gallery.GetCurrentStillAlbum()
+                if album and hasattr(album, "GrabStill"):
+                    still = album.GrabStill(still_name or "")
+                    if still:
+                        return {
+                            "status": "success",
+                            "still_name": still_name or "Untitled",
+                            "clip_name": current_clip.GetName(),
+                            "message": f"Grabbed still from '{current_clip.GetName()}'",
+                        }
+        raise ResolveOperationError("GrabStill not available in this API version")
+
+    except Exception as e:
+        logger.error(f"Error grabbing still: {e!s}")
+        raise ResolveOperationError(f"Failed to grab still: {e!s}")
+
+
+async def get_stills_impl(app) -> dict[str, Any]:
+    """Get all stills in the current gallery album."""
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        resolve = connection.get_connection()
+        project = resolve.GetProjectManager().GetCurrentProject()
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        if hasattr(project, "GetGallery"):
+            gallery = project.GetGallery()
+            if gallery and hasattr(gallery, "GetCurrentStillAlbum"):
+                album = gallery.GetCurrentStillAlbum()
+                if album and hasattr(album, "GetStills"):
+                    stills = album.GetStills() or []
+                    still_list = []
+                    for i, still in enumerate(stills):
+                        still_info = {"index": i}
+                        if hasattr(still, "GetLabel"):
+                            still_info["label"] = still.GetLabel()
+                        if hasattr(still, "GetClipProperty"):
+                            still_info["source"] = still.GetClipProperty("Source Clip") or ""
+                        still_list.append(still_info)
+                    return {"status": "success", "stills": still_list, "count": len(still_list)}
+
+        return {"status": "success", "stills": [], "count": 0, "message": "Gallery stills not available in this API version"}
+
+    except Exception as e:
+        logger.error(f"Error getting stills: {e!s}")
+        raise ResolveOperationError(f"Failed to get stills: {e!s}")
+
+
+async def apply_grade_from_still_impl(
+    app,
+    still_index: int,
+    timeline_name: str | None = None,
+) -> dict[str, Any]:
+    """Apply a grade from a gallery still to the current clip."""
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        resolve = connection.get_connection()
+        project = resolve.GetProjectManager().GetCurrentProject()
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        current_clip = timeline.GetCurrentVideoItem()
+        if not current_clip:
+            raise ResolveOperationError("No clip is currently selected")
+
+        gallery = project.GetGallery()
+        if gallery and hasattr(gallery, "GetCurrentStillAlbum"):
+            album = gallery.GetCurrentStillAlbum()
+            if album and hasattr(album, "GetStills"):
+                stills = album.GetStills() or []
+                if still_index < 0 or still_index >= len(stills):
+                    raise ResolveOperationError(f"Invalid still index: {still_index}")
+                still = stills[still_index]
+                if hasattr(current_clip, "ApplyGradeFromStill"):
+                    current_clip.ApplyGradeFromStill(still)
+                    return {
+                        "status": "success",
+                        "still_index": still_index,
+                        "clip_name": current_clip.GetName(),
+                        "message": f"Applied grade from still {still_index} to '{current_clip.GetName()}'",
+                    }
+
+        raise ResolveOperationError("ApplyGradeFromStill not available in this API version")
+
+    except Exception as e:
+        logger.error(f"Error applying grade from still: {e!s}")
+        raise ResolveOperationError(f"Failed to apply grade from still: {e!s}")
 
 
 def register_tools(app):
@@ -487,7 +690,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to create color node: {str(e)}")
+            raise ResolveOperationError(f"Failed to create color node: {e!s}")
 
     @app.tool()
     async def apply_lut(
@@ -551,7 +754,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to apply LUT: {str(e)}")
+            raise ResolveOperationError(f"Failed to apply LUT: {e!s}")
 
     @app.tool()
     async def set_color_space(
@@ -602,7 +805,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to set color space: {str(e)}")
+            raise ResolveOperationError(f"Failed to set color space: {e!s}")
 
     @app.tool()
     async def adjust_color_wheels(
@@ -700,7 +903,91 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to adjust color wheels: {str(e)}")
+            raise ResolveOperationError(f"Failed to adjust color wheels: {e!s}")
+
+    @app.tool()
+    async def grab_still(still_name: str | None = None, timeline_name: str | None = None) -> dict[str, Any]:
+        """Grab a still from the current clip to the gallery."""
+        try:
+            with ResolveConnectionManager() as resolve:
+                project = resolve.GetProjectManager().GetCurrentProject()
+                if not project:
+                    raise ResolveOperationError("No project is currently open")
+                if timeline_name:
+                    timeline = project.GetTimelineByName(timeline_name)
+                else:
+                    timeline = project.GetCurrentTimeline()
+                if not timeline:
+                    raise ResolveOperationError("No timeline is currently open")
+                current_clip = timeline.GetCurrentVideoItem()
+                if not current_clip:
+                    raise ResolveOperationError("No clip is currently selected")
+                gallery = project.GetGallery()
+                if gallery and hasattr(gallery, "GetCurrentStillAlbum"):
+                    album = gallery.GetCurrentStillAlbum()
+                    if album and hasattr(album, "GrabStill"):
+                        album.GrabStill(still_name or "")
+                        return {"status": "success", "still_name": still_name or "Untitled", "clip_name": current_clip.GetName()}
+                raise ResolveOperationError("GrabStill not available")
+        except Exception as e:
+            raise ResolveOperationError(f"Failed to grab still: {e!s}")
+
+    @app.tool()
+    async def get_stills() -> dict[str, Any]:
+        """Get all stills in the current gallery album."""
+        try:
+            with ResolveConnectionManager() as resolve:
+                project = resolve.GetProjectManager().GetCurrentProject()
+                if not project:
+                    raise ResolveOperationError("No project is currently open")
+                if hasattr(project, "GetGallery"):
+                    gallery = project.GetGallery()
+                    if gallery and hasattr(gallery, "GetCurrentStillAlbum"):
+                        album = gallery.GetCurrentStillAlbum()
+                        if album and hasattr(album, "GetStills"):
+                            stills = album.GetStills() or []
+                            still_list = []
+                            for i, still in enumerate(stills):
+                                info = {"index": i}
+                                if hasattr(still, "GetLabel"):
+                                    info["label"] = still.GetLabel()
+                                still_list.append(info)
+                            return {"status": "success", "stills": still_list, "count": len(still_list)}
+                return {"status": "success", "stills": [], "count": 0}
+        except Exception as e:
+            raise ResolveOperationError(f"Failed to get stills: {e!s}")
+
+    @app.tool()
+    async def apply_grade_from_still(still_index: int, timeline_name: str | None = None) -> dict[str, Any]:
+        """Apply a grade from a gallery still to the current clip."""
+        try:
+            with ResolveConnectionManager() as resolve:
+                project = resolve.GetProjectManager().GetCurrentProject()
+                if not project:
+                    raise ResolveOperationError("No project is currently open")
+                if timeline_name:
+                    timeline = project.GetTimelineByName(timeline_name)
+                else:
+                    timeline = project.GetCurrentTimeline()
+                if not timeline:
+                    raise ResolveOperationError("No timeline is currently open")
+                current_clip = timeline.GetCurrentVideoItem()
+                if not current_clip:
+                    raise ResolveOperationError("No clip is currently selected")
+                gallery = project.GetGallery()
+                if gallery and hasattr(gallery, "GetCurrentStillAlbum"):
+                    album = gallery.GetCurrentStillAlbum()
+                    if album and hasattr(album, "GetStills"):
+                        stills = album.GetStills() or []
+                        if still_index < 0 or still_index >= len(stills):
+                            raise ResolveOperationError(f"Invalid still index: {still_index}")
+                        still = stills[still_index]
+                        if hasattr(current_clip, "ApplyGradeFromStill"):
+                            current_clip.ApplyGradeFromStill(still)
+                            return {"status": "success", "still_index": still_index, "clip_name": current_clip.GetName()}
+                raise ResolveOperationError("ApplyGradeFromStill not available")
+        except Exception as e:
+            raise ResolveOperationError(f"Failed to apply grade from still: {e!s}")
 
     # Add more color grading tools as needed
     # - Color match

@@ -38,14 +38,14 @@ from .tools import help as _help_tool
 
 # Re-export commonly used components for easier access
 __all__ = [
-    "help",  # Help function
-    "get_help",  # Help function
     "UserLevel",  # User level enum
+    "get_help",  # Help function
+    "help",  # Help function
 ]
 
 
 # Create a more user-friendly help function that delegates to the help tool
-def help(topic: str = None, level: str | UserLevel = None) -> str:
+def help(topic: str | None = None, level: str | UserLevel = None) -> str:
     """
     Display help information for the DaVinci Resolve MCP package.
 

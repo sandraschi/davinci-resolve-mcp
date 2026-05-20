@@ -30,7 +30,7 @@ def main():
         # Install the pre-commit hooks for commit-msg if configured
         hooks_config = Path(".pre-commit-config.yaml")
         if hooks_config.exists():
-            with open(hooks_config, 'r') as f:
+            with open(hooks_config) as f:
                 content = f.read()
                 if "commit-msg" in content:
                     print("🔧 Installing commit-msg hooks...")

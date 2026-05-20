@@ -205,8 +205,8 @@ async def get_audio_tracks_impl(app, timeline_name: str | None = None) -> dict[s
         }
 
     except Exception as e:
-        logger.error(f"Error getting audio tracks: {str(e)}")
-        raise ResolveOperationError(f"Failed to get audio tracks: {str(e)}")
+        logger.error(f"Error getting audio tracks: {e!s}")
+        raise ResolveOperationError(f"Failed to get audio tracks: {e!s}")
 
 
 async def add_audio_effect_impl(
@@ -216,19 +216,17 @@ async def add_audio_effect_impl(
     parameters: dict[str, Any] | None = None,
     timeline_name: str | None = None,
 ) -> dict[str, Any]:
-    """
-    Implementation of audio effect addition (shared between individual and portmanteau tools).
-    """
+    """Implementation of audio effect addition (shared between individual and portmanteau tools)."""
     try:
         connection = app.state.connection_manager
         if not connection or not connection.resolve:
             raise ResolveOperationError("Not connected to DaVinci Resolve")
 
-        project = connection.current_project
+        resolve = connection.get_connection()
+        project = resolve.GetProjectManager().GetCurrentProject()
         if not project:
             raise ResolveOperationError("No project is currently open")
 
-        # Get the specified timeline or current timeline
         if timeline_name:
             timeline = project.GetTimelineByName(timeline_name)
             if not timeline:
@@ -238,25 +236,58 @@ async def add_audio_effect_impl(
             if not timeline:
                 raise ResolveOperationError("No timeline is currently open")
 
-        # Add audio effect to track
-        # Note: This is a simplified implementation as DaVinci Resolve's audio API
-        # may not have direct effect addition methods in the Python API
-        effect_params = parameters or {}
+        track_count = timeline.GetTrackCount("audio")
+        if track_index < 1 or track_index > track_count:
+            raise ResolveOperationError(f"Invalid track index: {track_index}")
 
-        # This would typically involve Fairlight audio processing
-        # For now, we'll return a placeholder response
+        fusion = resolve.Fusion()
+        if not fusion:
+            raise ResolveOperationError("Could not access Fusion (effects) interface")
+
+        comp = fusion.GetCurrentComp()
+        if not comp:
+            raise ResolveOperationError("Could not access current composition")
+
+        effect_map = {
+            AudioEffectType.EQ: "AudioEQ",
+            AudioEffectType.COMPRESSOR: "AudioCompressor",
+            AudioEffectType.LIMITER: "AudioLimiter",
+            AudioEffectType.EXPANDER: "AudioExpander",
+            AudioEffectType.GATE: "AudioGate",
+            AudioEffectType.REVERB: "AudioReverb",
+            AudioEffectType.DELAY: "AudioDelay",
+            AudioEffectType.PITCH_SHIFT: "AudioPitchShift",
+            AudioEffectType.NOISE_REDUCTION: "AudioNoiseReduction",
+            AudioEffectType.NORMALIZE: "AudioNormalize",
+            AudioEffectType.LOUDNESS: "AudioLoudness",
+        }
+
+        node_type = effect_map.get(effect_type)
+        if not node_type:
+            raise ResolveOperationError(f"Unsupported effect type: {effect_type}")
+
+        effect_node = comp.AddTool(node_type, -1, -1)
+        if not effect_node:
+            raise ResolveOperationError(f"Failed to create {effect_type} effect node")
+
+        effect_params = parameters or {}
+        for param, value in effect_params.items():
+            if hasattr(effect_node, param):
+                setattr(effect_node, param, value)
+
         return {
             "status": "success",
             "timeline_name": timeline.GetName(),
             "track_index": track_index,
             "effect_type": effect_type.value,
             "parameters": effect_params,
-            "message": "Audio effect addition not fully implemented in Python API",
+            "node_id": effect_node.GetAttrs()["TOOLS_RegID"],
+            "message": f"Added {effect_type.value} effect to track {track_index}",
         }
 
     except Exception as e:
-        logger.error(f"Error adding audio effect: {str(e)}")
-        raise ResolveOperationError(f"Failed to add audio effect: {str(e)}")
+        logger.error(f"Error adding audio effect: {e!s}")
+        raise ResolveOperationError(f"Failed to add audio effect: {e!s}")
 
 
 async def adjust_audio_levels_impl(
@@ -320,8 +351,8 @@ async def adjust_audio_levels_impl(
         }
 
     except Exception as e:
-        logger.error(f"Error adjusting audio levels: {str(e)}")
-        raise ResolveOperationError(f"Failed to adjust audio levels: {str(e)}")
+        logger.error(f"Error adjusting audio levels: {e!s}")
+        raise ResolveOperationError(f"Failed to adjust audio levels: {e!s}")
 
 
 async def normalize_audio_impl(
@@ -363,7 +394,7 @@ async def normalize_audio_impl(
         normalized_tracks = []
         for track_index in track_indices:
             # Apply normalization effect
-            result = await add_audio_effect_impl(
+            await add_audio_effect_impl(
                 app,
                 AudioEffectType.NORMALIZE,
                 track_index,
@@ -380,8 +411,8 @@ async def normalize_audio_impl(
         }
 
     except Exception as e:
-        logger.error(f"Error normalizing audio: {str(e)}")
-        raise ResolveOperationError(f"Failed to normalize audio: {str(e)}")
+        logger.error(f"Error normalizing audio: {e!s}")
+        raise ResolveOperationError(f"Failed to normalize audio: {e!s}")
 
 
 def register_tools(app):
@@ -467,7 +498,7 @@ def register_tools(app):
                 return {"status": "success", "tracks": audio_tracks, "timeline": timeline.GetName()}
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to get audio tracks: {str(e)}")
+            raise ResolveOperationError(f"Failed to get audio tracks: {e!s}")
 
     @app.tool()
     async def add_audio_effect(
@@ -565,7 +596,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to add audio effect: {str(e)}")
+            raise ResolveOperationError(f"Failed to add audio effect: {e!s}")
 
     @app.tool()
     async def adjust_audio_levels(
@@ -642,7 +673,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to adjust audio levels: {str(e)}")
+            raise ResolveOperationError(f"Failed to adjust audio levels: {e!s}")
 
     @app.tool()
     async def normalize_audio(
@@ -720,7 +751,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to normalize audio: {str(e)}")
+            raise ResolveOperationError(f"Failed to normalize audio: {e!s}")
 
     # Add more audio tools as needed
     # - Audio mixing

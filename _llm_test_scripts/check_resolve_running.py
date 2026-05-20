@@ -1,12 +1,9 @@
 """
 Check if DaVinci Resolve is running and try to connect to it.
 """
-import os
-import sys
-import time
 import logging
+
 import psutil
-from typing import Optional, Dict, Any
 
 # Configure logging
 logging.basicConfig(
@@ -29,11 +26,11 @@ def is_resolve_running() -> bool:
 def main():
     """Main function to check Resolve status and attempt connection."""
     print("🔍 Checking DaVinci Resolve status...")
-    
+
     # Check if Resolve is running
     if is_resolve_running():
         print("✅ DaVinci Resolve is running")
-        
+
         # Try to connect using the default Python module
         print("\nAttempting to connect using Python module...")
         try:
@@ -47,7 +44,7 @@ def main():
             print("❌ DaVinciResolveScript module not found in Python path")
         except Exception as e:
             print(f"❌ Failed to connect using Python module: {e}")
-        
+
         # Try to connect using COM
         print("\nAttempting to connect using COM...")
         try:
@@ -61,7 +58,7 @@ def main():
             print("❌ pywin32 module not installed. Install with: pip install pywin32")
         except Exception as e:
             print(f"❌ Failed to connect using COM: {e}")
-        
+
         print("\n⚠️  Could not connect to DaVinci Resolve using any method")
         print("Please ensure that:")
         print("1. You're running this script with administrator privileges")

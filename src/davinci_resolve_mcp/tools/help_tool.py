@@ -8,7 +8,7 @@ multiple user levels and context-aware help.
 import inspect
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Generic, TypeVar
+from typing import TypeVar
 
 from ..models import (
     AudioMixer,
@@ -35,7 +35,7 @@ class UserLevel(Enum):
 
 
 @dataclass
-class HelpContent(Generic[T]):
+class HelpContent[T]:
     """Container for help content with user-level specific information."""
 
     name: str

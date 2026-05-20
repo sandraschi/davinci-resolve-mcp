@@ -4,7 +4,6 @@ Tests for the error handling utilities.
 
 import pytest
 from fastmcp import FastMCP
-from fastapi import status
 
 from davinci_resolve_mcp.utils.error_handling import (
     ErrorResponse,
@@ -12,10 +11,10 @@ from davinci_resolve_mcp.utils.error_handling import (
     register_error_handlers,
 )
 from davinci_resolve_mcp.utils.exceptions import (
-    ResolveConnectionError,
-    ProjectOperationError,
     MediaPoolError,
+    ProjectOperationError,
     ResolveAPIError,
+    ResolveConnectionError,
 )
 
 

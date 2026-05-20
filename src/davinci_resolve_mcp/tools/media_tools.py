@@ -134,7 +134,6 @@ async def import_media_impl(
 
         # Get or create target folder
         current_folder = media_pool.GetCurrentFolder()
-        target_folder_obj = None
 
         if target_folder:
             # Split path into components
@@ -167,7 +166,6 @@ async def import_media_impl(
                     current_folder = new_folder
                     created_path.append(folder_name)
 
-            target_folder_obj = current_folder
 
         # Import media files
         import_results = []
@@ -213,8 +211,8 @@ async def import_media_impl(
         }
 
     except Exception as e:
-        logger.error(f"Error importing media: {str(e)}")
-        raise ResolveOperationError(f"Failed to import media: {str(e)}")
+        logger.error(f"Error importing media: {e!s}")
+        raise ResolveOperationError(f"Failed to import media: {e!s}")
 
 
 async def list_media_impl(app, folder_path: str = "") -> dict[str, Any]:
@@ -294,8 +292,8 @@ async def list_media_impl(app, folder_path: str = "") -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error listing media: {str(e)}")
-        raise ResolveOperationError(f"Failed to list media: {str(e)}")
+        logger.error(f"Error listing media: {e!s}")
+        raise ResolveOperationError(f"Failed to list media: {e!s}")
 
 
 async def create_folder_impl(app, folder_path: str) -> dict[str, Any]:
@@ -352,8 +350,8 @@ async def create_folder_impl(app, folder_path: str) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"Error creating folder: {str(e)}")
-        raise ResolveOperationError(f"Failed to create folder: {str(e)}")
+        logger.error(f"Error creating folder: {e!s}")
+        raise ResolveOperationError(f"Failed to create folder: {e!s}")
 
 
 async def get_media_metadata_impl(app, clip_path: str) -> dict[str, Any]:
@@ -444,8 +442,8 @@ async def get_media_metadata_impl(app, clip_path: str) -> dict[str, Any]:
         return {"status": "success", "clip_path": clip_path, "metadata": metadata}
 
     except Exception as e:
-        logger.error(f"Error getting media metadata: {str(e)}")
-        raise ResolveOperationError(f"Failed to get media metadata: {str(e)}")
+        logger.error(f"Error getting media metadata: {e!s}")
+        raise ResolveOperationError(f"Failed to get media metadata: {e!s}")
 
 
 def register_tools(app):
@@ -563,7 +561,7 @@ def register_tools(app):
                         failed_imports.append({"path": expanded_path, "error": "Import failed"})
 
                 except Exception as e:
-                    logger.error(f"Error importing {path}: {str(e)}")
+                    logger.error(f"Error importing {path}: {e!s}")
                     failed_imports.append({"path": path, "error": str(e)})
 
             return {
@@ -579,8 +577,8 @@ def register_tools(app):
             }
 
         except Exception as e:
-            logger.error(f"Error in import_media: {str(e)}")
-            raise ResolveOperationError(f"Failed to import media: {str(e)}")
+            logger.error(f"Error in import_media: {e!s}")
+            raise ResolveOperationError(f"Failed to import media: {e!s}")
 
     @app.tool()
     async def list_media(folder_path: str = "") -> dict[str, Any]:
@@ -664,7 +662,7 @@ def register_tools(app):
                     }
                     media_items.append(clip_info)
                 except Exception as e:
-                    logger.warning(f"Error getting clip info: {str(e)}")
+                    logger.warning(f"Error getting clip info: {e!s}")
 
             return {
                 "status": "success",
@@ -674,8 +672,8 @@ def register_tools(app):
             }
 
         except Exception as e:
-            logger.error(f"Error listing media: {str(e)}")
-            raise ResolveOperationError(f"Failed to list media: {str(e)}")
+            logger.error(f"Error listing media: {e!s}")
+            raise ResolveOperationError(f"Failed to list media: {e!s}")
 
     @app.tool()
     async def create_folder(path: str) -> dict[str, Any]:
@@ -742,8 +740,8 @@ def register_tools(app):
             }
 
         except Exception as e:
-            logger.error(f"Error creating folder: {str(e)}")
-            raise ResolveOperationError(f"Failed to create folder: {str(e)}")
+            logger.error(f"Error creating folder: {e!s}")
+            raise ResolveOperationError(f"Failed to create folder: {e!s}")
 
     @app.tool()
     async def get_media_metadata(clip_path: str) -> dict[str, Any]:
@@ -776,7 +774,7 @@ def register_tools(app):
             clip = None
             clips = media_pool.GetClipsInFolder(media_pool.GetRootFolder()) or {}
 
-            for clip_id, c in clips.items():
+            for _clip_id, c in clips.items():
                 if c.GetMediaPath() == clip_path:
                     clip = c
                     break
@@ -814,7 +812,7 @@ def register_tools(app):
             return {"status": "success", "metadata": metadata}
 
         except Exception as e:
-            logger.error(f"Error getting media metadata: {str(e)}")
-            raise ResolveOperationError(f"Failed to get media metadata: {str(e)}")
+            logger.error(f"Error getting media metadata: {e!s}")
+            raise ResolveOperationError(f"Failed to get media metadata: {e!s}")
 
     logger.info("Registered media management tools")

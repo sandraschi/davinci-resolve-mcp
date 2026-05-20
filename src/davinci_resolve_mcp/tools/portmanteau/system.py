@@ -101,7 +101,7 @@ def setup_system_portmanteau(app):
                 return {
                     "success": False,
                     "error": str(e),
-                    "message": f"Failed to get DaVinci Resolve information: {str(e)}",
+                    "message": f"Failed to get DaVinci Resolve information: {e!s}",
                 }
 
         elif action == "status":
@@ -132,7 +132,7 @@ def setup_system_portmanteau(app):
                 return {
                     "success": False,
                     "error": str(e),
-                    "message": f"Failed to get system status: {str(e)}",
+                    "message": f"Failed to get system status: {e!s}",
                 }
 
         elif action == "health":
@@ -165,7 +165,7 @@ def setup_system_portmanteau(app):
                 return {
                     "success": False,
                     "error": str(e),
-                    "message": f"Health check failed: {str(e)}",
+                    "message": f"Health check failed: {e!s}",
                 }
 
         elif action == "help":

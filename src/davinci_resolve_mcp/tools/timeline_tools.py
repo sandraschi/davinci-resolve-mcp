@@ -210,8 +210,8 @@ async def create_timeline_impl(
         }
 
     except Exception as e:
-        logger.error(f"Error creating timeline: {str(e)}")
-        raise ResolveOperationError(f"Failed to create timeline: {str(e)}")
+        logger.error(f"Error creating timeline: {e!s}")
+        raise ResolveOperationError(f"Failed to create timeline: {e!s}")
 
 
 async def get_timeline_info_impl(app, timeline_name: str | None = None) -> dict[str, Any]:
@@ -267,8 +267,8 @@ async def get_timeline_info_impl(app, timeline_name: str | None = None) -> dict[
         }
 
     except Exception as e:
-        logger.error(f"Error getting timeline info: {str(e)}")
-        raise ResolveOperationError(f"Failed to get timeline info: {str(e)}")
+        logger.error(f"Error getting timeline info: {e!s}")
+        raise ResolveOperationError(f"Failed to get timeline info: {e!s}")
 
 
 async def add_clip_to_timeline_impl(
@@ -358,8 +358,8 @@ async def add_clip_to_timeline_impl(
         }
 
     except Exception as e:
-        logger.error(f"Error adding clip to timeline: {str(e)}")
-        raise ResolveOperationError(f"Failed to add clip to timeline: {str(e)}")
+        logger.error(f"Error adding clip to timeline: {e!s}")
+        raise ResolveOperationError(f"Failed to add clip to timeline: {e!s}")
 
 
 async def cut_clip_impl(
@@ -405,8 +405,8 @@ async def cut_clip_impl(
         }
 
     except Exception as e:
-        logger.error(f"Error cutting clip: {str(e)}")
-        raise ResolveOperationError(f"Failed to cut clip: {str(e)}")
+        logger.error(f"Error cutting clip: {e!s}")
+        raise ResolveOperationError(f"Failed to cut clip: {e!s}")
 
 
 async def set_timeline_playhead_impl(
@@ -447,8 +447,313 @@ async def set_timeline_playhead_impl(
         }
 
     except Exception as e:
-        logger.error(f"Error setting playhead: {str(e)}")
-        raise ResolveOperationError(f"Failed to set playhead: {str(e)}")
+        logger.error(f"Error setting playhead: {e!s}")
+        raise ResolveOperationError(f"Failed to set playhead: {e!s}")
+
+
+# ── Marker Operations ──────────────────────────────────────────────
+
+
+async def add_marker_impl(
+    app,
+    frame: int,
+    color: str = "Blue",
+    name: str = "",
+    note: str = "",
+    duration: int = 1,
+    timeline_name: str | None = None,
+) -> dict[str, Any]:
+    """Implementation of marker addition (shared between individual and portmanteau tools)."""
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        project = connection.current_project
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        valid_colors = {"Blue", "Cyan", "Green", "Yellow", "Red", "Pink", "Purple", "Fuchsia", "Rose", "Lavender", "Sky", "Mint", "Lemon", "Sand", "Cocoa", "Cream"}
+        if color not in valid_colors:
+            logger.warning(f"Unknown marker color '{color}', defaulting to Blue")
+            color = "Blue"
+
+        if hasattr(timeline, "AddMarker"):
+            timeline.AddMarker(frame, color, name, note, duration)
+        else:
+            raise ResolveOperationError("Timeline does not support AddMarker (API version too old)")
+
+        return {
+            "status": "success",
+            "timeline_name": timeline.GetName(),
+            "frame": frame,
+            "color": color,
+            "name": name,
+            "note": note,
+            "duration": duration,
+            "message": f"Added {color} marker at frame {frame}" + (f": {name}" if name else ""),
+        }
+
+    except Exception as e:
+        logger.error(f"Error adding marker: {e!s}")
+        raise ResolveOperationError(f"Failed to add marker: {e!s}")
+
+
+async def get_markers_impl(
+    app,
+    timeline_name: str | None = None,
+) -> dict[str, Any]:
+    """Implementation of markers retrieval (shared between individual and portmanteau tools)."""
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        project = connection.current_project
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        markers = {}
+        if hasattr(timeline, "GetMarkers"):
+            markers = timeline.GetMarkers() or {}
+
+        marker_list = []
+        for frame, marker_info in markers.items():
+            marker_list.append({
+                "frame": frame,
+                "color": marker_info.get("color", ""),
+                "name": marker_info.get("name", ""),
+                "note": marker_info.get("note", ""),
+                "duration": marker_info.get("duration", 1),
+                "customData": marker_info.get("customData", ""),
+            })
+
+        return {
+            "status": "success",
+            "timeline_name": timeline.GetName(),
+            "markers": marker_list,
+            "count": len(marker_list),
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting markers: {e!s}")
+        raise ResolveOperationError(f"Failed to get markers: {e!s}")
+
+
+async def delete_marker_impl(
+    app,
+    frame: int,
+    timeline_name: str | None = None,
+) -> dict[str, Any]:
+    """Implementation of marker deletion (shared between individual and portmanteau tools)."""
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        project = connection.current_project
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        if hasattr(timeline, "DeleteMarkerAtFrame"):
+            timeline.DeleteMarkerAtFrame(frame)
+        else:
+            raise ResolveOperationError("Timeline does not support DeleteMarkerAtFrame")
+
+        return {
+            "status": "success",
+            "timeline_name": timeline.GetName(),
+            "frame": frame,
+            "message": f"Deleted marker at frame {frame}",
+        }
+
+    except Exception as e:
+        logger.error(f"Error deleting marker: {e!s}")
+        raise ResolveOperationError(f"Failed to delete marker: {e!s}")
+
+
+# ── Keyframe Operations ────────────────────────────────────────────
+
+
+async def add_keyframe_impl(
+    app,
+    clip_path: str,
+    property_name: str,
+    frame: int,
+    value: float,
+    timeline_name: str | None = None,
+) -> dict[str, Any]:
+    """Implementation of keyframe addition (shared between individual and portmanteau tools)."""
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        resolve = connection.get_connection()
+        project = resolve.GetProjectManager().GetCurrentProject()
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        current_clip = timeline.GetCurrentVideoItem()
+        if not current_clip:
+            raise ResolveOperationError("No clip is currently selected")
+
+        if hasattr(current_clip, "AddKeyframe"):
+            current_clip.AddKeyframe(property_name, frame, value)
+        else:
+            raise ResolveOperationError("Clip does not support AddKeyframe (API version too old)")
+
+        return {
+            "status": "success",
+            "timeline_name": timeline.GetName(),
+            "clip_name": current_clip.GetName(),
+            "property": property_name,
+            "frame": frame,
+            "value": value,
+            "message": f"Added keyframe for '{property_name}' at frame {frame} = {value}",
+        }
+
+    except Exception as e:
+        logger.error(f"Error adding keyframe: {e!s}")
+        raise ResolveOperationError(f"Failed to add keyframe: {e!s}")
+
+
+async def get_keyframes_impl(
+    app,
+    property_name: str,
+    clip_path: str | None = None,
+    timeline_name: str | None = None,
+) -> dict[str, Any]:
+    """Implementation of keyframe retrieval (shared between individual and portmanteau tools)."""
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        resolve = connection.get_connection()
+        project = resolve.GetProjectManager().GetCurrentProject()
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        current_clip = timeline.GetCurrentVideoItem()
+        if not current_clip:
+            raise ResolveOperationError("No clip is currently selected")
+
+        keyframes = {}
+        if hasattr(current_clip, "GetKeyframeList"):
+            keyframes = current_clip.GetKeyframeList(property_name) or {}
+
+        kf_list = []
+        for kf_frame, kf_value in keyframes.items():
+            kf_list.append({"frame": kf_frame, "value": kf_value})
+
+        return {
+            "status": "success",
+            "timeline_name": timeline.GetName(),
+            "clip_name": current_clip.GetName(),
+            "property": property_name,
+            "keyframes": kf_list,
+            "count": len(kf_list),
+        }
+
+    except Exception as e:
+        logger.error(f"Error getting keyframes: {e!s}")
+        raise ResolveOperationError(f"Failed to get keyframes: {e!s}")
+
+
+async def delete_keyframe_impl(
+    app,
+    property_name: str,
+    frame: int,
+    clip_path: str | None = None,
+    timeline_name: str | None = None,
+) -> dict[str, Any]:
+    """Implementation of keyframe deletion (shared between individual and portmanteau tools)."""
+    try:
+        connection = app.state.connection_manager
+        if not connection or not connection.resolve:
+            raise ResolveOperationError("Not connected to DaVinci Resolve")
+
+        resolve = connection.get_connection()
+        project = resolve.GetProjectManager().GetCurrentProject()
+        if not project:
+            raise ResolveOperationError("No project is currently open")
+
+        if timeline_name:
+            timeline = project.GetTimelineByName(timeline_name)
+            if not timeline:
+                raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+        else:
+            timeline = project.GetCurrentTimeline()
+            if not timeline:
+                raise ResolveOperationError("No timeline is currently open")
+
+        current_clip = timeline.GetCurrentVideoItem()
+        if not current_clip:
+            raise ResolveOperationError("No clip is currently selected")
+
+        if hasattr(current_clip, "DeleteKeyframe"):
+            current_clip.DeleteKeyframe(property_name, frame)
+        else:
+            raise ResolveOperationError("Clip does not support DeleteKeyframe")
+
+        return {
+            "status": "success",
+            "timeline_name": timeline.GetName(),
+            "clip_name": current_clip.GetName(),
+            "property": property_name,
+            "frame": frame,
+            "message": f"Deleted keyframe for '{property_name}' at frame {frame}",
+        }
+
+    except Exception as e:
+        logger.error(f"Error deleting keyframe: {e!s}")
+        raise ResolveOperationError(f"Failed to delete keyframe: {e!s}")
 
 
 def register_tools(app):
@@ -517,7 +822,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to create timeline: {str(e)}")
+            raise ResolveOperationError(f"Failed to create timeline: {e!s}")
 
     @app.tool()
     async def get_timeline_info(timeline_name: str | None = None) -> dict[str, Any]:
@@ -586,7 +891,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to get timeline info: {str(e)}")
+            raise ResolveOperationError(f"Failed to get timeline info: {e!s}")
 
     @app.tool()
     async def add_clip_to_timeline(
@@ -673,7 +978,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to add clip to timeline: {str(e)}")
+            raise ResolveOperationError(f"Failed to add clip to timeline: {e!s}")
 
     @app.tool()
     async def cut_clip(
@@ -733,7 +1038,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to cut clip: {str(e)}")
+            raise ResolveOperationError(f"Failed to cut clip: {e!s}")
 
     @app.tool()
     async def set_timeline_playhead(frame: int, timeline_name: str | None = None) -> dict[str, Any]:
@@ -773,7 +1078,102 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to set playhead position: {str(e)}")
+            raise ResolveOperationError(f"Failed to set playhead position: {e!s}")
+
+    @app.tool()
+    async def add_timeline_marker(
+        frame: int,
+        color: str = "Blue",
+        name: str = "",
+        note: str = "",
+        duration: int = 1,
+        timeline_name: str | None = None,
+    ) -> dict[str, Any]:
+        """Add a marker at a specific frame in the timeline."""
+        try:
+            with ResolveConnectionManager() as resolve:
+                project = resolve.GetProjectManager().GetCurrentProject()
+                if not project:
+                    raise ResolveOperationError("No project is currently open")
+                if timeline_name:
+                    timeline = project.GetTimelineByName(timeline_name)
+                    if not timeline:
+                        raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+                else:
+                    timeline = project.GetCurrentTimeline()
+                    if not timeline:
+                        raise ResolveOperationError("No timeline is currently open")
+                valid_colors = {"Blue", "Cyan", "Green", "Yellow", "Red", "Pink", "Purple", "Fuchsia", "Rose", "Lavender", "Sky", "Mint", "Lemon", "Sand", "Cocoa", "Cream"}
+                if color not in valid_colors:
+                    color = "Blue"
+                if hasattr(timeline, "AddMarker"):
+                    timeline.AddMarker(frame, color, name, note, duration)
+                else:
+                    raise ResolveOperationError("AddMarker not available in this API version")
+                return {
+                    "status": "success",
+                    "timeline_name": timeline.GetName(),
+                    "frame": frame,
+                    "color": color,
+                    "name": name,
+                    "message": f"Added {color} marker at frame {frame}" + (f": {name}" if name else ""),
+                }
+        except Exception as e:
+            raise ResolveOperationError(f"Failed to add marker: {e!s}")
+
+    @app.tool()
+    async def get_timeline_markers(timeline_name: str | None = None) -> dict[str, Any]:
+        """Get all markers in the timeline."""
+        try:
+            with ResolveConnectionManager() as resolve:
+                project = resolve.GetProjectManager().GetCurrentProject()
+                if not project:
+                    raise ResolveOperationError("No project is currently open")
+                if timeline_name:
+                    timeline = project.GetTimelineByName(timeline_name)
+                    if not timeline:
+                        raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+                else:
+                    timeline = project.GetCurrentTimeline()
+                    if not timeline:
+                        raise ResolveOperationError("No timeline is currently open")
+                markers = timeline.GetMarkers() if hasattr(timeline, "GetMarkers") else {}
+                marker_list = []
+                for frame, info in (markers or {}).items():
+                    marker_list.append({
+                        "frame": frame,
+                        "color": info.get("color", ""),
+                        "name": info.get("name", ""),
+                        "note": info.get("note", ""),
+                        "duration": info.get("duration", 1),
+                    })
+                return {"status": "success", "timeline_name": timeline.GetName(), "markers": marker_list, "count": len(marker_list)}
+        except Exception as e:
+            raise ResolveOperationError(f"Failed to get markers: {e!s}")
+
+    @app.tool()
+    async def delete_timeline_marker(frame: int, timeline_name: str | None = None) -> dict[str, Any]:
+        """Delete a marker at a specific frame in the timeline."""
+        try:
+            with ResolveConnectionManager() as resolve:
+                project = resolve.GetProjectManager().GetCurrentProject()
+                if not project:
+                    raise ResolveOperationError("No project is currently open")
+                if timeline_name:
+                    timeline = project.GetTimelineByName(timeline_name)
+                    if not timeline:
+                        raise ResolveOperationError(f"Timeline '{timeline_name}' not found")
+                else:
+                    timeline = project.GetCurrentTimeline()
+                    if not timeline:
+                        raise ResolveOperationError("No timeline is currently open")
+                if hasattr(timeline, "DeleteMarkerAtFrame"):
+                    timeline.DeleteMarkerAtFrame(frame)
+                else:
+                    raise ResolveOperationError("DeleteMarkerAtFrame not available in this API version")
+                return {"status": "success", "timeline_name": timeline.GetName(), "frame": frame, "message": f"Deleted marker at frame {frame}"}
+        except Exception as e:
+            raise ResolveOperationError(f"Failed to delete marker: {e!s}")
 
     # Add more timeline-related tools as needed
     # - Add transitions

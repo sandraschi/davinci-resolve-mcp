@@ -4,9 +4,10 @@ Pytest configuration and fixtures for DaVinci Resolve MCP tests.
 
 import os
 import sys
-import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 # Add source directory to Python path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))

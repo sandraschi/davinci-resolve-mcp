@@ -15,7 +15,7 @@ def setup_color_portmanteau(app):
 
     @app.tool()
     async def resolve_color(
-        action: Literal["create_node", "apply_lut", "set_color_space", "adjust_wheels"],
+        action: Literal["create_node", "apply_lut", "set_color_space", "adjust_wheels", "grab_still", "get_stills", "apply_grade_from_still"],
         node_type: str = "primary",
         node_name: str | None = None,
         parent_node: str | None = None,
@@ -31,6 +31,8 @@ def setup_color_portmanteau(app):
         gamma: dict[str, float] | None = None,
         gain: dict[str, float] | None = None,
         offset: dict[str, float] | None = None,
+        still_name: str | None = None,
+        still_index: int = 0,
     ) -> dict[str, Any]:
         """
         Comprehensive color grading for DaVinci Resolve.
@@ -42,6 +44,9 @@ def setup_color_portmanteau(app):
         - apply_lut: Apply LUT to clip (requires: clip_path, lut_path)
         - set_color_space: Set color space transform
         - adjust_wheels: Adjust color wheels (lift/gamma/gain/offset)
+        - grab_still: Grab still from current clip (optional: node_name)
+        - get_stills: List gallery stills
+        - apply_grade_from_still: Apply grade from still (requires: still_index)
 
         Args:
             action: Operation to perform (create_node, apply_lut, set_color_space, adjust_wheels)
@@ -82,10 +87,19 @@ def setup_color_portmanteau(app):
             adjust_color_wheels_impl as adjust_color_wheels,
         )
         from ..color_tools import (
+            apply_grade_from_still_impl as apply_grade_from_still,
+        )
+        from ..color_tools import (
             apply_lut_impl as apply_lut,
         )
         from ..color_tools import (
             create_color_node_impl as create_color_node,
+        )
+        from ..color_tools import (
+            get_stills_impl as get_stills,
+        )
+        from ..color_tools import (
+            grab_still_impl as grab_still,
         )
         from ..color_tools import (
             set_color_space_impl as set_color_space,
@@ -141,6 +155,15 @@ def setup_color_portmanteau(app):
             return await adjust_color_wheels(
                 app, lift, gamma, gain, offset, clip_path, node_name, timeline_name
             )
+
+        elif action == "grab_still":
+            return await grab_still(app, still_name or node_name, timeline_name)
+
+        elif action == "get_stills":
+            return await get_stills(app)
+
+        elif action == "apply_grade_from_still":
+            return await apply_grade_from_still(app, still_index, timeline_name)
 
         else:
             return {"status": "error", "message": f"Unknown action: {action}"}
