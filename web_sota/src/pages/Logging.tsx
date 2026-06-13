@@ -26,7 +26,7 @@ export default function Logging() {
   const [level, setLevel] = useState("");
   const [kind, setKind] = useState("");
   const [search, setSearch] = useState("");
-  const [sort, setSort] = useState("desc");
+  const [sort] = useState("desc");
   const [tail, setTail] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showClear, setShowClear] = useState(false);
@@ -34,7 +34,7 @@ export default function Logging() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [userScrolled, setUserScrolled] = useState(false);
   const afterIdRef = useRef<string | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const fetchLogs = useCallback(async (opts: { tail?: boolean; after_id?: string } = {}) => {
     setLoading(true);

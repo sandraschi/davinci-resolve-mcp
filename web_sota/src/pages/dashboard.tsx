@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Activity, GitMerge, Box, Cpu, Loader2, Clock, Film, Music2 } from "lucide-react";
+import { Activity, GitMerge, Box, Cpu, Loader2, Film } from "lucide-react";
 
 interface ManagerStatus {
     status?: string;

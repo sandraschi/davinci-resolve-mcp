@@ -9,7 +9,6 @@ import {
     Activity,
     Video,
     Film,
-    Play,
     Server,
     FolderOpen,
     Clock,

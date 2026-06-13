@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/common/utils";
-import { AlertCircle, Loader2, Play, Wifi, WifiOff } from "lucide-react";
+import { Loader2, Play, Wifi, WifiOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface HostStatus {

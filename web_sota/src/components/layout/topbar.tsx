@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { APPS_CATALOG } from "@/common/apps-catalog";
-import { LayoutGrid, ExternalLink, HelpCircle, Wifi, WifiOff, Loader2, Play } from "lucide-react";
+import { LayoutGrid, ExternalLink, HelpCircle, WifiOff, Loader2, Play } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 
 interface HostState {

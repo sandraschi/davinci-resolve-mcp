@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Play, SkipForward, RefreshCw, Scissors } from "lucide-react";
+import { Play, RefreshCw, Scissors } from "lucide-react";
 
 export function Actions() {
     return (

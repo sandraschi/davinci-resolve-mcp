@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Film, Play, Sliders, Layers, Scissors, Palette } from "lucide-react";
+import { Play, Scissors, Palette } from "lucide-react";
 
 export function Tools() {
     return (
