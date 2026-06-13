@@ -3,65 +3,48 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RefreshCw, Loader2 } from "lucide-react";
 
-const API_BASE = "/api/v1";
-
-interface ModelsResponse {
-    models: string[];
-    ollama_url?: string;
-    error?: string;
+function LLMSettings() {
+    const [providers, setProviders] = useState<Record<string, {name:string}[]>>({});
+    const [selectedProvider, setSelectedProvider] = useState("ollama");
+    const [selectedModel, setSelectedModel] = useState("");
+    useEffect(() => {
+        fetch("/api/llm/providers").then(r => r.json()).then(d => {
+            setProviders(d);
+            const savedP = localStorage.getItem("llm_provider") || "ollama";
+            const savedM = localStorage.getItem("llm_model") || "";
+            setSelectedProvider(savedP);
+            const models = d[savedP === "ollama" ? "ollama" : "lm_studio"] || [];
+            setSelectedModel(savedM && models.some((m:{name:string}) => m.name === savedM) ? savedM : (models[0]?.name || ""));
+        }).catch(() => {
+            setProviders({ ollama: [{name:"llama3.2:3b"}] });
+            setSelectedModel(localStorage.getItem("llm_model") || "llama3.2:3b");
+        });
+    }, []);
+    const save = (p:string, m:string) => { localStorage.setItem("llm_provider", p); localStorage.setItem("llm_model", m); };
+    const models = providers[selectedProvider === "ollama" ? "ollama" : "lm_studio"] || [];
+    return (
+        <div className="space-y-3">
+            <select
+                className="h-9 w-full rounded-md border border-slate-700 bg-slate-900 px-3 text-sm text-slate-200"
+                value={selectedProvider}
+                onChange={(e) => { setSelectedProvider(e.target.value); save(e.target.value, ""); }}
+            >
+                <option value="ollama">Ollama</option>
+                <option value="lm_studio">LM Studio</option>
+            </select>
+            <select
+                className="h-9 w-full rounded-md border border-slate-700 bg-slate-900 px-3 text-sm text-slate-200"
+                value={selectedModel}
+                onChange={(e) => { setSelectedModel(e.target.value); save(selectedProvider, e.target.value); }}
+            >
+                {models.map((m) => <option key={m.name} value={m.name}>{m.name}</option>)}
+            </select>
+        </div>
+    );
 }
 
 export function Settings() {
-    const [models, setModels] = useState<string[]>([]);
-    const [ollamaUrl, setOllamaUrl] = useState<string>("");
-    const [loadingModels, setLoadingModels] = useState(false);
-    const [loadingModel, setLoadingModel] = useState<string | null>(null);
-    const [llmError, setLlmError] = useState<string | null>(null);
-
-    const fetchModels = async () => {
-        setLoadingModels(true);
-        setLlmError(null);
-        const maxAttempts = 3;
-        const delayMs = 2000;
-        for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-            try {
-                const res = await fetch(`${API_BASE}/llm/models`);
-                const data: ModelsResponse = await res.json();
-                setModels(data.models || []);
-                if (data.ollama_url) setOllamaUrl(data.ollama_url);
-                if (data.error) setLlmError(data.error);
-                break;
-            } catch (e) {
-                setLlmError(attempt < maxAttempts ? "Backend starting... retrying." : (e instanceof Error ? e.message : "Failed to fetch models"));
-                setModels([]);
-                if (attempt < maxAttempts) await new Promise((r) => setTimeout(r, delayMs));
-            }
-        }
-        setLoadingModels(false);
-    };
-
-    useEffect(() => {
-        fetchModels();
-    }, []);
-
-    const loadModel = async (name: string) => {
-        setLoadingModel(name);
-        setLlmError(null);
-        try {
-            const res = await fetch(`${API_BASE}/llm/load?name=${encodeURIComponent(name)}`, { method: "POST" });
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                throw new Error(err.detail || res.statusText);
-            }
-        } catch (e) {
-            setLlmError(e instanceof Error ? e.message : "Load failed");
-        } finally {
-            setLoadingModel(null);
-        }
-    };
-
     return (
         <div className="space-y-6">
             <div>
@@ -99,47 +82,11 @@ export function Settings() {
 
                 <Card className="border-slate-800 bg-slate-950/50">
                     <CardHeader>
-                        <CardTitle className="text-white">Local LLM (Ollama)</CardTitle>
-                        <CardDescription className="text-slate-400">
-                            Find and load models for the AI Editor chat. Server uses OLLAMA_URL (e.g. http://127.0.0.1:11434).
-                        </CardDescription>
+                        <CardTitle className="text-white">Local LLM</CardTitle>
+                        <CardDescription className="text-slate-400">Provider and model selection</CardDescription>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        {ollamaUrl && (
-                            <p className="text-slate-500 text-sm">Backend Ollama: {ollamaUrl}</p>
-                        )}
-                        {llmError && (
-                            <p className="text-amber-400 text-sm">{llmError}</p>
-                        )}
-                        <Button
-                            variant="outline"
-                            className="border-slate-800 text-slate-300 hover:bg-slate-800"
-                            onClick={fetchModels}
-                            disabled={loadingModels}
-                        >
-                            {loadingModels ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                            <span className="ml-2">Refresh model list</span>
-                        </Button>
-                        {models.length > 0 ? (
-                            <ul className="space-y-2">
-                                {models.map((name) => (
-                                    <li key={name} className="flex items-center justify-between gap-2 py-1 border-b border-slate-800 last:border-0">
-                                        <span className="text-slate-300 text-sm truncate">{name}</span>
-                                        <Button
-                                            size="sm"
-                                            variant="outline"
-                                            className="border-slate-700 text-slate-300 shrink-0"
-                                            onClick={() => loadModel(name)}
-                                            disabled={loadingModel !== null}
-                                        >
-                                            {loadingModel === name ? <Loader2 className="w-4 h-4 animate-spin" /> : "Load into memory"}
-                                        </Button>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            !loadingModels && <p className="text-slate-500 text-sm">No models found. Install Ollama and pull a model (e.g. ollama pull llama3.2).</p>
-                        )}
+                    <CardContent>
+                        <LLMSettings />
                     </CardContent>
                 </Card>
 
