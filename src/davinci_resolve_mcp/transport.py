@@ -227,7 +227,7 @@ async def run_server_async(
     try:
         if transport == "stdio":
             logger.info("Running in STDIO mode - Ready for Claude Desktop!")
-            await mcp_app.run_stdio_async()
+            await mcp_app.run_stdio_async(show_banner=False)
 
         elif transport == "http":
             host = config["host"]

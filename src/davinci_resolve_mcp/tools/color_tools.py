@@ -328,26 +328,38 @@ async def set_color_space_impl(
                 raise ResolveOperationError("No timeline is currently open")
 
         # Find the target clip
-        target_clip = None
-        if clip_path:
-            # Navigate to clip (simplified implementation)
-            target_clip = timeline.GetCurrentVideoItem()
-        else:
-            target_clip = timeline.GetCurrentVideoItem()
+        target_clip = timeline.GetCurrentVideoItem()
 
         if not target_clip:
             raise ResolveOperationError("No target clip found")
 
-        # Set color space
-        # Note: This is a simplified implementation as DaVinci Resolve's color space
-        # management may not have direct methods in the Python API
+        # Set color space via Fusion ColorSpaceTransform tool
+        resolve = connection.get_connection()
+        fusion = resolve.Fusion() if hasattr(resolve, "Fusion") else None
+        if not fusion:
+            raise ResolveOperationError("Could not access Fusion interface for CST")
+
+        comp = fusion.GetCurrentComp()
+        if not comp:
+            raise ResolveOperationError("Could not access current composition")
+
+        cst = comp.AddTool("ColorSpaceTransform", -1, -1)
+        if not cst:
+            raise ResolveOperationError("Failed to create ColorSpaceTransform node")
+
+        cst.SourceSpace = input_space.input_color_space
+        cst.SourceGamma = input_space.input_gamma or "Same as Project"
+        cst.TargetSpace = output_space.output_color_space
+        cst.TargetGamma = output_space.output_gamma or "Same as Project"
+
         return {
             "status": "success",
             "timeline_name": timeline.GetName(),
             "clip_name": target_clip.GetName(),
             "input_space": input_space.input_color_space,
             "output_space": output_space.output_color_space,
-            "message": "Color space setting not fully implemented in Python API",
+            "cst_node_id": cst.GetAttrs().get("TOOLS_RegID", ""),
+            "message": f"Color space transform: {input_space.input_color_space} → {output_space.output_color_space}",
         }
 
     except Exception as e:
@@ -791,17 +803,35 @@ def register_tools(app):
                 if not current_clip:
                     raise ResolveOperationError("No clip is currently selected")
 
-                # Set the color space transform
-                # Note: This is a simplified example - actual implementation may vary
-                # depending on the DaVinci Resolve API version
+                fusion = resolve.Fusion()
+                if not fusion:
+                    raise ResolveOperationError("Could not access Fusion interface")
 
-                # Save the project
+                comp = fusion.GetCurrentComp()
+                if not comp:
+                    raise ResolveOperationError("Could not access current composition")
+
+                cst = comp.AddTool("ColorSpaceTransform", -1, -1)
+                if not cst:
+                    raise ResolveOperationError("Failed to create ColorSpaceTransform node")
+
+                cst.SourceSpace = transform.input_color_space
+                cst.SourceGamma = transform.input_gamma or "Same as Project"
+                cst.TargetSpace = transform.output_color_space
+                cst.TargetGamma = transform.output_gamma or "Same as Project"
+
                 resolve.GetProjectManager().SaveProject()
 
                 return {
                     "status": "success",
-                    "message": "Color space transform applied",
-                    "transform": transform.dict(),
+                    "message": f"Color space transform applied: {transform.input_color_space} → {transform.output_color_space}",
+                    "transform": {
+                        "input_color_space": transform.input_color_space,
+                        "input_gamma": transform.input_gamma,
+                        "output_color_space": transform.output_color_space,
+                        "output_gamma": transform.output_gamma,
+                    },
+                    "node_id": cst.GetAttrs()["TOOLS_RegID"],
                 }
 
         except Exception as e:

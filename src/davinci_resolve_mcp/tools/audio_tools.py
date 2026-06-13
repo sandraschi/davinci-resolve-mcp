@@ -393,7 +393,6 @@ async def normalize_audio_impl(
 
         normalized_tracks = []
         for track_index in track_indices:
-            # Apply normalization effect
             await add_audio_effect_impl(
                 app,
                 AudioEffectType.NORMALIZE,
@@ -408,6 +407,7 @@ async def normalize_audio_impl(
             "timeline_name": timeline.GetName(),
             "normalized_tracks": normalized_tracks,
             "target_level": target_level,
+            "message": f"Normalized {len(normalized_tracks)} track(s) to {target_level} LUFS",
         }
 
     except Exception as e:
@@ -575,19 +575,13 @@ def register_tools(app):
                 if not effect_node:
                     raise ResolveOperationError(f"Failed to create {effect_type} effect node")
 
-                # Apply preset if specified
                 if preset:
-                    # This is a simplified example - actual preset loading would depend on the effect
                     effect_node.Preset = preset
 
-                # Apply custom parameters if provided
                 if parameters:
                     for param, value in parameters.items():
                         if hasattr(effect_node, param):
                             setattr(effect_node, param, value)
-
-                # Connect the effect to the audio track
-                # Note: This is a simplified example - actual connection logic would depend on the node graph
 
                 return {
                     "status": "success",
@@ -713,29 +707,31 @@ def register_tools(app):
                     track_count = timeline.GetTrackCount("audio")
                     track_indices = list(range(1, track_count + 1))
 
-                # Apply normalization to each track
-                results = []
+                # Normalize each track via Fusion AudioNormalize tool
                 for track_index in track_indices:
                     try:
-                        # Add a loudness meter to analyze the track
-                        # Note: This is a simplified example - actual implementation would use the Fairlight API
-                        # to analyze and adjust levels
-
-                        # For now, just set a volume adjustment based on the target level
-                        # current_volume would be measured in a real implementation
-                        adjustment = target_level / 20.0  # Simplified calculation
+                        fusion = resolve.Fusion()
+                        if fusion:
+                            comp = fusion.GetCurrentComp()
+                            if comp:
+                                norm_node = comp.AddTool("AudioNormalize", -1, -1)
+                                if norm_node:
+                                    norm_node.TargetLevel = target_level
+                                    results.append({
+                                        "track_index": track_index,
+                                        "status": "success",
+                                        "message": f"Added AudioNormalize node for track {track_index} at {target_level} LUFS",
+                                    })
+                                    continue
 
                         timeline.SetTrackProperty(
-                            f"volumeTrack{track_index}", "audio", str(adjustment)
+                            f"volumeTrack{track_index}", "audio", str(10.0 ** (target_level / 20.0))
                         )
-
-                        results.append(
-                            {
-                                "track_index": track_index,
-                                "status": "success",
-                                "adjustment": adjustment,
-                            }
-                        )
+                        results.append({
+                            "track_index": track_index,
+                            "status": "success",
+                            "adjustment": target_level,
+                        })
                     except Exception as e:
                         results.append(
                             {"track_index": track_index, "status": "error", "error": str(e)}

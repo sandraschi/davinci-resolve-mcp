@@ -103,16 +103,15 @@ async def get_resolve_info():
             return {"status": "disconnected", "message": "Connection manager not initialized"}
 
         mgr = mcp_app.state.connection_manager
-        if not await mgr.ensure_connection():
-            info = mgr.get_status()
-            return {
-                "status": "disconnected",
-                "message": "Could not connect to DaVinci Resolve (see manager status)",
-                "manager_status": info,
-            }
-
-        # Manually fetch since we have connection manager
         try:
+            if not await mgr.ensure_connection():
+                host = mgr.environment.check_resolve_running()
+                return {
+                    "status": "disconnected",
+                    "message": "Could not connect to DaVinci Resolve. Open a project and ensure external scripting is enabled in Resolve Preferences.",
+                    "manager_status": {"status": "error", "resolve_running": host, "api_available": False},
+                }
+
             resolve = mgr.get_connection()
             project_manager = resolve.GetProjectManager()
             current_project = project_manager.GetCurrentProject()
@@ -120,12 +119,22 @@ async def get_resolve_info():
                 "status": "connected",
                 "version": resolve.GetVersionString(),
                 "project_name": current_project.GetName() if current_project else None,
-                "is_rendering": resolve.IsRenderingInProgress()
-                if hasattr(resolve, "IsRenderingInProgress")
-                else False,
+                "is_rendering": resolve.IsRenderingInProgress() if hasattr(resolve, "IsRenderingInProgress") else False,
             }
         except Exception as e:
-            return {"status": "error", "message": str(e), "manager_status": mgr.get_status()}
+            host = mgr.environment.check_resolve_running()
+            err = str(e)
+            if "scriptapp returned None" in err:
+                hint = "Resolve is running but the scripting bridge isn't responding. Open a project and check Preferences > System > General > External Scripting."
+            elif "not running" in err.lower():
+                hint = "DaVinci Resolve is not running. Launch it from the top bar."
+            else:
+                hint = err
+            return {
+                "status": "disconnected",
+                "message": hint,
+                "manager_status": {"status": "error", "resolve_running": host, "api_available": False},
+            }
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
