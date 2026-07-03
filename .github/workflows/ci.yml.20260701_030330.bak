@@ -9,7 +9,7 @@ jobs:
   # Quality Assurance
   quality:
     name: Code Quality & Security
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     timeout-minutes: 10
 
     steps:
@@ -56,13 +56,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.8", "3.9", "3.10", "3.11"]
         exclude:
           # Reduce matrix size - test extremes
-          - os: windows-latest
+          - os: ubuntu-latest
             python-version: "3.9"
-          - os: windows-latest
+          - os: macos-latest
             python-version: "3.10"
 
     steps:
@@ -134,7 +134,7 @@ jobs:
   # Package building
   build:
     name: Build Packages
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: [quality, test]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
 
@@ -175,7 +175,7 @@ jobs:
   # Release management
   release:
     name: Create Release
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: [quality, test, build]
     if: startsWith(github.ref, 'refs/tags/v')
 
@@ -210,7 +210,7 @@ jobs:
   # Documentation deployment
   docs:
     name: Deploy Documentation
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: [quality]
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
 
@@ -241,7 +241,7 @@ jobs:
   # Dependency updates
   dependabot:
     name: Auto-merge Dependabot updates
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: [quality, test]
     if: github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'
 

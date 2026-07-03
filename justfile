@@ -1,4 +1,5 @@
-﻿set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+set windows-shell := ["pwsh.exe", "-NoLogo", "-Command"]
+import 'scripts/just/fleet.just'
 
 # ── Dashboard ─────────────────────────────────────────────────────────────────
 
@@ -150,4 +151,3 @@ stats:
 # Quick line count
 count:
     Get-ChildItem -Recurse -Include '*.py' | Get-Content | Measure-Object -Line | Select-Object -ExpandProperty Lines
-

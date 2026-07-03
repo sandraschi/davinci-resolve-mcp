@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_BASE } from "../lib/api";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +10,7 @@ function LLMSettings() {
     const [selectedProvider, setSelectedProvider] = useState("ollama");
     const [selectedModel, setSelectedModel] = useState("");
     useEffect(() => {
-        fetch("/api/llm/providers").then(r => r.json()).then(d => {
+        fetch(API_BASE + "/api/llm/providers").then(r => r.json()).then(d => {
             setProviders(d);
             const savedP = localStorage.getItem("llm_provider") || "ollama";
             const savedM = localStorage.getItem("llm_model") || "";

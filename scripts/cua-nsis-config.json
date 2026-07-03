@@ -1,0 +1,14 @@
+{
+    "product_name": "DaVinci Resolve MCP",
+    "install_dir": "%LOCALAPPDATA%\\DaVinci Resolve MCP",
+    "operator_exe": "davinci-resolve-mcp-native.exe",
+    "backend_process_names": ["davinci-resolve-mcp-native", "davinci-resolve-mcp-backend"],
+    "backend_port": 10843,
+    "health_path": "/api/v1/health",
+    "diagnostics_path": "/api/v1/diagnostics",
+    "feature_smoke_path": "/api/v1/system/info",
+    "window_title_re": "DaVinci Resolve MCP",
+    "nsis_glob": "native/target/release/bundle/nsis/DaVinci Resolve MCP_*_x64-setup.exe",
+    "bridge_ok_text": "REST bridge reachable",
+    "uninstall_registry_filter": "*DaVinci Resolve MCP*"
+}
