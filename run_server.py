@@ -21,7 +21,7 @@ if __name__ == "__main__":
     from davinci_resolve_mcp.server import app as _mcp
 
     app = FastAPI(title="davinci-resolve-mcp")
-    app.mount("/mcp", _mcp.http_app())
+    app.mount("/mcp", _mcp.http_app(path="/"))
 
     host = os.environ.get("RESOLVE_HOST", "127.0.0.1")
     port = int(os.environ.get("RESOLVE_PORT", os.environ.get("MCP_PORT", "10843")))
