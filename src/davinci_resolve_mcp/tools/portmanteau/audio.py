@@ -10,10 +10,12 @@ from typing import Any, Literal
 logger = logging.getLogger(__name__)
 
 
+_MUTATING = {}
+
 def setup_audio_portmanteau(app):
     """Register the audio portmanteau tool."""
 
-    @app.tool()
+    @app.tool(annotations=_MUTATING)
     async def resolve_audio(
         action: Literal["get_tracks", "add_effect", "adjust_levels", "normalize"],
         timeline_name: str | None = None,

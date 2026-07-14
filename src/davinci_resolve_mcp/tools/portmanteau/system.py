@@ -10,10 +10,12 @@ from typing import Any, Literal
 logger = logging.getLogger(__name__)
 
 
+_READ_ONLY = {"readonly": True}
+
 def setup_system_portmanteau(app):
     """Register the system portmanteau tool with conversational capabilities."""
 
-    @app.tool()
+    @app.tool(annotations=_READ_ONLY)
     async def resolve_system(
         action: Literal["info", "status", "health", "help", "host_status", "host_launch"],
         topic: str | None = None,

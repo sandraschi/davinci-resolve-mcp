@@ -10,10 +10,12 @@ from typing import Any, Literal
 logger = logging.getLogger(__name__)
 
 
+_MUTATING = {}
+
 def setup_timeline_portmanteau(app):
     """Register the timeline portmanteau tool."""
 
-    @app.tool()
+    @app.tool(annotations=_MUTATING)
     async def resolve_timeline(
         action: Literal[
             "create", "info", "add_clip", "cut", "set_playhead",

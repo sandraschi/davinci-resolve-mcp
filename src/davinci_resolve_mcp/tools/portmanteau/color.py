@@ -10,10 +10,12 @@ from typing import Any, Literal
 logger = logging.getLogger(__name__)
 
 
+_MUTATING = {}
+
 def setup_color_portmanteau(app):
     """Register the color portmanteau tool."""
 
-    @app.tool()
+    @app.tool(annotations=_MUTATING)
     async def resolve_color(
         action: Literal["create_node", "apply_lut", "set_color_space", "adjust_wheels", "grab_still", "get_stills", "apply_grade_from_still"],
         node_type: str = "primary",

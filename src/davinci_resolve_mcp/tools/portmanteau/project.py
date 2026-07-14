@@ -10,10 +10,12 @@ from typing import Any, Literal
 logger = logging.getLogger(__name__)
 
 
+_MUTATING = {}
+
 def setup_project_portmanteau(app):
     """Register the project portmanteau tool with conversational capabilities."""
 
-    @app.tool()
+    @app.tool(annotations=_MUTATING)
     async def resolve_project(
         action: Literal["create", "open", "list", "get_settings", "update_settings"],
         name: str | None = None,

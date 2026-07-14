@@ -9,14 +9,21 @@ Fleet **2026** standards live in **MCP Central Docs** (local clone):
 **Hub:** `standards\AGENT_PROTOCOLS.md` — links to all modular standards.
 
 **Most relevant for this repo:**
-
 - `standards\SOTA_REQUIREMENTS.md` — FastMCP **3.1+** (prompts, resources, `ctx.sample()`, skills provider)
 - `standards\TOOL_DESIGN_STANDARDS.md` — portmanteau tools, docstrings, args
-- `standards\WEBAPP_STANDARDS.md` — dashboard rules; ports **10700–10800**; this project **10842** / **10843**
-- `operations\WEBAPP_PORTS.md` — port registry
+- `operations\WEBAPP_PORTS.md` — port registry; this project **10842** / **10843**
 - `standards\PACKAGING_STANDARDS.md` — uv, justfile, `llms.txt` + `llms-full.txt`, glama, MCPB
-- `standards\CODE_QUALITY_STANDARDS.md` — Ruff, pre-commit, optional `ty`
+
+## Portmanteau Tools (9)
+- `resolve_project` — create, open, list, get_settings, update_settings
+- `resolve_media` — import, list, create_folder, get_metadata
+- `resolve_timeline` — create, info, add_clip, cut, set_playhead, add_marker, get_markers, delete_marker, add_keyframe, get_keyframes, delete_keyframe, set_clip_property
+- `resolve_color` — create_node, apply_lut, set_color_space, adjust_wheels, grab_still, get_stills, apply_grade_from_still
+- `resolve_render` — timeline, presets, with_preset, job_status
+- `resolve_audio` — get_tracks, add_effect, adjust_levels, normalize
+- `resolve_fairlight` — open_page, get_tracks, set_mute, set_solo, set_volume, track_eq, track_send, get_buses, track_automation
+- `resolve_subtitle` — add, get, edit, delete, import_srt, export_srt
+- `resolve_system` — info, status, health, help, host_status, host_launch
 
 ## Shell (Windows)
-
 PowerShell: use `;` to chain commands; avoid bash-only syntax in scripts.

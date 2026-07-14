@@ -22,10 +22,12 @@ from ..fairlight_tools import (
 logger = logging.getLogger(__name__)
 
 
+_MUTATING = {}
+
 def setup_fairlight_portmanteau(app):
     """Register the Fairlight portmanteau tool."""
 
-    @app.tool()
+    @app.tool(annotations=_MUTATING)
     async def resolve_fairlight(
         operation: Literal[
             "open_page",

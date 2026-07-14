@@ -10,10 +10,12 @@ from typing import Any, Literal
 logger = logging.getLogger(__name__)
 
 
+_MUTATING = {}
+
 def setup_subtitle_portmanteau(app):
     """Register the subtitle portmanteau tool."""
 
-    @app.tool()
+    @app.tool(annotations=_MUTATING)
     async def resolve_subtitle(
         action: Literal["add", "get", "edit", "delete", "import_srt", "export_srt"],
         track_index: int = 1,

@@ -10,10 +10,12 @@ from typing import Any, Literal
 logger = logging.getLogger(__name__)
 
 
+_MUTATING = {}
+
 def setup_render_portmanteau(app):
     """Register the render portmanteau tool."""
 
-    @app.tool()
+    @app.tool(annotations=_MUTATING)
     async def resolve_render(
         action: Literal["timeline", "presets", "with_preset", "job_status"],
         output_path: str | None = None,

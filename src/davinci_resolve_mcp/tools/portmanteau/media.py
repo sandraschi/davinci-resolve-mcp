@@ -10,10 +10,12 @@ from typing import Any, Literal
 logger = logging.getLogger(__name__)
 
 
+_MUTATING = {}
+
 def setup_media_portmanteau(app):
     """Register the media portmanteau tool."""
 
-    @app.tool()
+    @app.tool(annotations=_MUTATING)
     async def resolve_media(
         action: Literal["import", "list", "create_folder", "get_metadata"],
         paths: list[str] | None = None,

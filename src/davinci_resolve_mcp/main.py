@@ -66,38 +66,37 @@ def _configure_mcp_logging() -> None:
 
 @contextmanager
 def _stdio_single_instance_lock():
-    """Guard stdio mode with a process lock on Windows (opt-out via env)."""
+    """Guard stdio mode with a named mutex on Windows (auto-releases on process death)."""
     import os
 
     if os.getenv("DAVINCI_MCP_STDIN_SINGLE_INSTANCE", "1") != "1":
         yield
         return
 
-    lock_path = Path.home() / ".davinci-resolve-mcp" / "mcp-stdio.lock"
-    lock_path.parent.mkdir(parents=True, exist_ok=True)
-
     if os.name == "nt":
-        import msvcrt
+        import ctypes
 
-        lock_file = open(lock_path, "a+b")
-        try:
-            msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
-        except OSError:
-            lock_file.close()
+        ERROR_ALREADY_EXISTS = 183
+        mutex_name = "Local\\DaVinciResolveMCP-d4f2a1"
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        handle = kernel32.CreateMutexW(None, True, mutex_name)
+        error = ctypes.get_last_error()
+
+        if handle and error == 0:
+            try:
+                yield
+            finally:
+                kernel32.ReleaseMutex(handle)
+                kernel32.CloseHandle(handle)
+        elif error == ERROR_ALREADY_EXISTS:
             logger.error(
-                "davinci-resolve-mcp stdio already running (lock: %s). "
-                "Close other MCP clients or set DAVINCI_MCP_STDIN_SINGLE_INSTANCE=0.",
-                lock_path,
+                "davinci-resolve-mcp stdio already running (named mutex detected). "
+                "Close other MCP clients or set DAVINCI_MCP_STDIN_SINGLE_INSTANCE=0."
             )
             raise typer.Exit(1)
-        try:
+        else:
             yield
-        finally:
-            try:
-                lock_file.seek(0)
-                msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
-            finally:
-                lock_file.close()
     else:
         yield
 
