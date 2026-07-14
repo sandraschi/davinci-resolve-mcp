@@ -25,7 +25,7 @@ function Test-Python {
     try {
         $pythonVersion = & python --version 2>$null
         if ($LASTEXITCODE -eq 0) {
-            Write-Colored "✓ Python found: $pythonVersion" -Color Green
+            Write-Colored "âœ“ Python found: $pythonVersion" -Color Green
             return $true
         }
     }
@@ -34,12 +34,12 @@ function Test-Python {
         try {
             $pythonVersion = & python3 --version 2>$null
             if ($LASTEXITCODE -eq 0) {
-                Write-Colored "✓ Python found: $pythonVersion" -Color Green
+                Write-Colored "âœ“ Python found: $pythonVersion" -Color Green
                 return $true
             }
         }
         catch {
-            Write-Colored "✗ Python not found. Please install Python $PythonVersion or later." -Color Red
+            Write-Colored "âœ- Python not found. Please install Python $PythonVersion or later." -Color Red
             return $false
         }
     }
@@ -62,11 +62,11 @@ function New-VirtualEnvironment {
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to create virtual environment"
         }
-        Write-Colored "✓ Virtual environment created successfully" -Color Green
+        Write-Colored "âœ“ Virtual environment created successfully" -Color Green
         return $true
     }
     catch {
-        Write-Colored "✗ Failed to create virtual environment: $_" -Color Red
+        Write-Colored "âœ- Failed to create virtual environment: $_" -Color Red
         return $false
     }
 }
@@ -112,11 +112,11 @@ function Install-Dependencies {
             }
         }
 
-        Write-Colored "✓ Dependencies installed successfully" -Color Green
+        Write-Colored "âœ“ Dependencies installed successfully" -Color Green
         return $true
     }
     catch {
-        Write-Colored "✗ Failed to install dependencies: $_" -Color Red
+        Write-Colored "âœ- Failed to install dependencies: $_" -Color Red
         return $false
     }
 }
@@ -151,12 +151,12 @@ except ImportError as e:
             throw "Package import test failed"
         }
 
-        Write-Colored "✓ Installation test passed" -Color Green
+        Write-Colored "âœ“ Installation test passed" -Color Green
         Write-Colored $testResult -Color Green
         return $true
     }
     catch {
-        Write-Colored "✗ Installation test failed: $_" -Color Red
+        Write-Colored "âœ- Installation test failed: $_" -Color Red
         return $false
     }
 }
