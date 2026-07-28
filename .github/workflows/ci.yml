@@ -1,261 +1,54 @@
-name: CI/CD Pipeline
+﻿# Fleet: mcp-central-docs/templates/ci.yml.template
+name: CI
 
 on:
   push:
-    tags: ["v*"]
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
-  # Quality Assurance
-  quality:
-    name: Code Quality & Security
+  check:
+    name: Lint & Test (Windows)
     runs-on: windows-latest
-    timeout-minutes: 10
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+          enable-cache: true
 
-    - name: Cache pip dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/pyproject.toml', '**/requirements*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[dev]
-        pre-commit install --install-hooks
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web_sota/package-lock.json
 
-    - name: Run pre-commit hooks
-      run: pre-commit run --all-files
+      - name: Install Python dependencies
+        run: uv sync --extra dev --group dev
 
-    - name: Security audit
-      run: |
-        pip install safety
-        safety check --full-report
+      - name: Ruff check
+        run: uv run ruff check src tests
 
-    - name: Type checking
-      run: mypy src/ --ignore-missing-imports
+      - name: Ruff format check
+        run: uv run ruff format --check src tests
 
-  # Cross-platform testing
-  test:
-    name: Test (${{ matrix.os }}, Python ${{ matrix.python-version }})
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [windows-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
-        exclude:
-          # Reduce matrix size - test extremes
-          - os: windows-latest
-            python-version: "3.9"
-          - os: windows-latest
-            python-version: "3.10"
+      - name: Pytest
+        run: uv run python -m pytest -q --tb=short
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Install web dependencies
+        run: npm ci
+        working-directory: web_sota
 
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Cache pip dependencies
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cache/pip
-          ~/Library/Caches/pip
-        key: ${{ runner.os }}-py${{ matrix.python-version }}-pip-${{ hashFiles('**/pyproject.toml') }}
-        restore-keys: |
-          ${{ runner.os }}-py${{ matrix.python-version }}-pip-
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[dev]
-
-    - name: Run tests
-      run: |
-        pytest tests/ -v --cov=src/davinci_resolve_mcp --cov-report=xml --cov-report=term-missing
-      env:
-        PYTHONPATH: src
-
-    - name: Upload coverage to Codecov
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-
-  # Integration testing (limited scope)
-  integration-test:
-    name: Integration Tests
-    runs-on: windows-latest
-    timeout-minutes: 20
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[dev]
-
-    - name: Run integration tests
-      run: |
-        pytest tests/integration/ -v -k "not slow" --tb=short
-      env:
-        PYTHONPATH: src
-      continue-on-error: true
-
-  # Package building
-  build:
-    name: Build Packages
-    runs-on: windows-latest
-    needs: [quality, test]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build twine
-
-    - name: Build Python package
-      run: python -m build
-
-    - name: Build MCPB package
-      run: python build_mcpb.py
-
-    - name: Build Zed extension
-      run: python -m scripts.build_zed
-
-    - name: Validate packages
-      run: |
-        ls -la dist/
-        python -c "import zipfile; zipfile.ZipFile('dist/davinci-resolve-mcp-0.2.0.mcpb').testzip()"
-
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: packages
-        path: dist/
-
-  # Release management
-  release:
-    name: Create Release
-    runs-on: windows-latest
-    needs: [quality, test, build]
-    if: startsWith(github.ref, 'refs/tags/v')
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: packages
-        path: dist/
-
-    - name: Create GitHub Release
-      uses: softprops/action-gh-release@v2
-      with:
-        files: dist/*
-        generate_release_notes: true
-        draft: false
-        prerelease: ${{ contains(github.ref, 'rc') || contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Publish to PyPI (if configured)
-      if: github.event_name == 'release' && !github.event.release.prerelease
-      run: |
-        twine upload dist/*.whl dist/*.tar.gz
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-
-  # Documentation deployment
-  docs:
-    name: Deploy Documentation
-    runs-on: windows-latest
-    needs: [quality]
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-
-    - name: Install docs dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[docs]
-
-    - name: Build documentation
-      run: mkdocs build
-
-    - name: Deploy to GitHub Pages
-      if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./site
-
-  # Dependency updates
-  dependabot:
-    name: Auto-merge Dependabot updates
-    runs-on: windows-latest
-    needs: [quality, test]
-    if: github.actor == 'dependabot[bot]' && github.event_name == 'pull_request'
-
-    steps:
-    - name: Auto-merge for Dependabot
-      uses: pascalgn/auto-merge-action@v0.16.4
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        merge_method: squash
-        commit_message_template: |
-          🤖 Automated dependency update
-
-          {pullRequest.title}
-
-          {pullRequest.body}
-        commit_message_args: |
-          --signoff
+      - name: Biome check
+        run: npm run biome:ci
+        working-directory: web_sota
