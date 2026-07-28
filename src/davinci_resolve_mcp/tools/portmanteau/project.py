@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 _MUTATING = {}
 
+
 def setup_project_portmanteau(app):
     """Register the project portmanteau tool with conversational capabilities."""
 
@@ -92,9 +93,7 @@ def setup_project_portmanteau(app):
             result = await create_project(app, name, frame_rate, width, height, template)
             if result.get("status") == "success":
                 resolution = f"{width}x{height}"
-                message = (
-                    f"Created new project '{name}' with {resolution} resolution at {frame_rate}fps"
-                )
+                message = f"Created new project '{name}' with {resolution} resolution at {frame_rate}fps"
                 if template:
                     message += f" using '{template}' template"
                 return {

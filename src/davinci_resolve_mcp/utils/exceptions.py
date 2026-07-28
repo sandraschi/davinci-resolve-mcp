@@ -65,9 +65,7 @@ class ProjectNotFoundError(DaVinciResolveMCPError):
     """Exception raised when specified project doesn't exist."""
 
     def __init__(self, project_name: str):
-        super().__init__(
-            f"Project '{project_name}' not found", recovery_action="list_available_projects"
-        )
+        super().__init__(f"Project '{project_name}' not found", recovery_action="list_available_projects")
 
 
 class ProjectOperationError(DaVinciResolveMCPError):
@@ -106,9 +104,7 @@ class TimelineNotFoundError(TimelineError):
     """Exception raised when specified timeline doesn't exist."""
 
     def __init__(self, timeline_name: str):
-        super().__init__(
-            f"Timeline '{timeline_name}' not found", recovery_action="list_available_timelines"
-        )
+        super().__init__(f"Timeline '{timeline_name}' not found", recovery_action="list_available_timelines")
 
 
 class ColorGradingError(DaVinciResolveMCPError):
@@ -129,9 +125,7 @@ class RenderQueueError(RenderError):
     """Exception raised when render queue operation fails."""
 
     def __init__(self, message: str):
-        super().__init__(
-            f"Render queue error: {message}", recovery_action="check_render_queue_state"
-        )
+        super().__init__(f"Render queue error: {message}", recovery_action="check_render_queue_state")
 
 
 class AudioProcessingError(DaVinciResolveMCPError):
@@ -199,6 +193,4 @@ class ResourceNotAvailableError(DaVinciResolveMCPError):
     """Exception raised when required resource is not available."""
 
     def __init__(self, resource: str):
-        super().__init__(
-            f"Resource not available: {resource}", recovery_action="check_resource_availability"
-        )
+        super().__init__(f"Resource not available: {resource}", recovery_action="check_resource_availability")

@@ -180,13 +180,9 @@ def register_agentic_tools():
                 )
                 optimal_strategy = msg.content.text.strip().lower()
                 if optimal_strategy not in ["adaptive", "parallel", "sequential"]:
-                    optimal_strategy = _determine_optimal_strategy(
-                        project_analysis, processing_strategy
-                    )
+                    optimal_strategy = _determine_optimal_strategy(project_analysis, processing_strategy)
             except Exception:
-                optimal_strategy = _determine_optimal_strategy(
-                    project_analysis, processing_strategy
-                )
+                optimal_strategy = _determine_optimal_strategy(project_analysis, processing_strategy)
 
             strategy_messages = {
                 "adaptive": "Adaptive processing will optimize strategy based on project characteristics.",

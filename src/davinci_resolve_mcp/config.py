@@ -10,7 +10,7 @@ from __future__ import annotations
 import logging
 import os
 import platform
-from enum import Enum
+from enum import Enum, StrEnum
 from pathlib import Path
 from typing import Any, TypeVar
 
@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 ModelT = TypeVar("ModelT", bound=BaseModel)
 
 
-class LogLevel(str, Enum):
+class LogLevel(StrEnum):
     """Standard log levels for consistent configuration."""
 
     DEBUG = "DEBUG"
@@ -34,7 +34,7 @@ class LogLevel(str, Enum):
     CRITICAL = "CRITICAL"
 
 
-class ColorSpace(str, Enum):
+class ColorSpace(StrEnum):
     """Supported color spaces."""
 
     REC709 = "Rec.709"
@@ -64,15 +64,9 @@ class ResolveEnvironmentConfig(BaseModel):
     the DaVinci Resolve Python API.
     """
 
-    script_api_path: Path | None = Field(
-        default=None, description="Path to DaVinci Resolve's Python modules"
-    )
-    script_lib_path: Path | None = Field(
-        default=None, description="Path to additional script libraries"
-    )
-    python_path_additions: list[Path] = Field(
-        default_factory=list, description="Additional paths to add to PYTHONPATH"
-    )
+    script_api_path: Path | None = Field(default=None, description="Path to DaVinci Resolve's Python modules")
+    script_lib_path: Path | None = Field(default=None, description="Path to additional script libraries")
+    python_path_additions: list[Path] = Field(default_factory=list, description="Additional paths to add to PYTHONPATH")
 
     model_config = ConfigDict(extra="allow", arbitrary_types_allowed=True)
 
@@ -93,24 +87,14 @@ class ConnectionConfig(BaseModel):
     with the DaVinci Resolve application.
     """
 
-    timeout: float = Field(
-        default=30.0, ge=5.0, le=300.0, description="Timeout in seconds for API operations"
-    )
-    retry_attempts: int = Field(
-        default=3, ge=1, le=10, description="Number of retry attempts for failed operations"
-    )
-    retry_delay: float = Field(
-        default=2.0, ge=0.5, le=30.0, description="Delay in seconds between retry attempts"
-    )
+    timeout: float = Field(default=30.0, ge=5.0, le=300.0, description="Timeout in seconds for API operations")
+    retry_attempts: int = Field(default=3, ge=1, le=10, description="Number of retry attempts for failed operations")
+    retry_delay: float = Field(default=2.0, ge=0.5, le=30.0, description="Delay in seconds between retry attempts")
     connection_check_interval: float = Field(
         default=5.0, ge=1.0, le=60.0, description="Interval in seconds to check connection health"
     )
-    headless_mode: bool = Field(
-        default=False, description="Run Resolve in headless mode (if supported)"
-    )
-    auto_reconnect: bool = Field(
-        default=True, description="Automatically attempt to reconnect if connection is lost"
-    )
+    headless_mode: bool = Field(default=False, description="Run Resolve in headless mode (if supported)")
+    auto_reconnect: bool = Field(default=True, description="Automatically attempt to reconnect if connection is lost")
 
     model_config = ConfigDict(extra="ignore")
 
@@ -219,9 +203,7 @@ class DaVinciResolveConfig(BaseModel):
                 if os.path.exists(modules_path):
                     current_path = os.environ.get("PYTHONPATH", "")
                     if modules_path not in current_path:
-                        os.environ["PYTHONPATH"] = (
-                            f"{current_path};{modules_path}" if current_path else modules_path
-                        )
+                        os.environ["PYTHONPATH"] = f"{current_path};{modules_path}" if current_path else modules_path
 
             if script_lib:
                 os.environ["RESOLVE_SCRIPT_LIB"] = script_lib
@@ -230,9 +212,7 @@ class DaVinciResolveConfig(BaseModel):
             if self.environment.python_path_additions:
                 current_path = os.environ.get("PYTHONPATH", "")
                 additional = ";".join(self.environment.python_path_additions)
-                os.environ["PYTHONPATH"] = (
-                    f"{current_path};{additional}" if current_path else additional
-                )
+                os.environ["PYTHONPATH"] = f"{current_path};{additional}" if current_path else additional
 
             return True
 

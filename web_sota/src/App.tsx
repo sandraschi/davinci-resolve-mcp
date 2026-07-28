@@ -1,17 +1,17 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AppLayout } from '@/components/layout/app-layout';
-import { Dashboard } from '@/pages/dashboard';
-import { Tools } from '@/pages/tools';
-import { Actions } from '@/pages/actions';
-import Logs from '@/pages/logs';
-import { Chat } from '@/pages/chat';
-import { Settings } from '@/pages/settings';
-import { Projects } from '@/pages/projects';
-import { Timeline } from '@/pages/timeline';
-import { Render } from '@/pages/render';
-import { Fairlight } from '@/pages/fairlight';
-import { Help } from '@/pages/help';
-import { Workflows } from '@/pages/workflows';
+import { Navigate, Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { AppLayout } from "@/components/layout/app-layout";
+import { Actions } from "@/pages/actions";
+import { Chat } from "@/pages/chat";
+import { Dashboard } from "@/pages/dashboard";
+import { Fairlight } from "@/pages/fairlight";
+import { Help } from "@/pages/help";
+import Logs from "@/pages/logs";
+import { Projects } from "@/pages/projects";
+import { Render } from "@/pages/render";
+import { Settings } from "@/pages/settings";
+import { Timeline } from "@/pages/timeline";
+import { Tools } from "@/pages/tools";
+import { Workflows } from "@/pages/workflows";
 
 function App() {
   return (

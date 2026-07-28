@@ -26,7 +26,9 @@ def _add_resolve_to_path() -> None:
     """Add DaVinci Resolve Scripting module to sys.path.
     Must be called after setup_environment_variables() so RESOLVE_SCRIPT_API is set.
     """
-    import os, sys
+    import os
+    import sys
+
     api = os.environ.get("RESOLVE_SCRIPT_API", "")
     if not api:
         return
@@ -52,6 +54,7 @@ class ResolveConnectionManager:
         """
         if config is None:
             from ..config import load_default
+
             config = load_default()
         self.config = config
         self.environment = ResolveEnvironment()
@@ -84,6 +87,7 @@ class ResolveConnectionManager:
                         raise ResolveNotRunningError("DaVinci Resolve is not running")
 
                     import DaVinciResolveScript as dvr_script
+
                     self.resolve = dvr_script.scriptapp("Resolve")
                     if not self.resolve:
                         raise ResolveConnectionError(
@@ -116,9 +120,7 @@ class ResolveConnectionManager:
         """
         try:
             current_time = time.time()
-            if (
-                current_time - self.last_connection_check
-            ) < self.config.connection.connection_check_interval:
+            if (current_time - self.last_connection_check) < self.config.connection.connection_check_interval:
                 if self.connection_status == ConnectionState.CONNECTED:
                     return True
 
@@ -180,9 +182,7 @@ class ResolveConnectionManager:
 
             except Exception as e:
                 last_exception = e
-                logger.warning(
-                    f"Operation failed (attempt {attempt + 1}/{self.config.connection.retry_attempts}): {e}"
-                )
+                logger.warning(f"Operation failed (attempt {attempt + 1}/{self.config.connection.retry_attempts}): {e}")
 
                 if attempt < self.config.connection.retry_attempts - 1:
                     # Wait before retry
@@ -192,7 +192,7 @@ class ResolveConnectionManager:
                     try:
                         await self.connect()
                     except Exception:
-                        pass  # Will try again on next attempt
+                        logger.warning("Reconnect attempt failed, will retry")
 
         # All retries failed
         raise ResolveAPIError(
@@ -272,13 +272,13 @@ class ResolveConnectionManager:
                     info["resolve_version"] = self.resolve.GetVersion()
                     info["product_name"] = self.resolve.GetProductName()
                 except Exception:
-                    pass
+                    logger.warning("Could not read Resolve version info", exc_info=True)
 
             if self.current_project:
                 try:
                     info["current_project"] = self.current_project.GetName()
                 except Exception:
-                    pass
+                    logger.warning("Could not read current project name", exc_info=True)
 
             return info
 

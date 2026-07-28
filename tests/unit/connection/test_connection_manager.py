@@ -1,6 +1,7 @@
 """
 Tests for the DaVinci Resolve connection manager.
 """
+
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -30,8 +31,7 @@ class TestResolveConnectionManager:
         self.mock_project_manager.GetCurrentProject.return_value = self.mock_project
 
         # Patch the DaVinciResolveScript import
-        self.dvr_patcher = patch('davinci_resolve_mcp.connection.manager.import_module',
-                               return_value=self.mock_dvr)
+        self.dvr_patcher = patch("davinci_resolve_mcp.connection.manager.import_module", return_value=self.mock_dvr)
         self.dvr_patcher.start()
 
         yield
@@ -47,8 +47,7 @@ class TestResolveConnectionManager:
         assert self.manager.current_project is None
         assert self.manager.connection_status == "disconnected"
 
-    @patch('davinci_resolve_mcp.connection.manager.ResolveEnvironment.check_resolve_running',
-           return_value=False)
+    @patch("davinci_resolve_mcp.connection.manager.ResolveEnvironment.check_resolve_running", return_value=False)
     async def test_connect_resolve_not_running(self, mock_check_running):
         """Test connect() when DaVinci Resolve is not running."""
         with pytest.raises(ResolveNotRunningError):
@@ -56,8 +55,7 @@ class TestResolveConnectionManager:
 
         assert self.manager.connection_status == "error"
 
-    @patch('davinci_resolve_mcp.connection.manager.ResolveEnvironment.check_resolve_running',
-           return_value=True)
+    @patch("davinci_resolve_mcp.connection.manager.ResolveEnvironment.check_resolve_running", return_value=True)
     async def test_connect_success(self, mock_check_running):
         """Test successful connection to DaVinci Resolve."""
         result = await self.manager.connect()
@@ -71,16 +69,15 @@ class TestResolveConnectionManager:
         # Verify the scriptapp was called with the correct parameters
         self.mock_dvr.scriptapp.assert_called_once_with("Resolve")
 
-    @patch('davinci_resolve_mcp.connection.manager.ResolveEnvironment.check_resolve_running',
-           return_value=True)
+    @patch("davinci_resolve_mcp.connection.manager.ResolveEnvironment.check_resolve_running", return_value=True)
     async def test_connect_import_error(self, mock_check_running, monkeypatch):
         """Test connection failure due to import error."""
+
         # Make the import fail
         def mock_import_error(*args, **kwargs):
             raise ImportError("Module not found")
 
-        monkeypatch.setattr('davinci_resolve_mcp.connection.manager.import_module',
-                          mock_import_error)
+        monkeypatch.setattr("davinci_resolve_mcp.connection.manager.import_module", mock_import_error)
 
         with pytest.raises(ResolveConnectionError) as exc_info:
             await self.manager.connect()
@@ -88,8 +85,7 @@ class TestResolveConnectionManager:
         assert "Cannot import DaVinciResolveScript" in str(exc_info.value)
         assert self.manager.connection_status == "error"
 
-    @patch('davinci_resolve_mcp.connection.manager.ResolveEnvironment.check_resolve_running',
-           return_value=True)
+    @patch("davinci_resolve_mcp.connection.manager.ResolveEnvironment.check_resolve_running", return_value=True)
     async def test_connect_resolve_not_available(self, mock_check_running):
         """Test connection when Resolve API is not available."""
         self.mock_dvr.scriptapp.return_value = None
@@ -100,8 +96,7 @@ class TestResolveConnectionManager:
         assert "Failed to connect to DaVinci Resolve" in str(exc_info.value)
         assert self.manager.connection_status == "error"
 
-    @patch('davinci_resolve_mcp.connection.manager.ResolveEnvironment.check_resolve_running',
-           return_value=True)
+    @patch("davinci_resolve_mcp.connection.manager.ResolveEnvironment.check_resolve_running", return_value=True)
     async def test_connect_project_manager_error(self, mock_check_running):
         """Test connection when project manager cannot be accessed."""
         self.mock_resolve.GetProjectManager.return_value = None
@@ -156,8 +151,7 @@ class TestResolveConnectionPool:
 
         # Patch the ResolveConnectionManager
         self.manager_patcher = patch(
-            'davinci_resolve_mcp.connection.manager.ResolveConnectionManager',
-            return_value=self.mock_connection
+            "davinci_resolve_mcp.connection.manager.ResolveConnectionManager", return_value=self.mock_connection
         )
         self.manager_patcher.start()
 
@@ -171,7 +165,8 @@ class TestResolveConnectionPool:
         assert self.pool.config == self.config
         assert self.pool.max_connections == self.max_connections
         assert len(self.pool.connections) == 0
-        assert self.pool.connection_queue.qsize() == self.max_connections
+        # Queue is filled lazily on release; starts empty
+        assert self.pool.connection_queue.qsize() == 0
 
     async def test_get_connection(self):
         """Test getting a connection from the pool."""

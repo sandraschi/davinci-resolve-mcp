@@ -43,9 +43,7 @@ async def fairlight_open_page_impl(app) -> dict[str, Any]:
         raise ResolveOperationError(str(e)) from e
 
 
-async def fairlight_get_timeline_tracks_impl(
-    app, timeline_name: str | None = None
-) -> dict[str, Any]:
+async def fairlight_get_timeline_tracks_impl(app, timeline_name: str | None = None) -> dict[str, Any]:
     """Get audio track list for current or named timeline (Fairlight context)."""
     try:
         await _ensure_resolve(app)
@@ -62,24 +60,14 @@ async def fairlight_get_timeline_tracks_impl(
         audio_count = timeline.GetTrackCount("audio")
         tracks = []
         for i in range(1, audio_count + 1):
-            name = (
-                timeline.GetTrackName("audio", i)
-                if hasattr(timeline, "GetTrackName")
-                else f"Audio {i}"
-            )
+            name = timeline.GetTrackName("audio", i) if hasattr(timeline, "GetTrackName") else f"Audio {i}"
             tracks.append(
                 {
                     "index": i,
                     "name": name or f"Audio {i}",
-                    "muted": timeline.GetIsTrackMuted("audio", i)
-                    if hasattr(timeline, "GetIsTrackMuted")
-                    else False,
-                    "solo": timeline.GetIsTrackSolo("audio", i)
-                    if hasattr(timeline, "GetIsTrackSolo")
-                    else False,
-                    "locked": timeline.GetIsTrackLocked("audio", i)
-                    if hasattr(timeline, "GetIsTrackLocked")
-                    else False,
+                    "muted": timeline.GetIsTrackMuted("audio", i) if hasattr(timeline, "GetIsTrackMuted") else False,
+                    "solo": timeline.GetIsTrackSolo("audio", i) if hasattr(timeline, "GetIsTrackSolo") else False,
+                    "locked": timeline.GetIsTrackLocked("audio", i) if hasattr(timeline, "GetIsTrackLocked") else False,
                 }
             )
         return {
@@ -106,11 +94,7 @@ async def fairlight_set_track_mute_impl(
         project = connection.get_current_project()
         if not project:
             raise ResolveOperationError("No project is currently open")
-        timeline = (
-            project.GetTimelineByName(timeline_name)
-            if timeline_name
-            else project.GetCurrentTimeline()
-        )
+        timeline = project.GetTimelineByName(timeline_name) if timeline_name else project.GetCurrentTimeline()
         if not timeline:
             raise ResolveOperationError("No timeline is currently open")
         if hasattr(timeline, "SetTrackMute"):
@@ -135,11 +119,7 @@ async def fairlight_set_track_solo_impl(
         project = connection.get_current_project()
         if not project:
             raise ResolveOperationError("No project is currently open")
-        timeline = (
-            project.GetTimelineByName(timeline_name)
-            if timeline_name
-            else project.GetCurrentTimeline()
-        )
+        timeline = project.GetTimelineByName(timeline_name) if timeline_name else project.GetCurrentTimeline()
         if not timeline:
             raise ResolveOperationError("No timeline is currently open")
         if hasattr(timeline, "SetTrackSolo"):
@@ -164,11 +144,7 @@ async def fairlight_set_track_volume_impl(
         project = connection.get_current_project()
         if not project:
             raise ResolveOperationError("No project is currently open")
-        timeline = (
-            project.GetTimelineByName(timeline_name)
-            if timeline_name
-            else project.GetCurrentTimeline()
-        )
+        timeline = project.GetTimelineByName(timeline_name) if timeline_name else project.GetCurrentTimeline()
         if not timeline:
             raise ResolveOperationError("No timeline is currently open")
         volume = max(0.0, min(2.0, float(volume)))
@@ -238,7 +214,13 @@ async def fairlight_track_eq_impl(
             if enabled is not None and hasattr(eq_node, f"Band{band}Enabled"):
                 setattr(eq_node, f"Band{band}Enabled", enabled)
                 changes["enabled"] = enabled
-            return {"status": "success", "track_index": track_index, "band": band, "changes": changes, "message": f"EQ band {band} updated"}
+            return {
+                "status": "success",
+                "track_index": track_index,
+                "band": band,
+                "changes": changes,
+                "message": f"EQ band {band} updated",
+            }
         else:
             bands = []
             for b in range(1, 7):
@@ -248,7 +230,12 @@ async def fairlight_track_eq_impl(
                     if hasattr(eq_node, attr):
                         b_info[prop.lower()] = getattr(eq_node, attr)
                 bands.append(b_info)
-            return {"status": "success", "track_index": track_index, "eq_bands": bands, "message": f"EQ read from track {track_index}"}
+            return {
+                "status": "success",
+                "track_index": track_index,
+                "eq_bands": bands,
+                "message": f"EQ read from track {track_index}",
+            }
 
     except Exception as e:
         logger.exception("fairlight_track_eq failed")
@@ -292,7 +279,13 @@ async def fairlight_track_send_impl(
                 timeline.SetTrackProperty(send_prop, "audio", "1" if pre_fader else "0")
                 changes["pre_fader"] = pre_fader
 
-        return {"status": "success", "track_index": track_index, "bus_index": bus_index, "changes": changes, "message": f"Send {track_index}->Bus{bus_index} updated"}
+        return {
+            "status": "success",
+            "track_index": track_index,
+            "bus_index": bus_index,
+            "changes": changes,
+            "message": f"Send {track_index}->Bus{bus_index} updated",
+        }
 
     except Exception as e:
         logger.exception("fairlight_track_send failed")
@@ -325,7 +318,7 @@ async def fairlight_get_buses_impl(
                 for i in range(1, count + 1):
                     buses.append({"index": i, "type": bus_type, "name": f"{bus_type} {i}"})
             except Exception:
-                pass
+                logger.warning("Failed to enumerate %s buses", bus_type, exc_info=True)
 
         if not buses:
             buses.append({"index": 1, "type": "Master", "name": "Master"})
@@ -357,11 +350,23 @@ async def fairlight_track_automation_impl(
         resolve = connection.get_connection()
         fusion = resolve.Fusion() if hasattr(resolve, "Fusion") else None
         if not fusion:
-            return {"status": "success", "track_index": track_index, "parameter": parameter, "keyframes": [], "message": "Fusion automation not available"}
+            return {
+                "status": "success",
+                "track_index": track_index,
+                "parameter": parameter,
+                "keyframes": [],
+                "message": "Fusion automation not available",
+            }
 
         comp = fusion.GetCurrentComp()
         if not comp:
-            return {"status": "success", "track_index": track_index, "parameter": parameter, "keyframes": [], "message": "No composition"}
+            return {
+                "status": "success",
+                "track_index": track_index,
+                "parameter": parameter,
+                "keyframes": [],
+                "message": "No composition",
+            }
 
         param_map = {
             "volume": "AudioVolume",
@@ -373,7 +378,13 @@ async def fairlight_track_automation_impl(
         tool_name = param_map.get(parameter.lower(), "AudioVolume")
         tool = comp.FindTool(tool_name)
         if not tool:
-            return {"status": "success", "track_index": track_index, "parameter": parameter, "keyframes": [], "message": f"No automation tool found for '{parameter}'"}
+            return {
+                "status": "success",
+                "track_index": track_index,
+                "parameter": parameter,
+                "keyframes": [],
+                "message": f"No automation tool found for '{parameter}'",
+            }
 
         keyframes = {}
         if hasattr(tool, "GetKeyframeList"):
@@ -381,7 +392,13 @@ async def fairlight_track_automation_impl(
 
         kf_list = [{"frame": k, "value": v} for k, v in keyframes.items()]
 
-        return {"status": "success", "track_index": track_index, "parameter": parameter, "keyframes": kf_list, "count": len(kf_list)}
+        return {
+            "status": "success",
+            "track_index": track_index,
+            "parameter": parameter,
+            "keyframes": kf_list,
+            "count": len(kf_list),
+        }
 
     except Exception as e:
         logger.exception("fairlight_track_automation failed")

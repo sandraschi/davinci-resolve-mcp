@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 _MUTATING = {}
 
+
 def setup_audio_portmanteau(app):
     """Register the audio portmanteau tool."""
 

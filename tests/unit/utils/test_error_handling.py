@@ -47,72 +47,57 @@ class TestErrorHandlers:
     def setup(self):
         """Set up test environment."""
         self.app = FastMCP(name="Test App", instructions="Test application", version="0.1.0")
-
-        # Register error handlers
-        # FastMCP 2.14.5 handles errors at the tool level
         register_error_handlers(self.app)
-
-        # Test error handling directly using the handler functions
-        # rather than creating dummy HTTP routes on the MCP app
         self._connection_error = ResolveConnectionError("Connection failed")
-        self._project_error = ProjectOperationError("Project not found", project_name="test")
-        self._media_error = MediaPoolError("Media not found", media_path="/path/to/media")
-        self._api_error = ResolveAPIError(
-            "API call failed", method="test_method", params={"param": "value"}
-        )
+        self._project_error = ProjectOperationError("Project not found")
+        self._media_error = MediaPoolError("Media not found")
+        self._api_error = ResolveAPIError("API call failed")
         self._generic_error = ValueError("A generic error occurred")
 
-    def test_resolve_connection_error_handler(self, test_client):
+    def test_resolve_connection_error_handler(self):
         """Test handling of ResolveConnectionError."""
-        # FastMCP manages errors globally or via decorators instead of HTTP routes
-        pass
+        result = handle_resolve_error(self._connection_error)
+        assert result["status"] == "error"
+        assert result["error_type"] == "connection_error"
 
-    def test_resolve_project_error_handler(self, test_client):
+    def test_resolve_project_error_handler(self):
         """Test handling of ProjectOperationError."""
-        pass
+        result = handle_resolve_error(self._project_error)
+        assert result["status"] == "error"
 
-    def test_resolve_media_error_handler(self, test_client):
+    def test_resolve_media_error_handler(self):
         """Test handling of MediaPoolError."""
-        pass
+        result = handle_resolve_error(self._media_error)
+        assert result["status"] == "error"
 
-    def test_resolve_api_error_handler(self, test_client):
+    def test_resolve_api_error_handler(self):
         """Test handling of ResolveAPIError."""
-        pass
+        result = handle_resolve_error(self._api_error)
+        assert result["status"] == "error"
 
-    def test_generic_error_handler(self, test_client):
+    def test_generic_error_handler(self):
         """Test handling of generic exceptions."""
-        pass
+        result = handle_resolve_error(self._generic_error)
+        assert result["status"] == "error"
+        assert result["error_type"] == "unexpected_error"
 
-    def test_handle_resolve_error_decorator(self):
-        """Test the handle_resolve_error decorator."""
-
-        # Create a test function that raises an exception
-        @handle_resolve_error
-        def test_func():
-            raise ResolveConnectionError("Connection failed")
-
-        # Call the function and verify it returns an error response
-        response = test_func()
-
+    def test_handle_resolve_error_function(self):
+        """Test handle_resolve_error returns structured error dicts."""
+        response = handle_resolve_error(ResolveConnectionError("Connection failed"))
         assert response["status"] == "error"
-        assert "Connection failed" in response["error"]
-        assert response["error_code"] == "RESOLVE_CONNECTION_ERROR"
+        assert "Connection failed" in response["message"]
+        assert response["error_type"] == "connection_error"
 
     def test_register_error_handlers(self):
         """Test that error handlers registration works (FastMCP doesn't use FastAPI-style handlers)."""
         app = FastMCP(name="Test App", instructions="Test application", version="0.1.0")
-
-        # Register error handlers (should not raise any exceptions)
         register_error_handlers(app)
-
-        # FastMCP doesn't have exception_handlers attribute like FastAPI
-        # Error handling is done at the tool level with decorators
-
 
 class TestHandleErrorsDecorator:
     """Tests for the handle_errors decorator."""
 
-    def test_successful_execution(self):
+    @pytest.mark.asyncio
+    async def test_successful_execution(self):
         """Test the decorator with a successful function call."""
         from davinci_resolve_mcp.utils.error_handling import handle_errors
 
@@ -120,10 +105,11 @@ class TestHandleErrorsDecorator:
         def test_func():
             return {"status": "success", "data": "test"}
 
-        result = test_func()
+        result = await test_func()
         assert result == {"status": "success", "data": "test"}
 
-    def test_resolve_connection_error_handling(self):
+    @pytest.mark.asyncio
+    async def test_resolve_connection_error_handling(self):
         """Test handling of ResolveConnectionError."""
         from davinci_resolve_mcp.utils.error_handling import handle_errors
 
@@ -131,12 +117,13 @@ class TestHandleErrorsDecorator:
         def test_func():
             raise ResolveConnectionError("Connection failed")
 
-        result = test_func()
+        result = await test_func()
         assert isinstance(result, dict)
-        assert "success" in result
-        assert result["success"] is False
+        assert result.get("status") == "error"
+        assert result.get("error_type") == "connection_error"
 
-    def test_generic_exception_handling(self):
+    @pytest.mark.asyncio
+    async def test_generic_exception_handling(self):
         """Test handling of generic exceptions."""
         from davinci_resolve_mcp.utils.error_handling import handle_errors
 
@@ -144,7 +131,7 @@ class TestHandleErrorsDecorator:
         def test_func():
             raise ValueError("Something went wrong")
 
-        result = test_func()
+        result = await test_func()
         assert isinstance(result, dict)
-        assert "success" in result
-        assert result["success"] is False
+        assert result.get("status") == "error"
+        assert result.get("error_type") == "unexpected_error"

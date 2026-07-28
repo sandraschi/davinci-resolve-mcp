@@ -5,7 +5,7 @@ This module contains data models for managing color grading nodes, LUTs, scopes,
 and other color-related functionality in DaVinci Resolve.
 """
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import Field
@@ -13,7 +13,7 @@ from pydantic import Field
 from .common import ColorSpace, ResolveObject
 
 
-class ColorNodeType(str, Enum):
+class ColorNodeType(StrEnum):
     """Types of nodes in the DaVinci Resolve color grading node graph."""
 
     # Basic node types
@@ -71,12 +71,8 @@ class ColorNode(ResolveObject):
     is_active: bool = Field(default=True, description="Active status")
     is_bypassed: bool = Field(default=False, description="Bypass status")
     is_collapsed: bool = Field(default=False, description="Collapsed in UI")
-    position: tuple[float, float] = Field(
-        default=(0.0, 0.0), description="(x, y) position in node graph"
-    )
-    size: tuple[float, float] = Field(
-        default=(200.0, 100.0), description="(width, height) of the node"
-    )
+    position: tuple[float, float] = Field(default=(0.0, 0.0), description="(x, y) position in node graph")
+    size: tuple[float, float] = Field(default=(200.0, 100.0), description="(width, height) of the node")
     input_count: int = Field(default=1, ge=0, description="Number of inputs")
     output_count: int = Field(default=1, ge=0, description="Number of outputs")
     parent_id: str | None = Field(default=None, description="Parent node ID")
@@ -130,9 +126,7 @@ class ColorGrade(ResolveObject):
     """
 
     name: str = Field(..., description="Name of the grade")
-    nodes: dict[str, ColorNode] = Field(
-        default_factory=dict, description="Dictionary of nodes by ID"
-    )
+    nodes: dict[str, ColorNode] = Field(default_factory=dict, description="Dictionary of nodes by ID")
     root_node_id: str | None = Field(default=None, description="ID of the root node")
     selected_node_id: str | None = Field(default=None, description="ID of the selected node")
     version: str = Field(default="1.0", description="Version string")
@@ -276,28 +270,16 @@ class ColorWheels(ResolveObject):
     gain: tuple[float, float, float, float] = Field(
         default=(1.0, 1.0, 1.0, 1.0), description="Gain (highlights) RGBA values"
     )
-    offset: tuple[float, float, float, float] = Field(
-        default=(0.0, 0.0, 0.0, 0.0), description="Offset RGBA values"
-    )
+    offset: tuple[float, float, float, float] = Field(default=(0.0, 0.0, 0.0, 0.0), description="Offset RGBA values")
     contrast: float = Field(default=0.0, ge=-1.0, le=1.0, description="Contrast adjustment")
     pivot: float = Field(default=0.0, ge=-1.0, le=1.0, description="Contrast pivot point")
     saturation: float = Field(default=1.0, ge=0.0, le=2.0, description="Saturation adjustment")
     luma_mix: float = Field(default=1.0, ge=0.0, le=1.0, description="Luma mix value")
-    hue_vs_sat: list[tuple[float, float]] = Field(
-        default_factory=list, description="Hue vs Saturation curve points"
-    )
-    luma_vs_sat: list[tuple[float, float]] = Field(
-        default_factory=list, description="Luma vs Saturation curve points"
-    )
-    hue_vs_hue: list[tuple[float, float]] = Field(
-        default_factory=list, description="Hue vs Hue curve points"
-    )
-    hue_vs_luma: list[tuple[float, float]] = Field(
-        default_factory=list, description="Hue vs Luma curve points"
-    )
-    luma_vs_hue: list[tuple[float, float]] = Field(
-        default_factory=list, description="Luma vs Hue curve points"
-    )
+    hue_vs_sat: list[tuple[float, float]] = Field(default_factory=list, description="Hue vs Saturation curve points")
+    luma_vs_sat: list[tuple[float, float]] = Field(default_factory=list, description="Luma vs Saturation curve points")
+    hue_vs_hue: list[tuple[float, float]] = Field(default_factory=list, description="Hue vs Hue curve points")
+    hue_vs_luma: list[tuple[float, float]] = Field(default_factory=list, description="Hue vs Luma curve points")
+    luma_vs_hue: list[tuple[float, float]] = Field(default_factory=list, description="Luma vs Hue curve points")
 
 
 class ColorSpaceTransform(ResolveObject):
@@ -319,24 +301,16 @@ class ColorSpaceTransform(ResolveObject):
         black_offset: Black offset value
     """
 
-    input_color_space: ColorSpace = Field(
-        default=ColorSpace.REC709, description="Input color space"
-    )
-    output_color_space: ColorSpace = Field(
-        default=ColorSpace.REC709, description="Output color space"
-    )
+    input_color_space: ColorSpace = Field(default=ColorSpace.REC709, description="Input color space")
+    output_color_space: ColorSpace = Field(default=ColorSpace.REC709, description="Output color space")
     input_gamma: str = Field(default="2.4", description="Input gamma curve")
     output_gamma: str = Field(default="2.4", description="Output gamma curve")
     tone_mapping: str = Field(default="None", description="Tone mapping method")
     gamut_mapping: str = Field(default="None", description="Gamut mapping method")
     use_white_point_adaption: bool = Field(default=True, description="Use white point adaptation")
-    white_point: tuple[float, float] = Field(
-        default=(0.3127, 0.3290), description="White point coordinates (x, y)"
-    )
+    white_point: tuple[float, float] = Field(default=(0.3127, 0.3290), description="White point coordinates (x, y)")
     apply_chromatic_adaption: bool = Field(default=True, description="Apply chromatic adaptation")
-    chromatic_adaption_method: str = Field(
-        default="Bradford", description="Chromatic adaptation method"
-    )
+    chromatic_adaption_method: str = Field(default="Bradford", description="Chromatic adaptation method")
     apply_black_offset: bool = Field(default=False, description="Apply black offset")
     black_offset: float = Field(default=0.0, description="Black offset value")
 
@@ -369,9 +343,7 @@ class ScopesSettings(ResolveObject):
         default="RGB",
         description="Type of waveform display (RGB, YC, Y, YCbCr, YPbPr, YUV, HLS, HSV, HSL, YCgCo, YDzDx, RGB Parade, YCbCr Parade, YPbPr Parade, YUV Parade, HLS Parade, HSV Parade, HSL Parade, YCgCo Parade, YDzDx Parade)",
     )
-    waveform_style: str = Field(
-        default="Overlay", description="Style of waveform display (Overlay, Parade, Stacked)"
-    )
+    waveform_style: str = Field(default="Overlay", description="Style of waveform display (Overlay, Parade, Stacked)")
     vectorscope_style: str = Field(
         default="Vectorscope",
         description="Style of vectorscope display (Vectorscope, Vectorscope 2x, Vectorscope 5x, Vectorscope 10x, Vectorscope 20x)",
@@ -395,6 +367,4 @@ class ScopesSettings(ResolveObject):
     show_audio_spectrum: bool = Field(default=False, description="Show audio spectrum")
     scope_size: float = Field(default=0.5, ge=0.0, le=1.0, description="Size of the scopes")
     opacity: float = Field(default=1.0, ge=0.0, le=1.0, description="Opacity of the scopes")
-    background_brightness: float = Field(
-        default=0.0, ge=0.0, le=1.0, description="Background brightness"
-    )
+    background_brightness: float = Field(default=0.0, ge=0.0, le=1.0, description="Background brightness")

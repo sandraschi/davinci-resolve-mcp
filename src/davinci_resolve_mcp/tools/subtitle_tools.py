@@ -68,7 +68,7 @@ async def add_subtitle_impl(
 
     except Exception as e:
         logger.error(f"Error adding subtitle: {e!s}")
-        raise ResolveOperationError(f"Failed to add subtitle: {e!s}")
+        raise ResolveOperationError(f"Failed to add subtitle: {e!s}") from e
 
 
 async def get_subtitles_impl(
@@ -98,7 +98,13 @@ async def get_subtitles_impl(
 
         subtitle_track_count = timeline.GetTrackCount("subtitle")
         if subtitle_track_count == 0:
-            return {"status": "success", "timeline_name": timeline.GetName(), "subtitles": [], "count": 0, "message": "No subtitle tracks found"}
+            return {
+                "status": "success",
+                "timeline_name": timeline.GetName(),
+                "subtitles": [],
+                "count": 0,
+                "message": "No subtitle tracks found",
+            }
 
         subtitles = []
         if hasattr(timeline, "GetSubtitleList"):
@@ -124,7 +130,7 @@ async def get_subtitles_impl(
 
     except Exception as e:
         logger.error(f"Error getting subtitles: {e!s}")
-        raise ResolveOperationError(f"Failed to get subtitles: {e!s}")
+        raise ResolveOperationError(f"Failed to get subtitles: {e!s}") from e
 
 
 async def edit_subtitle_impl(
@@ -181,7 +187,7 @@ async def edit_subtitle_impl(
 
     except Exception as e:
         logger.error(f"Error editing subtitle: {e!s}")
-        raise ResolveOperationError(f"Failed to edit subtitle: {e!s}")
+        raise ResolveOperationError(f"Failed to edit subtitle: {e!s}") from e
 
 
 async def delete_subtitle_impl(
@@ -212,13 +218,18 @@ async def delete_subtitle_impl(
 
         if hasattr(timeline, "DeleteSubtitle"):
             timeline.DeleteSubtitle(track_index, subtitle_index)
-            return {"status": "success", "track_index": track_index, "subtitle_index": subtitle_index, "message": "Subtitle deleted"}
+            return {
+                "status": "success",
+                "track_index": track_index,
+                "subtitle_index": subtitle_index,
+                "message": "Subtitle deleted",
+            }
         else:
             raise ResolveOperationError("DeleteSubtitle not available in this API version")
 
     except Exception as e:
         logger.error(f"Error deleting subtitle: {e!s}")
-        raise ResolveOperationError(f"Failed to delete subtitle: {e!s}")
+        raise ResolveOperationError(f"Failed to delete subtitle: {e!s}") from e
 
 
 async def import_srt_impl(
@@ -230,6 +241,7 @@ async def import_srt_impl(
     """Import an SRT subtitle file into the timeline as subtitle items."""
     try:
         import os as _os
+
         if not _os.path.exists(srt_path):
             raise ResolveOperationError(f"SRT file not found: {srt_path}")
         import re
@@ -281,7 +293,7 @@ async def import_srt_impl(
             end_frame = _ts_to_frames(ts_match.group(2))
             text = "\n".join(lines[2:])
             if hasattr(timeline, "InsertSubtitle"):
-                subtitle = timeline.InsertSubtitle(track_index, f"Subtitle {imported+1}", start_frame, end_frame)
+                subtitle = timeline.InsertSubtitle(track_index, f"Subtitle {imported + 1}", start_frame, end_frame)
                 if subtitle and hasattr(subtitle, "SetClipProperty"):
                     subtitle.SetClipProperty("Text", text)
                     imported += 1
@@ -296,7 +308,7 @@ async def import_srt_impl(
 
     except Exception as e:
         logger.error(f"Error importing SRT: {e!s}")
-        raise ResolveOperationError(f"Failed to import SRT: {e!s}")
+        raise ResolveOperationError(f"Failed to import SRT: {e!s}") from e
 
 
 async def export_srt_impl(
@@ -364,7 +376,7 @@ async def export_srt_impl(
 
     except Exception as e:
         logger.error(f"Error exporting SRT: {e!s}")
-        raise ResolveOperationError(f"Failed to export SRT: {e!s}")
+        raise ResolveOperationError(f"Failed to export SRT: {e!s}") from e
 
 
 def register_tools(app):
@@ -397,10 +409,16 @@ def register_tools(app):
                     subtitle = timeline.InsertSubtitle(track_index, name, start_frame, end_frame)
                     if text and subtitle and hasattr(subtitle, "SetClipProperty"):
                         subtitle.SetClipProperty("Text", text)
-                    return {"status": "success", "name": name, "start_frame": start_frame, "end_frame": end_frame, "text": text}
+                    return {
+                        "status": "success",
+                        "name": name,
+                        "start_frame": start_frame,
+                        "end_frame": end_frame,
+                        "text": text,
+                    }
                 raise ResolveOperationError("InsertSubtitle not available")
         except Exception as e:
-            raise ResolveOperationError(f"Failed to add subtitle: {e!s}")
+            raise ResolveOperationError(f"Failed to add subtitle: {e!s}") from e
 
     @app.tool()
     async def get_subtitles(
@@ -438,7 +456,7 @@ def register_tools(app):
                         subtitles.append(info)
                 return {"status": "success", "track_count": sub_count, "subtitles": subtitles, "count": len(subtitles)}
         except Exception as e:
-            raise ResolveOperationError(f"Failed to get subtitles: {e!s}")
+            raise ResolveOperationError(f"Failed to get subtitles: {e!s}") from e
 
     @app.tool()
     async def import_subtitles_srt(
@@ -451,6 +469,7 @@ def register_tools(app):
         try:
             import os as _os
             import re
+
             if not _os.path.exists(srt_path):
                 raise ResolveOperationError(f"SRT file not found: {srt_path}")
             with ResolveConnectionManager() as resolve:
@@ -492,10 +511,10 @@ def register_tools(app):
                     start = _ts_to_frames(ts_match.group(1))
                     end = _ts_to_frames(ts_match.group(2))
                     text = "\n".join(lines[2:])
-                    subtitle = timeline.InsertSubtitle(track_index, f"Sub {imported+1}", start, end)
+                    subtitle = timeline.InsertSubtitle(track_index, f"Sub {imported + 1}", start, end)
                     if subtitle and hasattr(subtitle, "SetClipProperty"):
                         subtitle.SetClipProperty("Text", text)
                         imported += 1
                 return {"status": "success", "imported_count": imported, "message": f"Imported {imported} subtitles"}
         except Exception as e:
-            raise ResolveOperationError(f"Failed to import SRT: {e!s}")
+            raise ResolveOperationError(f"Failed to import SRT: {e!s}") from e

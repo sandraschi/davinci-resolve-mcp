@@ -5,7 +5,7 @@ This module contains data models for managing audio tracks, effects, mixing,
 and other audio-related functionality in DaVinci Resolve.
 """
 
-from enum import Enum
+from enum import Enum, StrEnum
 from typing import Any
 
 from pydantic import Field
@@ -13,7 +13,7 @@ from pydantic import Field
 from .common import ResolveObject, TimeCode
 
 
-class AudioTrackType(str, Enum):
+class AudioTrackType(StrEnum):
     """Types of audio tracks in DaVinci Resolve."""
 
     MONO = "mono"
@@ -24,7 +24,7 @@ class AudioTrackType(str, Enum):
     ADAPTIVE = "adaptive"
 
 
-class AudioChannelLayout(str, Enum):
+class AudioChannelLayout(StrEnum):
     """Standard audio channel layouts."""
 
     MONO = "mono"
@@ -89,14 +89,10 @@ class AudioClip(ResolveObject):
 
     name: str = Field(..., description="Name of the audio clip")
     file_path: str = Field(..., description="Path to the audio file")
-    sample_rate: AudioSampleRate = Field(
-        default=AudioSampleRate.KHZ_48, description="Sample rate in Hz"
-    )
+    sample_rate: AudioSampleRate = Field(default=AudioSampleRate.KHZ_48, description="Sample rate in Hz")
     bit_depth: AudioBitDepth = Field(default=AudioBitDepth.BIT_24, description="Bit depth")
     channel_count: int = Field(default=2, ge=1, le=64, description="Number of audio channels")
-    channel_layout: AudioChannelLayout = Field(
-        default=AudioChannelLayout.STEREO, description="Channel layout"
-    )
+    channel_layout: AudioChannelLayout = Field(default=AudioChannelLayout.STEREO, description="Channel layout")
     duration: float = Field(default=0.0, ge=0.0, description="Duration in seconds")
     start_timecode: TimeCode | None = Field(default=None, description="Start timecode")
     end_timecode: TimeCode | None = Field(default=None, description="End timecode")
@@ -120,7 +116,7 @@ class AudioClip(ResolveObject):
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 
-class AudioEffectType(str, Enum):
+class AudioEffectType(StrEnum):
     """Types of audio effects in DaVinci Resolve."""
 
     # Basic effects
@@ -221,9 +217,7 @@ class AudioTrack(ResolveObject):
     """
 
     name: str = Field(..., description="Name of the track")
-    track_type: AudioTrackType = Field(
-        default=AudioTrackType.STEREO, description="Type of audio track"
-    )
+    track_type: AudioTrackType = Field(default=AudioTrackType.STEREO, description="Type of audio track")
     index: int = Field(..., ge=1, description="Track index (1-based)")
     is_muted: bool = Field(default=False, description="Muted status")
     is_soloed: bool = Field(default=False, description="Soloed status")
@@ -239,9 +233,7 @@ class AudioTrack(ResolveObject):
     clips: list[AudioClip] = Field(default_factory=list, description="List of audio clips")
     effects: list[AudioEffect] = Field(default_factory=list, description="List of audio effects")
     automation_enabled: bool = Field(default=True, description="Automation enabled status")
-    automation_mode: str = Field(
-        default="read", description="Automation mode (read, touch, latch, write)"
-    )
+    automation_mode: str = Field(default="read", description="Automation mode (read, touch, latch, write)")
     is_folded: bool = Field(default=False, description="Folded status in UI")
     color: str = Field(default="None", description="Track color")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
@@ -303,12 +295,8 @@ class AudioBus(ResolveObject):
     effects: list[AudioEffect] = Field(default_factory=list, description="List of audio effects")
     input_count: int = Field(default=2, ge=1, le=64, description="Number of input channels")
     output_count: int = Field(default=2, ge=1, le=64, description="Number of output channels")
-    input_routing: dict[str, Any] = Field(
-        default_factory=dict, description="Input routing configuration"
-    )
-    output_routing: dict[str, Any] = Field(
-        default_factory=dict, description="Output routing configuration"
-    )
+    input_routing: dict[str, Any] = Field(default_factory=dict, description="Input routing configuration")
+    output_routing: dict[str, Any] = Field(default_factory=dict, description="Output routing configuration")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
 
@@ -343,9 +331,7 @@ class AudioMixer(ResolveObject):
     """
 
     name: str = Field(default="Audio Mixer", description="Name of the mixer")
-    sample_rate: AudioSampleRate = Field(
-        default=AudioSampleRate.KHZ_48, description="Sample rate in Hz"
-    )
+    sample_rate: AudioSampleRate = Field(default=AudioSampleRate.KHZ_48, description="Sample rate in Hz")
     bit_depth: AudioBitDepth = Field(default=AudioBitDepth.BIT_24, description="Bit depth")
     master_bus: AudioBus = Field(
         default_factory=lambda: AudioBus(
@@ -357,42 +343,24 @@ class AudioMixer(ResolveObject):
         ),
         description="Master audio bus",
     )
-    audio_buses: dict[str, AudioBus] = Field(
-        default_factory=dict, description="Dictionary of audio buses by name"
-    )
+    audio_buses: dict[str, AudioBus] = Field(default_factory=dict, description="Dictionary of audio buses by name")
     audio_tracks: list[AudioTrack] = Field(default_factory=list, description="List of audio tracks")
     is_audio_metering_enabled: bool = Field(default=True, description="Audio metering status")
     is_automation_enabled: bool = Field(default=True, description="Automation status")
     is_snapping_enabled: bool = Field(default=True, description="Snapping status")
     is_loop_playback_enabled: bool = Field(default=False, description="Loop playback status")
     is_solo_in_place_enabled: bool = Field(default=False, description="Solo in place status")
-    is_track_solo_isolate_enabled: bool = Field(
-        default=False, description="Track solo isolate status"
-    )
+    is_track_solo_isolate_enabled: bool = Field(default=False, description="Track solo isolate status")
     is_auto_ducking_enabled: bool = Field(default=False, description="Auto ducking status")
-    is_loudness_normalization_enabled: bool = Field(
-        default=False, description="Loudness normalization status"
-    )
-    loudness_normalization_target: float = Field(
-        default=-23.0, description="Loudness normalization target in LUFS"
-    )
-    is_dialog_intelligence_enabled: bool = Field(
-        default=False, description="Dialog intelligence status"
-    )
+    is_loudness_normalization_enabled: bool = Field(default=False, description="Loudness normalization status")
+    loudness_normalization_target: float = Field(default=-23.0, description="Loudness normalization target in LUFS")
+    is_dialog_intelligence_enabled: bool = Field(default=False, description="Dialog intelligence status")
     is_audio_detection_enabled: bool = Field(default=True, description="Audio detection status")
-    is_audio_waveform_enabled: bool = Field(
-        default=True, description="Audio waveform display status"
-    )
-    is_audio_spectrum_enabled: bool = Field(
-        default=False, description="Audio spectrum display status"
-    )
-    is_audio_phase_scope_enabled: bool = Field(
-        default=False, description="Audio phase scope status"
-    )
+    is_audio_waveform_enabled: bool = Field(default=True, description="Audio waveform display status")
+    is_audio_spectrum_enabled: bool = Field(default=False, description="Audio spectrum display status")
+    is_audio_phase_scope_enabled: bool = Field(default=False, description="Audio phase scope status")
     is_audio_goniometer_enabled: bool = Field(default=False, description="Audio goniometer status")
-    is_audio_correlation_meter_enabled: bool = Field(
-        default=False, description="Audio correlation meter status"
-    )
+    is_audio_correlation_meter_enabled: bool = Field(default=False, description="Audio correlation meter status")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
 
     def add_audio_bus(self, bus: AudioBus) -> None:

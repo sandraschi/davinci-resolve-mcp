@@ -1,6 +1,7 @@
 """
 Integration tests for project-related tool workflows.
 """
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -17,11 +18,7 @@ class TestProjectWorkflow:
     def setup(self, mock_resolve, mock_connection_manager):
         """Set up test environment."""
         # Create a test app
-        self.app = FastMCP(
-            name="Test App",
-            instructions="Test application",
-            version="0.1.0"
-        )
+        self.app = FastMCP(name="Test App", instructions="Test application", version="0.1.0")
 
         # Register tools
         register_tools(self.app)
@@ -40,13 +37,13 @@ class TestProjectWorkflow:
         self.test_project_name = "Test Project"
         self.mock_project.GetName.return_value = self.test_project_name
         self.mock_project.GetSetting.side_effect = lambda x: {
-            'timelineFrameRate': '24.0',
-            'timelineResolutionWidth': '1920',
-            'timelineResolutionHeight': '1080',
-            'pixelAspectRatio': '1.0',
-            'playbackFrameRate': '24.0',
-            'timelineFormat': 'HD 1080p 24'
-        }.get(x, '')
+            "timelineFrameRate": "24.0",
+            "timelineResolutionWidth": "1920",
+            "timelineResolutionHeight": "1080",
+            "pixelAspectRatio": "1.0",
+            "playbackFrameRate": "24.0",
+            "timelineFormat": "HD 1080p 24",
+        }.get(x, "")
 
         # Configure mock media pool
         self.mock_media_pool.GetCurrentFolder.return_value = {"name": "Root"}
@@ -62,12 +59,7 @@ class TestProjectWorkflow:
 
         # Step 1: Create a new project
         create_project = self.app.get_tool("create_project")
-        project_result = await create_project(
-            "New Project",
-            frame_rate=30.0,
-            width=1920,
-            height=1080
-        )
+        project_result = await create_project("New Project", frame_rate=30.0, width=1920, height=1080)
 
         # Verify project creation
         assert project_result["status"] == "success"
@@ -85,10 +77,7 @@ class TestProjectWorkflow:
 
         # Step 3: Import media into the folder
         import_media = self.app.get_tool("import_media")
-        import_result = await import_media(
-            paths=[str(test_video)],
-            target_folder="Videos/Test"
-        )
+        import_result = await import_media(paths=[str(test_video)], target_folder="Videos/Test")
 
         # Verify media import
         assert import_result["status"] == "success"
@@ -126,11 +115,9 @@ class TestProjectWorkflow:
 
         # Step 2: Update project settings
         update_settings = self.app.get_tool("update_project_settings")
-        update_result = await update_settings({
-            "timelineFrameRate": "30.0",
-            "timelineResolutionWidth": "1280",
-            "timelineResolutionHeight": "720"
-        })
+        update_result = await update_settings(
+            {"timelineFrameRate": "30.0", "timelineResolutionWidth": "1280", "timelineResolutionHeight": "720"}
+        )
 
         # Verify settings update
         assert update_result["status"] == "success"
@@ -149,7 +136,7 @@ class TestProjectWorkflow:
         self.mock_project_manager.GetProjectListInCurrentFolder.return_value = [
             "Project 1",
             "Project 2",
-            self.test_project_name
+            self.test_project_name,
         ]
 
         # Step 1: List all projects
@@ -164,13 +151,13 @@ class TestProjectWorkflow:
         mock_new_project = MagicMock()
         mock_new_project.GetName.return_value = "Project 2"
         mock_new_project.GetSetting.side_effect = lambda x: {
-            'timelineFrameRate': '25.0',
-            'timelineResolutionWidth': '1920',
-            'timelineResolutionHeight': '1080',
-            'pixelAspectRatio': '1.0',
-            'playbackFrameRate': '25.0',
-            'timelineFormat': 'HD 1080p 25'
-        }.get(x, '')
+            "timelineFrameRate": "25.0",
+            "timelineResolutionWidth": "1920",
+            "timelineResolutionHeight": "1080",
+            "pixelAspectRatio": "1.0",
+            "playbackFrameRate": "25.0",
+            "timelineFormat": "HD 1080p 25",
+        }.get(x, "")
 
         # Configure project loading
         self.mock_project_manager.LoadProject.return_value = mock_new_project

@@ -1,7 +1,9 @@
 """
 Integration tests for the DaVinci Resolve MCP API endpoints.
 """
+
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -22,8 +24,9 @@ class TestResolveAPI:
         # Create a test app with our mocks
         self.test_app = app
 
-        # Set up app state with our mocks
-        self.test_app.state = AppState(self.config)
+        # Set up app state with our mocks (AppState takes no ctor args)
+        self.test_app.state = AppState()
+        self.test_app.state.config = self.config
         self.test_app.state.connection_manager = mock_connection_manager
 
         # Create a test client
@@ -34,7 +37,7 @@ class TestResolveAPI:
         self.test_media_path = str(tmp_path / "test_video.mp4")
 
         # Create a test media file
-        with open(self.test_media_path, 'wb') as f:
+        with open(self.test_media_path, "wb") as f:
             f.write(b"fake video data")
 
         # Set up mock Resolve instance
@@ -46,13 +49,13 @@ class TestResolveAPI:
         # Configure mock project
         self.mock_project.GetName.return_value = self.test_project_name
         self.mock_project.GetSetting.side_effect = lambda x: {
-            'timelineFrameRate': '24.0',
-            'timelineResolutionWidth': '1920',
-            'timelineResolutionHeight': '1080',
-            'pixelAspectRatio': '1.0',
-            'playbackFrameRate': '24.0',
-            'timelineFormat': 'HD 1080p 24'
-        }.get(x, '')
+            "timelineFrameRate": "24.0",
+            "timelineResolutionWidth": "1920",
+            "timelineResolutionHeight": "1080",
+            "pixelAspectRatio": "1.0",
+            "playbackFrameRate": "24.0",
+            "timelineFormat": "HD 1080p 24",
+        }.get(x, "")
 
         # Configure mock media pool
         self.mock_media_pool.GetCurrentFolder.return_value = {"name": "Root"}
@@ -84,7 +87,7 @@ class TestResolveAPI:
         self.mock_project_manager.GetProjectListInCurrentFolder.return_value = [
             "Project 1",
             self.test_project_name,
-            "Project 2"
+            "Project 2",
         ]
 
         # Make the request
@@ -106,12 +109,7 @@ class TestResolveAPI:
         self.mock_project.SaveProject.return_value = True
 
         # Test data
-        project_data = {
-            "name": "New Project",
-            "frame_rate": 30.0,
-            "width": 1920,
-            "height": 1080
-        }
+        project_data = {"name": "New Project", "frame_rate": 30.0, "width": 1920, "height": 1080}
 
         # Make the request
         response = self.client.post("/api/v1/projects", json=project_data)
@@ -126,9 +124,9 @@ class TestResolveAPI:
 
         # Verify the project was created with the correct settings
         self.mock_project_manager.CreateProject.assert_called_once_with(project_data["name"])
-        self.mock_project.SetSetting.assert_any_call('timelineFrameRate', str(project_data["frame_rate"]))
-        self.mock_project.SetSetting.assert_any_call('timelineResolutionWidth', str(project_data["width"]))
-        self.mock_project.SetSetting.assert_any_call('timelineResolutionHeight', str(project_data["height"]))
+        self.mock_project.SetSetting.assert_any_call("timelineFrameRate", str(project_data["frame_rate"]))
+        self.mock_project.SetSetting.assert_any_call("timelineResolutionWidth", str(project_data["width"]))
+        self.mock_project.SetSetting.assert_any_call("timelineResolutionHeight", str(project_data["height"]))
 
     def test_get_project_settings(self):
         """Test getting project settings."""
@@ -154,14 +152,11 @@ class TestResolveAPI:
         settings_update = {
             "timelineFrameRate": "30.0",
             "timelineResolutionWidth": "1280",
-            "timelineResolutionHeight": "720"
+            "timelineResolutionHeight": "720",
         }
 
         # Make the request
-        response = self.client.patch(
-            f"/api/v1/projects/{self.test_project_name}/settings",
-            json=settings_update
-        )
+        response = self.client.patch(f"/api/v1/projects/{self.test_project_name}/settings", json=settings_update)
 
         # Verify the response
         assert response.status_code == 200
@@ -187,11 +182,7 @@ class TestResolveAPI:
         files = [("files", (Path(test_file_path).name, open(test_file_path, "rb")))]
 
         # Make the request
-        response = self.client.post(
-            "/api/v1/media/import",
-            files=files,
-            data={"target_folder": ""}
-        )
+        response = self.client.post("/api/v1/media/import", files=files, data={"target_folder": ""})
 
         # Verify the response
         assert response.status_code == 200
@@ -212,7 +203,7 @@ class TestResolveAPI:
             "Width": "1920",
             "Height": "1080",
             "Has Video": "1",
-            "Has Audio": "1"
+            "Has Audio": "1",
         }.get(x, "")
 
         self.mock_media_pool.GetClipsInFolder.return_value = {1: mock_clip}
@@ -269,7 +260,7 @@ class TestResolveAPI:
             "Codec": "H.264",
             "File Size": "1024000",
             "Date Created": "2025-01-01 12:00:00",
-            "Date Modified": "2025-01-01 12:30:00"
+            "Date Modified": "2025-01-01 12:30:00",
         }.get(x, "")
 
         self.mock_media_pool.GetClipsInFolder.return_value = {1: mock_clip}

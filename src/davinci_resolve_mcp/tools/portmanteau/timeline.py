@@ -12,15 +12,24 @@ logger = logging.getLogger(__name__)
 
 _MUTATING = {}
 
+
 def setup_timeline_portmanteau(app):
     """Register the timeline portmanteau tool."""
 
     @app.tool(annotations=_MUTATING)
     async def resolve_timeline(
         action: Literal[
-            "create", "info", "add_clip", "cut", "set_playhead",
-            "add_marker", "get_markers", "delete_marker",
-            "add_keyframe", "get_keyframes", "delete_keyframe",
+            "create",
+            "info",
+            "add_clip",
+            "cut",
+            "set_playhead",
+            "add_marker",
+            "get_markers",
+            "delete_marker",
+            "add_keyframe",
+            "get_keyframes",
+            "delete_keyframe",
             "set_clip_property",
         ],
         name: str | None = None,
@@ -161,6 +170,7 @@ def setup_timeline_portmanteau(app):
             if not property_name or value is None:
                 return {"status": "error", "message": "property_name and value are required for set_clip_property"}
             from ..timeline_tools import ResolveConnectionManager
+
             try:
                 with ResolveConnectionManager() as resolve:
                     project = resolve.GetProjectManager().GetCurrentProject()
@@ -176,7 +186,12 @@ def setup_timeline_portmanteau(app):
                     if not clip:
                         return {"status": "error", "message": "No clip is currently selected"}
                     clip.SetClipProperty(property_name, str(value))
-                    return {"status": "success", "property": property_name, "value": value, "message": f"Set {property_name}={value}"}
+                    return {
+                        "status": "success",
+                        "property": property_name,
+                        "value": value,
+                        "message": f"Set {property_name}={value}",
+                    }
             except Exception as e:
                 return {"status": "error", "message": str(e)}
 

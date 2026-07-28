@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import { APPS_CATALOG } from "@/common/apps-catalog";
-import { LayoutGrid, ExternalLink, HelpCircle, WifiOff, Loader2, Play } from "lucide-react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { ExternalLink, HelpCircle, LayoutGrid, Loader2, Play, WifiOff } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { APPS_CATALOG } from "@/common/apps-catalog";
 
 interface HostState {
   state: string;
@@ -78,7 +78,11 @@ export function Topbar() {
         ) : (
           <div className="mr-2 flex items-center gap-2 rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-400 border border-slate-700">
             <WifiOff className="h-3 w-3" />
-            {state === "not_installed" ? "Not Installed" : state === "running_unreachable" ? "Connecting..." : "Offline"}
+            {state === "not_installed"
+              ? "Not Installed"
+              : state === "running_unreachable"
+                ? "Connecting..."
+                : "Offline"}
           </div>
         )}
 

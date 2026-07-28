@@ -95,17 +95,46 @@ pub fn materialize_backend(app: &AppHandle) -> Result<PathBuf, String> {
     Ok(bundled)
 }
 
-fn free_port(port: u16) {
+fn free_port(_port: u16) -> bool {
     #[cfg(windows)]
     {
-        let script = format!("Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue | ForEach-Object {{ taskkill /F /PID `$_.OwningProcess /T 2>$null }}");
+        let port = _port;
+        let img = "davinci-resolve-mcp";
+
+        // Multi-layer kill: Stop-Process + taskkill + port-kill + poll
+        let kill_script = format!(
+            "Stop-Process -Name '{img}-backend' -Force -ErrorAction SilentlyContinue; \
+             Stop-Process -Name '{img}-native' -Force -ErrorAction SilentlyContinue; \
+             taskkill /F /IM {img}-backend.exe /T 2>$null; \
+             taskkill /F /IM {img}-native.exe /T 2>$null; \
+             Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue \
+               | ForEach-Object {{ taskkill /F /PID `$_.OwningProcess /T 2>$null }}"
+        );
         let _ = Command::new("powershell.exe")
-            .args(["-NoProfile", "-Command", &script])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
+            .args(["-NoProfile", "-Command", &kill_script])
+            .stdout(Stdio::null()).stderr(Stdio::null())
             .status();
-        thread::sleep(Duration::from_millis(300));
+        thread::sleep(Duration::from_millis(500));
+
+        // Poll up to 30s for port to become free
+        let poll_script = format!(
+            "if (Get-NetTCPConnection -LocalPort {port} -ErrorAction SilentlyContinue) {{ 1 }} else {{ 0 }}"
+        );
+        for _ in 0..30 {
+            let output = Command::new("powershell.exe")
+                .args(["-NoProfile", "-Command", &poll_script])
+                .stdout(Stdio::piped()).stderr(Stdio::null())
+                .output();
+            let occupied = output.ok().and_then(|o| {
+                String::from_utf8(o.stdout).ok().and_then(|s| s.trim().parse::<u32>().ok())
+            }).unwrap_or(1);
+            if occupied == 0 { return true; }
+            thread::sleep(Duration::from_secs(1));
+        }
+        return false;
     }
+    #[cfg(not(windows))]
+    { true }
 }
 
 fn stop_managed_child(state: &BackendProcess) {
@@ -117,7 +146,11 @@ fn stop_managed_child(state: &BackendProcess) {
 
 pub fn spawn_backend(app: AppHandle, state: &BackendProcess) -> Result<String, String> {
     stop_managed_child(state);
-    free_port(BACKEND_PORT);
+    if !free_port(BACKEND_PORT) {
+        let msg = format!("Could not free port {BACKEND_PORT} after 30s");
+        log_line(&app, &msg);
+        return Err(msg);
+    }
 
     let backend_path = materialize_backend(&app)?;
     let workdir = app

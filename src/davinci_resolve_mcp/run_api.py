@@ -32,9 +32,7 @@ if __name__ == "__main__":
     except Exception as e:
         import logging
 
-        logging.getLogger(__name__).warning(
-            "Server init warning (Resolve may be unavailable): %s", e
-        )
+        logging.getLogger(__name__).warning("Server init warning (Resolve may be unavailable): %s", e)
 
     try:
         start_server()

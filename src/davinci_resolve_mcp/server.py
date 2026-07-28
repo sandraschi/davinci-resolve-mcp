@@ -77,7 +77,7 @@ class _LogRingHandler(logging.Handler):
                 }
             )
         except Exception:
-            pass
+            logger.warning("Log ring handler emit failed", exc_info=True)
 
 
 _ring_handler = _LogRingHandler()
@@ -161,13 +161,13 @@ if bridge_urls:
                 app.add_provider(create_proxy(url))
                 _bridge_proxies.append(url)
             except Exception:
-                pass
+                logger.warning("Failed to add bridge proxy: %s", url, exc_info=True)
 
 # Initialize application state
 app.state = AppState()
 
 # HTTP routes: must load after FastMCP `app` exists (routes import `app`). `api_app` is built after `initialize_server`.
-from .api.routes import router as api_router  # noqa: E402
+from .api.routes import router as api_router
 
 # Note: FastMCP handles exceptions differently than FastAPI
 # Error handling is done at the tool level using the handle_errors decorator
@@ -302,9 +302,7 @@ async def get_resolve_info() -> dict[str, Any]:
         "version": resolve.GetVersionString(),
         "api_version": resolve.GetApiVersion() if hasattr(resolve, "GetApiVersion") else "N/A",
         "is_console": resolve.IsConsole() if hasattr(resolve, "IsConsole") else False,
-        "is_rendering": resolve.IsRenderingInProgress()
-        if hasattr(resolve, "IsRenderingInProgress")
-        else False,
+        "is_rendering": resolve.IsRenderingInProgress() if hasattr(resolve, "IsRenderingInProgress") else False,
         "project_name": current_project.GetName() if current_project else None,
     }
 
@@ -407,6 +405,24 @@ def register_tools():
         register_agentic_tools()
         logger.info("Registered agentic workflow tools", count=3)
 
+        # Register shutdown tool
+        @app.tool()
+        async def davinci_resolve_shutdown(confirm: bool = False) -> dict:
+            """Shut down the DaVinci Resolve MCP server gracefully.
+
+            Requires confirm=True to prevent accidental termination.
+
+            ## Return Format
+            {"success": bool, "message": str}
+            """
+            if not confirm:
+                return {"success": False, "message": "Set confirm=True to shut down the server"}
+            logger.warning("Server shutdown requested via MCP tool")
+            app.state.should_exit = True
+            import os
+
+            os._exit(0)
+
         logger.info("All tools registered successfully")
 
     except Exception as e:
@@ -414,9 +430,7 @@ def register_tools():
         raise
 
 
-def start_server(
-    host: str | None = None, port: int | None = None, debug: bool | None = None
-) -> None:
+def start_server(host: str | None = None, port: int | None = None, debug: bool | None = None) -> None:
     """
     Start the HTTP API server (api_app) for the web dashboard.
 
@@ -450,9 +464,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="DaVinci Resolve MCP API server for webapp")
     parser.add_argument("--host", type=str, help="Host to bind to (overrides HOST env var)")
     parser.add_argument("--port", type=int, help="Port to listen on (overrides PORT env var)")
-    parser.add_argument(
-        "--debug", action="store_true", help="Enable debug mode (overrides DEBUG env var)"
-    )
+    parser.add_argument("--debug", action="store_true", help="Enable debug mode (overrides DEBUG env var)")
     parser.add_argument("--config", type=str, help="Path to configuration file")
 
     args = parser.parse_args()

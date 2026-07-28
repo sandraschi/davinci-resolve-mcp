@@ -3,6 +3,7 @@ Unit tests for timeline markers, keyframes, and extended operations.
 
 These tests validate the new _impl functions added in Phase 2-3.
 """
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -125,9 +126,7 @@ class TestKeyframeOperations:
 
     @pytest.mark.asyncio
     async def test_add_keyframe_success(self, mock_app):
-        clip = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value.GetCurrentVideoItem.return_value
+        clip = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value.GetCurrentVideoItem.return_value
         clip.AddKeyframe = MagicMock()
         result = await add_keyframe_impl(mock_app, clip_path="", property_name="Zoom", frame=0, value=1.0)
         assert result["status"] == "success"
@@ -140,27 +139,21 @@ class TestKeyframeOperations:
 
     @pytest.mark.asyncio
     async def test_get_keyframes_with_data(self, mock_app):
-        clip = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value.GetCurrentVideoItem.return_value
+        clip = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value.GetCurrentVideoItem.return_value
         clip.GetKeyframeList = MagicMock(return_value={0: 1.0, 24: 1.2, 48: 1.5})
         result = await get_keyframes_impl(mock_app, property_name="Zoom")
         assert result["count"] == 3
 
     @pytest.mark.asyncio
     async def test_delete_keyframe_success(self, mock_app):
-        clip = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value.GetCurrentVideoItem.return_value
+        clip = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value.GetCurrentVideoItem.return_value
         clip.DeleteKeyframe = MagicMock()
         result = await delete_keyframe_impl(mock_app, property_name="Zoom", frame=24)
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
     async def test_add_keyframe_no_clip_raises(self, mock_app):
-        timeline = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value
+        timeline = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value
         timeline.GetCurrentVideoItem.return_value = None
         with pytest.raises(ResolveOperationError, match="No clip"):
             await add_keyframe_impl(mock_app, clip_path="", property_name="Zoom", frame=0, value=1.0)

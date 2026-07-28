@@ -6,7 +6,7 @@ including mixing, effects, and audio processing operations.
 """
 
 import logging
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -17,7 +17,7 @@ from ..utils.exceptions import ResolveOperationError
 logger = logging.getLogger(__name__)
 
 
-class AudioChannelLayout(str, Enum):
+class AudioChannelLayout(StrEnum):
     """Supported audio channel layouts."""
 
     MONO = "mono"
@@ -26,7 +26,7 @@ class AudioChannelLayout(str, Enum):
     SURROUND_7_1 = "7.1"
 
 
-class AudioEffectType(str, Enum):
+class AudioEffectType(StrEnum):
     """Supported audio effect types."""
 
     EQ = "equalizer"
@@ -42,7 +42,7 @@ class AudioEffectType(str, Enum):
     LOUDNESS = "loudness"
 
 
-class AudioTrackType(str, Enum):
+class AudioTrackType(StrEnum):
     """Audio track types."""
 
     MONO = "mono"
@@ -206,7 +206,7 @@ async def get_audio_tracks_impl(app, timeline_name: str | None = None) -> dict[s
 
     except Exception as e:
         logger.error(f"Error getting audio tracks: {e!s}")
-        raise ResolveOperationError(f"Failed to get audio tracks: {e!s}")
+        raise ResolveOperationError(f"Failed to get audio tracks: {e!s}") from e
 
 
 async def add_audio_effect_impl(
@@ -287,7 +287,7 @@ async def add_audio_effect_impl(
 
     except Exception as e:
         logger.error(f"Error adding audio effect: {e!s}")
-        raise ResolveOperationError(f"Failed to add audio effect: {e!s}")
+        raise ResolveOperationError(f"Failed to add audio effect: {e!s}") from e
 
 
 async def adjust_audio_levels_impl(
@@ -352,7 +352,7 @@ async def adjust_audio_levels_impl(
 
     except Exception as e:
         logger.error(f"Error adjusting audio levels: {e!s}")
-        raise ResolveOperationError(f"Failed to adjust audio levels: {e!s}")
+        raise ResolveOperationError(f"Failed to adjust audio levels: {e!s}") from e
 
 
 async def normalize_audio_impl(
@@ -412,7 +412,7 @@ async def normalize_audio_impl(
 
     except Exception as e:
         logger.error(f"Error normalizing audio: {e!s}")
-        raise ResolveOperationError(f"Failed to normalize audio: {e!s}")
+        raise ResolveOperationError(f"Failed to normalize audio: {e!s}") from e
 
 
 def register_tools(app):
@@ -459,9 +459,7 @@ def register_tools(app):
                     volume = 1.0
                     pan = 0.0
                     try:
-                        volume = float(
-                            timeline.GetTrackProperty(f"volumeTrack{i}", "audio") or "1.0"
-                        )
+                        volume = float(timeline.GetTrackProperty(f"volumeTrack{i}", "audio") or "1.0")
                         pan = float(timeline.GetTrackProperty(f"panTrack{i}", "audio") or "0.0")
                     except (ValueError, AttributeError):
                         pass
@@ -469,9 +467,7 @@ def register_tools(app):
                     # Determine track type based on channel count
                     channel_count = 2  # Default to stereo
                     try:
-                        channel_count = int(
-                            timeline.GetTrackProperty(f"trackChannelCount{i}", "audio") or "2"
-                        )
+                        channel_count = int(timeline.GetTrackProperty(f"trackChannelCount{i}", "audio") or "2")
                     except (ValueError, AttributeError):
                         pass
 
@@ -498,7 +494,7 @@ def register_tools(app):
                 return {"status": "success", "tracks": audio_tracks, "timeline": timeline.GetName()}
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to get audio tracks: {e!s}")
+            raise ResolveOperationError(f"Failed to get audio tracks: {e!s}") from e
 
     @app.tool()
     async def add_audio_effect(
@@ -590,7 +586,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to add audio effect: {e!s}")
+            raise ResolveOperationError(f"Failed to add audio effect: {e!s}") from e
 
     @app.tool()
     async def adjust_audio_levels(
@@ -644,14 +640,10 @@ def register_tools(app):
                     timeline.SetTrackProperty(f"panTrack{track_index}", "audio", str(pan))
 
                 if mute is not None:
-                    timeline.SetTrackProperty(
-                        f"showTrackMute{track_index}", "audio", "1" if mute else "0"
-                    )
+                    timeline.SetTrackProperty(f"showTrackMute{track_index}", "audio", "1" if mute else "0")
 
                 if solo is not None:
-                    timeline.SetTrackProperty(
-                        f"showTrackSolo{track_index}", "audio", "1" if solo else "0"
-                    )
+                    timeline.SetTrackProperty(f"showTrackSolo{track_index}", "audio", "1" if solo else "0")
 
                 # Save the project
                 resolve.GetProjectManager().SaveProject()
@@ -667,7 +659,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to adjust audio levels: {e!s}")
+            raise ResolveOperationError(f"Failed to adjust audio levels: {e!s}") from e
 
     @app.tool()
     async def normalize_audio(
@@ -708,6 +700,7 @@ def register_tools(app):
                     track_indices = list(range(1, track_count + 1))
 
                 # Normalize each track via Fusion AudioNormalize tool
+                results = []
                 for track_index in track_indices:
                     try:
                         fusion = resolve.Fusion()
@@ -717,25 +710,27 @@ def register_tools(app):
                                 norm_node = comp.AddTool("AudioNormalize", -1, -1)
                                 if norm_node:
                                     norm_node.TargetLevel = target_level
-                                    results.append({
-                                        "track_index": track_index,
-                                        "status": "success",
-                                        "message": f"Added AudioNormalize node for track {track_index} at {target_level} LUFS",
-                                    })
+                                    results.append(
+                                        {
+                                            "track_index": track_index,
+                                            "status": "success",
+                                            "message": f"Added AudioNormalize node for track {track_index} at {target_level} LUFS",
+                                        }
+                                    )
                                     continue
 
                         timeline.SetTrackProperty(
                             f"volumeTrack{track_index}", "audio", str(10.0 ** (target_level / 20.0))
                         )
-                        results.append({
-                            "track_index": track_index,
-                            "status": "success",
-                            "adjustment": target_level,
-                        })
-                    except Exception as e:
                         results.append(
-                            {"track_index": track_index, "status": "error", "error": str(e)}
+                            {
+                                "track_index": track_index,
+                                "status": "success",
+                                "adjustment": target_level,
+                            }
                         )
+                    except Exception as e:
+                        results.append({"track_index": track_index, "status": "error", "error": str(e)})
 
                 # Save the project
                 resolve.GetProjectManager().SaveProject()
@@ -747,7 +742,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to normalize audio: {e!s}")
+            raise ResolveOperationError(f"Failed to normalize audio: {e!s}") from e
 
     # Add more audio tools as needed
     # - Audio mixing

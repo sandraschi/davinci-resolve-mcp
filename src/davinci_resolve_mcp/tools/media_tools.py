@@ -61,9 +61,7 @@ async def import_media(
     Returns:
         Dict containing import results
     """
-    return await import_media_impl(
-        app, paths, target_folder, as_sequence, force_framerate, force_resolution
-    )
+    return await import_media_impl(app, paths, target_folder, as_sequence, force_framerate, force_resolution)
 
 
 async def list_media(app, folder_path: str = "") -> dict[str, Any]:
@@ -166,14 +164,11 @@ async def import_media_impl(
                     current_folder = new_folder
                     created_path.append(folder_name)
 
-
         # Import media files
         import_results = []
         for path in paths:
             if not os.path.exists(path):
-                import_results.append(
-                    {"path": path, "status": "error", "message": "File does not exist"}
-                )
+                import_results.append({"path": path, "status": "error", "message": "File does not exist"})
                 continue
 
             # Create media storage object
@@ -197,9 +192,7 @@ async def import_media_impl(
             # Import the media
             result = media_pool.ImportMedia([media_storage])
             if result:
-                import_results.append(
-                    {"path": path, "status": "success", "clips_created": len(result)}
-                )
+                import_results.append({"path": path, "status": "success", "clips_created": len(result)})
             else:
                 import_results.append({"path": path, "status": "error", "message": "Import failed"})
 
@@ -212,7 +205,7 @@ async def import_media_impl(
 
     except Exception as e:
         logger.error(f"Error importing media: {e!s}")
-        raise ResolveOperationError(f"Failed to import media: {e!s}")
+        raise ResolveOperationError(f"Failed to import media: {e!s}") from e
 
 
 async def list_media_impl(app, folder_path: str = "") -> dict[str, Any]:
@@ -293,7 +286,7 @@ async def list_media_impl(app, folder_path: str = "") -> dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error listing media: {e!s}")
-        raise ResolveOperationError(f"Failed to list media: {e!s}")
+        raise ResolveOperationError(f"Failed to list media: {e!s}") from e
 
 
 async def create_folder_impl(app, folder_path: str) -> dict[str, Any]:
@@ -351,7 +344,7 @@ async def create_folder_impl(app, folder_path: str) -> dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error creating folder: {e!s}")
-        raise ResolveOperationError(f"Failed to create folder: {e!s}")
+        raise ResolveOperationError(f"Failed to create folder: {e!s}") from e
 
 
 async def get_media_metadata_impl(app, clip_path: str) -> dict[str, Any]:
@@ -443,7 +436,7 @@ async def get_media_metadata_impl(app, clip_path: str) -> dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error getting media metadata: {e!s}")
-        raise ResolveOperationError(f"Failed to get media metadata: {e!s}")
+        raise ResolveOperationError(f"Failed to get media metadata: {e!s}") from e
 
 
 def register_tools(app):
@@ -565,11 +558,7 @@ def register_tools(app):
                     failed_imports.append({"path": path, "error": str(e)})
 
             return {
-                "status": "partial"
-                if failed_imports and imported_items
-                else "success"
-                if imported_items
-                else "failed",
+                "status": "partial" if failed_imports and imported_items else "success" if imported_items else "failed",
                 "imported_count": len(imported_items),
                 "failed_count": len(failed_imports),
                 "imported_items": imported_items,
@@ -578,7 +567,7 @@ def register_tools(app):
 
         except Exception as e:
             logger.error(f"Error in import_media: {e!s}")
-            raise ResolveOperationError(f"Failed to import media: {e!s}")
+            raise ResolveOperationError(f"Failed to import media: {e!s}") from e
 
     @app.tool()
     async def list_media(folder_path: str = "") -> dict[str, Any]:
@@ -634,7 +623,7 @@ def register_tools(app):
             subfolders = []
             folder_items = media_pool.GetSubFolders(current_folder)
             if folder_items:
-                for name, folder in folder_items.items():
+                for name, _folder in folder_items.items():
                     subfolders.append(
                         {
                             "name": name,
@@ -673,7 +662,7 @@ def register_tools(app):
 
         except Exception as e:
             logger.error(f"Error listing media: {e!s}")
-            raise ResolveOperationError(f"Failed to list media: {e!s}")
+            raise ResolveOperationError(f"Failed to list media: {e!s}") from e
 
     @app.tool()
     async def create_folder(path: str) -> dict[str, Any]:
@@ -741,7 +730,7 @@ def register_tools(app):
 
         except Exception as e:
             logger.error(f"Error creating folder: {e!s}")
-            raise ResolveOperationError(f"Failed to create folder: {e!s}")
+            raise ResolveOperationError(f"Failed to create folder: {e!s}") from e
 
     @app.tool()
     async def get_media_metadata(clip_path: str) -> dict[str, Any]:
@@ -813,6 +802,6 @@ def register_tools(app):
 
         except Exception as e:
             logger.error(f"Error getting media metadata: {e!s}")
-            raise ResolveOperationError(f"Failed to get media metadata: {e!s}")
+            raise ResolveOperationError(f"Failed to get media metadata: {e!s}") from e
 
     logger.info("Registered media management tools")

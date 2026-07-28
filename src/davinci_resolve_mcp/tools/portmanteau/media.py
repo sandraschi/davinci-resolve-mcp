@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 _MUTATING = {}
 
+
 def setup_media_portmanteau(app):
     """Register the media portmanteau tool."""
 
@@ -82,9 +83,7 @@ def setup_media_portmanteau(app):
         if action == "import":
             if not paths:
                 return {"status": "error", "message": "paths is required for import action"}
-            return await import_media(
-                app, paths, target_folder, as_sequence, force_framerate, force_resolution
-            )
+            return await import_media(app, paths, target_folder, as_sequence, force_framerate, force_resolution)
 
         elif action == "list":
             return await list_media(app, folder_path)

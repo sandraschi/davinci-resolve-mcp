@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 _READ_ONLY = {"readonly": True}
 
+
 def setup_system_portmanteau(app):
     """Register the system portmanteau tool with conversational capabilities."""
 

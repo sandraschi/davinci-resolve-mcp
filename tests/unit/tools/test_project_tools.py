@@ -1,6 +1,7 @@
 """
 Tests for the DaVinci Resolve project tools.
 """
+
 import pytest
 from fastmcp import FastMCP
 from pydantic import ValidationError
@@ -14,11 +15,7 @@ class TestProjectInfo:
     def test_create_project_info(self):
         """Test creating a ProjectInfo instance with valid data."""
         project = ProjectInfo(
-            name="Test Project",
-            path="/path/to/project.drp",
-            frame_rate=24.0,
-            resolution="1920x1080",
-            is_active=True
+            name="Test Project", path="/path/to/project.drp", frame_rate=24.0, resolution="1920x1080", is_active=True
         )
 
         assert project.name == "Test Project"
@@ -53,7 +50,7 @@ class TestProjectSettings:
             resolution_height=1080,
             pixel_aspect_ratio=1.0,
             playback_framerate=30.0,
-            timeline_format="HD 1080p 30"
+            timeline_format="HD 1080p 30",
         )
 
         assert settings.frame_rate == 30.0
@@ -88,11 +85,7 @@ class TestProjectTools:
     @pytest.fixture(autouse=True)
     def setup(self, mock_resolve, mock_connection_manager):
         """Set up test environment."""
-        self.app = FastMCP(
-            name="Test App",
-            instructions="Test application",
-            version="0.1.0"
-        )
+        self.app = FastMCP(name="Test App", instructions="Test application", version="0.1.0")
 
         # Register tools
         register_tools(self.app)
@@ -104,19 +97,20 @@ class TestProjectTools:
 
         # Set up connection manager in module state
         from davinci_resolve_mcp.server import app as server_app
+
         server_app.state.connection_manager = mock_connection_manager
 
         # Set up project manager return values
         self.mock_project_manager.GetProjectListInCurrentFolder.return_value = ["Project 1", "Test Project"]
         self.mock_project.GetName.return_value = "Test Project"
         self.mock_project.GetSetting.side_effect = lambda x: {
-            'timelineFrameRate': '24.0',
-            'timelineResolutionWidth': '1920',
-            'timelineResolutionHeight': '1080',
-            'pixelAspectRatio': '1.0',
-            'playbackFrameRate': '24.0',
-            'timelineFormat': 'HD 1080p 24'
-        }.get(x, '')
+            "timelineFrameRate": "24.0",
+            "timelineResolutionWidth": "1920",
+            "timelineResolutionHeight": "1080",
+            "pixelAspectRatio": "1.0",
+            "playbackFrameRate": "24.0",
+            "timelineFormat": "HD 1080p 24",
+        }.get(x, "")
 
     async def test_create_project_success(self):
         """Test creating a new project successfully."""
@@ -138,9 +132,9 @@ class TestProjectTools:
 
         # Verify the project was created with the correct settings
         self.mock_project_manager.CreateProject.assert_called_once_with("New Project")
-        self.mock_project.SetSetting.assert_any_call('timelineFrameRate', '30.0')
-        self.mock_project.SetSetting.assert_any_call('timelineResolutionWidth', '1920')
-        self.mock_project.SetSetting.assert_any_call('timelineResolutionHeight', '1080')
+        self.mock_project.SetSetting.assert_any_call("timelineFrameRate", "30.0")
+        self.mock_project.SetSetting.assert_any_call("timelineResolutionWidth", "1920")
+        self.mock_project.SetSetting.assert_any_call("timelineResolutionHeight", "1080")
         self.mock_project.SaveProject.assert_called_once()
 
     async def test_create_project_failure(self):
@@ -233,11 +227,9 @@ class TestProjectTools:
         update_settings = self.app.get_tool("update_project_settings")
 
         # Call the tool
-        result = await update_settings({
-            "timelineFrameRate": "30.0",
-            "timelineResolutionWidth": "1280",
-            "timelineResolutionHeight": "720"
-        })
+        result = await update_settings(
+            {"timelineFrameRate": "30.0", "timelineResolutionWidth": "1280", "timelineResolutionHeight": "720"}
+        )
 
         # Verify the result
         assert result["status"] == "success"

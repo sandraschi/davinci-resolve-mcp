@@ -60,9 +60,7 @@ def validate_resolution(resolution: str) -> tuple[int, int]:
     match = re.match(pattern, resolution)
 
     if not match:
-        raise ValidationError(
-            "resolution", resolution, "Format must be WIDTHxHEIGHT (e.g., 1920x1080)"
-        )
+        raise ValidationError("resolution", resolution, "Format must be WIDTHxHEIGHT (e.g., 1920x1080)")
 
     width, height = int(match.group(1)), int(match.group(2))
 
@@ -301,12 +299,7 @@ def parse_timecode(timecode: str) -> float:
 
     if match:
         hours, minutes, seconds, milliseconds = match.groups()
-        total_seconds = (
-            int(hours) * 3600
-            + int(minutes) * 60
-            + int(seconds)
-            + int(milliseconds.ljust(3, "0")) / 1000
-        )
+        total_seconds = int(hours) * 3600 + int(minutes) * 60 + int(seconds) + int(milliseconds.ljust(3, "0")) / 1000
         return total_seconds
 
     # Try HH:MM:SS:FF format (assuming 24fps)
@@ -316,16 +309,11 @@ def parse_timecode(timecode: str) -> float:
     if match:
         hours, minutes, seconds, frames = match.groups()
         total_seconds = (
-            int(hours) * 3600
-            + int(minutes) * 60
-            + int(seconds)
-            + int(frames) / 24.0  # Assume 24fps
+            int(hours) * 3600 + int(minutes) * 60 + int(seconds) + int(frames) / 24.0  # Assume 24fps
         )
         return total_seconds
 
-    raise ValidationError(
-        "timecode", timecode, "Invalid timecode format (use HH:MM:SS.fff or HH:MM:SS:FF)"
-    )
+    raise ValidationError("timecode", timecode, "Invalid timecode format (use HH:MM:SS.fff or HH:MM:SS:FF)")
 
 
 def format_timecode(seconds: float, frame_rate: float = 24.0) -> str:

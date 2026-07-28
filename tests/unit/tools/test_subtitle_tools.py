@@ -1,6 +1,7 @@
 """
 Unit tests for subtitle operations: add, get, edit, delete, SRT import/export.
 """
+
 import os
 import tempfile
 from unittest.mock import MagicMock
@@ -41,12 +42,12 @@ class TestSubtitleOperations:
 
     @pytest.mark.asyncio
     async def test_add_subtitle_success(self, mock_app):
-        timeline = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value
+        timeline = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value
         timeline.InsertSubtitle = MagicMock(return_value=MagicMock())
         timeline.InsertSubtitle.return_value.SetClipProperty = MagicMock()
-        result = await add_subtitle_impl(mock_app, track_index=1, name="Sub1", start_frame=0, end_frame=48, text="Hello")
+        result = await add_subtitle_impl(
+            mock_app, track_index=1, name="Sub1", start_frame=0, end_frame=48, text="Hello"
+        )
         assert result["status"] == "success"
         assert result["name"] == "Sub1"
         assert result["text"] == "Hello"
@@ -58,27 +59,21 @@ class TestSubtitleOperations:
 
     @pytest.mark.asyncio
     async def test_add_subtitle_invalid_track(self, mock_app):
-        timeline = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value
+        timeline = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value
         timeline.GetTrackCount.return_value = 0
         with pytest.raises(ResolveOperationError, match="Invalid subtitle track"):
             await add_subtitle_impl(mock_app, track_index=5, name="S", start_frame=0, end_frame=10)
 
     @pytest.mark.asyncio
     async def test_get_subtitles_empty(self, mock_app):
-        timeline = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value
+        timeline = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value
         timeline.GetSubtitleList = MagicMock(return_value=[])
         result = await get_subtitles_impl(mock_app, track_index=1)
         assert result["count"] == 0
 
     @pytest.mark.asyncio
     async def test_get_subtitles_no_tracks(self, mock_app):
-        timeline = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value
+        timeline = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value
         timeline.GetTrackCount.return_value = 0
         result = await get_subtitles_impl(mock_app, track_index=1)
         assert result["count"] == 0
@@ -86,9 +81,7 @@ class TestSubtitleOperations:
 
     @pytest.mark.asyncio
     async def test_get_subtitles_with_data(self, mock_app):
-        timeline = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value
+        timeline = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value
         mock_item = MagicMock()
         mock_item.GetName.return_value = "Sub1"
         mock_item.GetStartFrame.return_value = 0
@@ -101,9 +94,7 @@ class TestSubtitleOperations:
 
     @pytest.mark.asyncio
     async def test_edit_subtitle_success(self, mock_app):
-        timeline = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value
+        timeline = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value
         mock_item = MagicMock()
         mock_item.SetClipProperty = MagicMock()
         mock_item.SetName = MagicMock()
@@ -113,18 +104,14 @@ class TestSubtitleOperations:
 
     @pytest.mark.asyncio
     async def test_delete_subtitle_success(self, mock_app):
-        timeline = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value
+        timeline = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value
         timeline.DeleteSubtitle = MagicMock()
         result = await delete_subtitle_impl(mock_app, track_index=1, subtitle_index=0)
         assert result["status"] == "success"
 
     @pytest.mark.asyncio
     async def test_import_srt_file(self, mock_app):
-        timeline = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value
+        timeline = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value
         timeline.GetSetting.return_value = "24.0"
         mock_sub = MagicMock()
         mock_sub.SetClipProperty = MagicMock()
@@ -156,9 +143,7 @@ Second line
 
     @pytest.mark.asyncio
     async def test_export_srt(self, mock_app):
-        timeline = mock_app.state.connection_manager.get_connection.return_value \
-            .GetProjectManager.return_value.GetCurrentProject.return_value \
-            .GetCurrentTimeline.return_value
+        timeline = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value
         timeline.GetSetting.return_value = "24.0"
         mock_item = MagicMock()
         mock_item.GetStartFrame.return_value = 0
@@ -166,7 +151,7 @@ Second line
         mock_item.GetClipProperty.return_value = "Hello"
         timeline.GetSubtitleList = MagicMock(return_value=[mock_item])
 
-        output = tempfile.mktemp(suffix=".srt")
+        output = tempfile.mkstemp(suffix=".srt")[1]
         try:
             result = await export_srt_impl(mock_app, output_path=output)
             assert result["status"] == "success"

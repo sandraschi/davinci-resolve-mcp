@@ -22,9 +22,7 @@ RESOLVE_PROBE_CONFIG = dict(
         Path("C:/Program Files/DaVinci Resolve/Resolve.exe"),
         # macOS
         Path("/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/MacOS/Resolve"),
-        Path(
-            "/Applications/DaVinci Resolve Studio/DaVinci Resolve Studio.app/Contents/MacOS/Resolve"
-        ),
+        Path("/Applications/DaVinci Resolve Studio/DaVinci Resolve Studio.app/Contents/MacOS/Resolve"),
         # Linux
         Path("/opt/resolve/bin/resolve"),
         Path("/usr/local/resolve/bin/resolve"),

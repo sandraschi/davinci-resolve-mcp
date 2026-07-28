@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 _MUTATING = {}
 
+
 def setup_render_portmanteau(app):
     """Register the render portmanteau tool."""
 

@@ -12,12 +12,21 @@ logger = logging.getLogger(__name__)
 
 _MUTATING = {}
 
+
 def setup_color_portmanteau(app):
     """Register the color portmanteau tool."""
 
     @app.tool(annotations=_MUTATING)
     async def resolve_color(
-        action: Literal["create_node", "apply_lut", "set_color_space", "adjust_wheels", "grab_still", "get_stills", "apply_grade_from_still"],
+        action: Literal[
+            "create_node",
+            "apply_lut",
+            "set_color_space",
+            "adjust_wheels",
+            "grab_still",
+            "get_stills",
+            "apply_grade_from_still",
+        ],
         node_type: str = "primary",
         node_name: str | None = None,
         parent_node: str | None = None,
@@ -125,9 +134,7 @@ def setup_color_portmanteau(app):
 
         if action == "create_node":
             node_type_enum = node_type_map.get(node_type.lower(), ColorCorrectionType.PRIMARY)
-            return await create_color_node(
-                app, node_type_enum, node_name, parent_node, timeline_name
-            )
+            return await create_color_node(app, node_type_enum, node_name, parent_node, timeline_name)
 
         elif action == "apply_lut":
             if not clip_path or not lut_path:
@@ -149,14 +156,10 @@ def setup_color_portmanteau(app):
             output_transform = ColorSpaceTransform(
                 input_color_space=output_color_space, output_color_space=output_color_space
             )
-            return await set_color_space(
-                app, input_transform, output_transform, clip_path, timeline_name
-            )
+            return await set_color_space(app, input_transform, output_transform, clip_path, timeline_name)
 
         elif action == "adjust_wheels":
-            return await adjust_color_wheels(
-                app, lift, gamma, gain, offset, clip_path, node_name, timeline_name
-            )
+            return await adjust_color_wheels(app, lift, gamma, gain, offset, clip_path, node_name, timeline_name)
 
         elif action == "grab_still":
             return await grab_still(app, still_name or node_name, timeline_name)

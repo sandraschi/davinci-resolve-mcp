@@ -1,6 +1,7 @@
 """
 Tests for the DaVinci Resolve media tools.
 """
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -23,7 +24,7 @@ class TestMediaItem:
             frame_rate=29.97,
             resolution="1920x1080",
             channels=2,
-            sample_rate=48000.0
+            sample_rate=48000.0,
         )
 
         assert media.name == "test_video.mp4"
@@ -55,12 +56,7 @@ class TestFolderInfo:
 
     def test_create_folder_info(self):
         """Test creating a FolderInfo instance with valid data."""
-        folder = FolderInfo(
-            name="Videos",
-            path="/Videos",
-            item_count=5,
-            subfolder_count=2
-        )
+        folder = FolderInfo(name="Videos", path="/Videos", item_count=5, subfolder_count=2)
 
         assert folder.name == "Videos"
         assert folder.path == "/Videos"
@@ -81,17 +77,14 @@ class TestMediaTools:
     @pytest.fixture(autouse=True)
     def setup(self, mock_resolve, mock_connection_manager):
         """Set up test environment."""
-        self.app = FastMCP(
-            name="Test App",
-            instructions="Test application",
-            version="0.1.0"
-        )
+        self.app = FastMCP(name="Test App", instructions="Test application", version="0.1.0")
 
         # Register tools
         register_tools(self.app)
 
         # Set up connection manager in module state
         from davinci_resolve_mcp.server import app as server_app
+
         server_app.state.connection_manager = mock_connection_manager
 
         # Set up mocks
@@ -149,10 +142,7 @@ class TestMediaTools:
         import_media = self.app.get_tool("import_media")
 
         # Call the tool with a target folder
-        result = await import_media(
-            paths=[str(video_file)],
-            target_folder="Videos/Test"
-        )
+        result = await import_media(paths=[str(video_file)], target_folder="Videos/Test")
 
         # Verify the result
         assert result["status"] == "success"
@@ -186,7 +176,7 @@ class TestMediaTools:
             "Width": "1920",
             "Height": "1080",
             "Has Video": "1",
-            "Has Audio": "1"
+            "Has Audio": "1",
         }.get(x, "")
 
         self.mock_media_pool.GetClipsInFolder.return_value = {1: mock_clip}
@@ -275,7 +265,7 @@ class TestMediaTools:
             "Codec": "H.264",
             "File Size": "1024000",
             "Date Created": "2025-01-01 12:00:00",
-            "Date Modified": "2025-01-01 12:30:00"
+            "Date Modified": "2025-01-01 12:30:00",
         }.get(x, "")
 
         # Mock media pool to return our clip

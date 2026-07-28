@@ -29,9 +29,7 @@ class ProjectSettings(ResolveObject):
     )
     working_folder: str | None = Field(default=None, description="Working folder path")
     auto_save: bool = Field(default=True, description="Auto-save enabled")
-    auto_save_interval: int = Field(
-        default=10, ge=1, le=60, description="Auto-save interval (minutes)"
-    )
+    auto_save_interval: int = Field(default=10, ge=1, le=60, description="Auto-save interval (minutes)")
     project_type: str = Field(default="feature_film", description="Project type")
     tags: list[str] = Field(default_factory=list, description="Project tags")
 
@@ -68,9 +66,7 @@ class ProjectInfo(ResolveObject):
     is_archived: bool = Field(default=False, description="Archived status")
     archive_path: str | None = Field(default=None, description="Archive file path")
     thumbnail_path: str | None = Field(default=None, description="Thumbnail path")
-    settings: ProjectSettings = Field(
-        default_factory=ProjectSettings, description="Project settings"
-    )
+    settings: ProjectSettings = Field(default_factory=ProjectSettings, description="Project settings")
     database: ProjectDatabase | None = Field(default=None, description="Database info")
 
 
@@ -79,9 +75,7 @@ class ProjectTemplate(ResolveObject):
 
     name: str = Field(..., description="Template name")
     description: str | None = Field(default=None, description="Template description")
-    settings: ProjectSettings = Field(
-        default_factory=ProjectSettings, description="Template settings"
-    )
+    settings: ProjectSettings = Field(default_factory=ProjectSettings, description="Template settings")
     is_system: bool = Field(default=False, description="System template flag")
     preview_path: str | None = Field(default=None, description="Preview image path")
     category: str | None = Field(default=None, description="Template category")

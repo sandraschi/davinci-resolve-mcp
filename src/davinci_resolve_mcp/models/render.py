@@ -6,7 +6,7 @@ in DaVinci Resolve projects.
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +16,7 @@ from .common import FrameRate, Resolution, ResolveObject, TimeCode
 from .timeline import Timeline
 
 
-class RenderFormat(str, Enum):
+class RenderFormat(StrEnum):
     """Supported render formats in DaVinci Resolve."""
 
     # Video formats
@@ -57,7 +57,7 @@ class RenderFormat(str, Enum):
     EDL = "edl"  # Edit Decision List
 
 
-class RenderCodec(str, Enum):
+class RenderCodec(StrEnum):
     """Supported codecs for rendering."""
 
     # Video codecs
@@ -213,9 +213,7 @@ class RenderJob(ResolveObject):
     codec: RenderCodec | None = Field(default=None, description="Override codec")
     bitrate: int | None = Field(default=None, ge=100, description="Override bitrate")
     quality: int | None = Field(default=None, ge=0, le=100, description="Override quality")
-    audio_channels: int | None = Field(
-        default=None, ge=1, le=16, description="Override audio channels"
-    )
+    audio_channels: int | None = Field(default=None, ge=1, le=16, description="Override audio channels")
     audio_sample_rate: int | None = Field(default=None, description="Override sample rate")
     audio_bit_depth: int | None = Field(default=None, description="Override bit depth")
 
@@ -223,29 +221,19 @@ class RenderJob(ResolveObject):
     include_video: bool | None = Field(default=None, description="Include video")
     include_audio: bool | None = Field(default=None, description="Include audio")
     use_max_render: bool | None = Field(default=None, description="Use maximum render quality")
-    use_hardware_acceleration: bool | None = Field(
-        default=None, description="Use hardware acceleration"
-    )
+    use_hardware_acceleration: bool | None = Field(default=None, description="Use hardware acceleration")
     use_network_rendering: bool | None = Field(default=None, description="Use network rendering")
 
     # Job status
-    status: str = Field(
-        default="queued", description="Job status (queued, rendering, completed, failed, cancelled)"
-    )
+    status: str = Field(default="queued", description="Job status (queued, rendering, completed, failed, cancelled)")
     progress: float = Field(default=0.0, ge=0.0, le=100.0, description="Render progress (0-100)")
-    time_remaining: float | None = Field(
-        default=None, ge=0.0, description="Estimated time remaining in seconds"
-    )
+    time_remaining: float | None = Field(default=None, ge=0.0, description="Estimated time remaining in seconds")
     time_elapsed: float = Field(default=0.0, ge=0.0, description="Time elapsed in seconds")
-    output_files: list[str] = Field(
-        default_factory=list, description="List of output files generated"
-    )
+    output_files: list[str] = Field(default_factory=list, description="List of output files generated")
     error_message: str | None = Field(default=None, description="Error message if job failed")
 
     # Timestamps
-    created_at: datetime = Field(
-        default_factory=datetime.now, description="When the job was created"
-    )
+    created_at: datetime = Field(default_factory=datetime.now, description="When the job was created")
     started_at: datetime | None = Field(default=None, description="When rendering started")
     completed_at: datetime | None = Field(default=None, description="When rendering completed")
 
@@ -293,9 +281,7 @@ class RenderJob(ResolveObject):
         duration = None
         if self.in_point is not None and self.out_point is not None:
             duration = (self.out_point - self.in_point).total_seconds()
-        elif (
-            self.start_frame is not None and self.end_frame is not None and "frame_rate" in settings
-        ):
+        elif self.start_frame is not None and self.end_frame is not None and "frame_rate" in settings:
             duration = (self.end_frame - self.start_frame) / settings["frame_rate"].value
 
         if not duration or "bitrate" not in settings or not settings["bitrate"]:
@@ -327,16 +313,10 @@ class RenderQueue(ResolveObject):
     name: str = Field(..., description="Name of the render queue")
     jobs: list[RenderJob] = Field(default_factory=list, description="List of render jobs")
     is_rendering: bool = Field(default=False, description="Whether rendering is in progress")
-    current_job_index: int = Field(
-        default=0, ge=0, description="Index of the currently rendering job"
-    )
+    current_job_index: int = Field(default=0, ge=0, description="Index of the currently rendering job")
     default_output_path: str | Path = Field(default="", description="Default output path for jobs")
-    default_preset: RenderPreset | None = Field(
-        default=None, description="Default render preset for jobs"
-    )
-    max_simultaneous_jobs: int = Field(
-        default=1, ge=1, le=16, description="Maximum simultaneous jobs"
-    )
+    default_preset: RenderPreset | None = Field(default=None, description="Default render preset for jobs")
+    max_simultaneous_jobs: int = Field(default=1, ge=1, le=16, description="Maximum simultaneous jobs")
     stop_on_error: bool = Field(default=False, description="Stop queue if a job fails")
     email_notifications: bool = Field(default=False, description="Send email notifications")
     email_address: str | None = Field(default=None, description="Email address for notifications")

@@ -68,9 +68,7 @@ class MediaItem(ResolveObject):
 class ImportSettings(ResolveObject):
     """Settings for importing media into DaVinci Resolve."""
 
-    source_paths: list[str | Path] = Field(
-        default_factory=list, description="Source file/folder paths"
-    )
+    source_paths: list[str | Path] = Field(default_factory=list, description="Source file/folder paths")
     target_bin_path: str = Field(default="", description="Target bin path")
     import_audio: bool = Field(default=True, description="Import audio tracks")
     import_video: bool = Field(default=True, description="Import video tracks")

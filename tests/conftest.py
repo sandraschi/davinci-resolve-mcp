@@ -84,9 +84,7 @@ def mock_connection_manager(mock_resolve):
         mock_instance = mock_manager.return_value
         mock_instance.get_connection.return_value = mock_resolve
         mock_instance.project_manager = mock_resolve.GetProjectManager.return_value
-        mock_instance.current_project = (
-            mock_resolve.GetProjectManager.return_value.GetCurrentProject.return_value
-        )
+        mock_instance.current_project = mock_resolve.GetProjectManager.return_value.GetCurrentProject.return_value
         yield mock_instance
 
 
@@ -124,9 +122,7 @@ def test_app():
     """Create a test FastMCP application."""
     from fastmcp import FastMCP
 
-    test_app = FastMCP(
-        name="Test DaVinci Resolve MCP", instructions="Test application", version="0.1.0"
-    )
+    test_app = FastMCP(name="Test DaVinci Resolve MCP", instructions="Test application", version="0.1.0")
 
     return test_app
 

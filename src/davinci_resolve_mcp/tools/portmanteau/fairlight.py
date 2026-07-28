@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 _MUTATING = {}
 
+
 def setup_fairlight_portmanteau(app):
     """Register the Fairlight portmanteau tool."""
 
@@ -91,7 +92,15 @@ def setup_fairlight_portmanteau(app):
             return await fairlight_set_track_volume_impl(app, track_index, volume, timeline_name)
         if operation == "track_eq":
             return await fairlight_track_eq_impl(
-                app, track_index, eq_band, eq_frequency, eq_gain_db, eq_q_factor, eq_band_type, eq_enabled, timeline_name
+                app,
+                track_index,
+                eq_band,
+                eq_frequency,
+                eq_gain_db,
+                eq_q_factor,
+                eq_band_type,
+                eq_enabled,
+                timeline_name,
             )
         if operation == "track_send":
             return await fairlight_track_send_impl(

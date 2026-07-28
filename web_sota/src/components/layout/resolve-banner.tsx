@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
-import { cn } from "@/common/utils";
 import { Loader2, Play, Wifi, WifiOff } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { cn } from "@/common/utils";
 import { Badge } from "@/components/ui/badge";
 
 interface HostStatus {
@@ -79,28 +79,16 @@ export function ResolveBanner({ className }: Props) {
     <div className={cn("rounded-lg border p-4", colorClass, className)}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-start gap-3">
-          {isReady ? (
-            <Wifi className="h-5 w-5 mt-0.5 shrink-0" />
-          ) : (
-            <WifiOff className="h-5 w-5 mt-0.5 shrink-0" />
-          )}
+          {isReady ? <Wifi className="h-5 w-5 mt-0.5 shrink-0" /> : <WifiOff className="h-5 w-5 mt-0.5 shrink-0" />}
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-medium text-sm">
-                {status?.app_name || "DaVinci Resolve"}
-              </span>
+              <span className="font-medium text-sm">{status?.app_name || "DaVinci Resolve"}</span>
               <Badge className={cn("text-[10px] border", colorClass)}>
                 {status?.state?.replace(/_/g, " ").toUpperCase()}
               </Badge>
             </div>
-            <p className="text-xs mt-1 opacity-80">
-              {launchMsg || status?.message || "Connection unavailable"}
-            </p>
-            {status?.install_path && (
-              <p className="text-[10px] mt-1 opacity-50">
-                Install path: {status.install_path}
-              </p>
-            )}
+            <p className="text-xs mt-1 opacity-80">{launchMsg || status?.message || "Connection unavailable"}</p>
+            {status?.install_path && <p className="text-[10px] mt-1 opacity-50">Install path: {status.install_path}</p>}
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -110,11 +98,7 @@ export function ResolveBanner({ className }: Props) {
               disabled={launching}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 transition-colors text-xs font-medium disabled:opacity-50"
             >
-              {launching ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Play className="h-3.5 w-3.5" />
-              )}
+              {launching ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
               Launch Resolve
             </button>
           )}

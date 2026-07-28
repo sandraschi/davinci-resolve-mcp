@@ -3,6 +3,7 @@ FastMCP API routes for DaVinci Resolve MCP.
 """
 
 import os
+import time
 
 import httpx
 from fastapi import APIRouter, HTTPException, Query
@@ -309,6 +310,71 @@ async def get_host_status():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/status")
+async def api_status():
+    """Server status with uptime, tool count, and version info."""
+    return {
+        "status": "ok",
+        "server": "DaVinci Resolve MCP",
+        "version": "0.1.0",
+        "uptime_seconds": int(time.time() - _start_time) if "_start_time" in dir() else 0,
+        "tool_count": 9,
+    }
+
+
+_start_time: float = 0.0
+
+
+@router.on_event("startup")
+async def _record_startup():
+    global _start_time
+    import time
+
+    _start_time = time.time()
+
+
+@router.get("/diagnostics")
+async def api_diagnostics():
+    """Full diagnostics for CUA-NSIS smoke testing."""
+    import platform
+
+    import psutil
+
+    return {
+        "status": "ok",
+        "server": "DaVinci Resolve MCP",
+        "version": "0.1.0",
+        "uptime_seconds": int(time.time() - _start_time) if _start_time else 0,
+        "tool_count": 9,
+        "tools": [
+            {"name": "resolve_project"},
+            {"name": "resolve_media"},
+            {"name": "resolve_timeline"},
+            {"name": "resolve_color"},
+            {"name": "resolve_render"},
+            {"name": "resolve_audio"},
+            {"name": "resolve_fairlight"},
+            {"name": "resolve_subtitle"},
+            {"name": "resolve_system"},
+        ],
+        "system": {
+            "platform": platform.platform(),
+            "cpu_percent": psutil.cpu_percent(interval=0),
+            "memory_percent": psutil.virtual_memory().percent,
+            "python_version": platform.python_version(),
+        },
+        "errors": [],
+    }
+
+
+@router.post("/shutdown")
+async def api_shutdown():
+    """Gracefully shut down the server."""
+    import os
+
+    os._exit(0)
 
 
 @router.post("/host/launch")

@@ -5,12 +5,15 @@ This module handles detection of DaVinci Resolve installations across different
 operating systems and sets up the required environment for API access.
 """
 
+import logging
 import os
 import platform
 import subprocess
 from pathlib import Path
 
 import psutil
+
+logger = logging.getLogger(__name__)
 
 
 class ResolveEnvironment:
@@ -51,9 +54,7 @@ class ResolveEnvironment:
             return [
                 Path("C:/Program Files/Blackmagic Design/DaVinci Resolve"),
                 Path("C:/Program Files (x86)/Blackmagic Design/DaVinci Resolve"),
-                Path(os.environ.get("PROGRAMFILES", "C:/Program Files"))
-                / "Blackmagic Design"
-                / "DaVinci Resolve",
+                Path(os.environ.get("PROGRAMFILES", "C:/Program Files")) / "Blackmagic Design" / "DaVinci Resolve",
                 Path(os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)"))
                 / "Blackmagic Design"
                 / "DaVinci Resolve",
@@ -164,7 +165,7 @@ class ResolveEnvironment:
                     plist = plistlib.load(f)
                     return plist.get("CFBundleShortVersionString", "Unknown")
         except Exception:
-            pass
+            logger.warning("Failed to detect Resolve version from macOS", exc_info=True)
 
         return "Unknown"
 
@@ -172,13 +173,11 @@ class ResolveEnvironment:
         """Get version from Linux executable."""
         try:
             # Try running with --version flag
-            result = subprocess.run(
-                [resolve_path, "--version"], capture_output=True, text=True, timeout=10
-            )
+            result = subprocess.run([resolve_path, "--version"], capture_output=True, text=True, timeout=10)
             if result.returncode == 0:
                 return result.stdout.strip()
         except Exception:
-            pass
+            logger.warning("Failed to detect Resolve version from Linux", exc_info=True)
 
         return "Unknown"
 
@@ -257,9 +256,7 @@ class ResolveEnvironment:
             lib_path = Path("C:/Program Files/Blackmagic Design/DaVinci Resolve/fusionscript.dll")
 
         elif self.system == "darwin":  # macOS
-            api_path = Path(
-                "/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting"
-            )
+            api_path = Path("/Library/Application Support/Blackmagic Design/DaVinci Resolve/Developer/Scripting")
             lib_path = Path(
                 "/Applications/DaVinci Resolve/DaVinci Resolve.app/Contents/Libraries/Fusion/fusionscript.so"
             )

@@ -5,6 +5,7 @@ This module provides standardized error handling and response formatting
 for the FastMCP server.
 """
 
+import asyncio
 import logging
 import traceback
 from collections.abc import Callable
@@ -48,7 +49,7 @@ def handle_errors(func: F) -> Callable[..., Any]:
             # If the function returns a response, ensure it has the right format
             if isinstance(result, dict):
                 if "status" not in result:
-                    return SuccessResponse(data=result).dict()
+                    return SuccessResponse(data=result).model_dump()
 
             return result
 
@@ -77,31 +78,31 @@ def handle_resolve_error(exc: Exception) -> dict:
             error_type="connection_error",
             message=str(exc) or "Failed to connect to DaVinci Resolve",
             details={"original_error": str(exc)},
-        ).dict()
+        ).model_dump()
     elif isinstance(exc, ResolveOperationError):
         return ErrorResponse(
             error_type="operation_error",
             message=str(exc) or "Operation failed in DaVinci Resolve",
             details={"original_error": str(exc)},
-        ).dict()
+        ).model_dump()
     elif isinstance(exc, ResolveAPIError):
         return ErrorResponse(
             error_type="api_error",
             message="DaVinci Resolve API returned an error",
             details={"original_error": str(exc)},
-        ).dict()
+        ).model_dump()
     elif isinstance(exc, ResolveNotRunningError):
         return ErrorResponse(
             error_type="not_running",
             message="DaVinci Resolve is not running",
             details={"original_error": str(exc)},
-        ).dict()
+        ).model_dump()
     elif isinstance(exc, ResolveError):
         return ErrorResponse(
             error_type="resolve_error",
             message="An error occurred in DaVinci Resolve",
             details={"original_error": str(exc)},
-        ).dict()
+        ).model_dump()
     else:
         logger.error(f"Unhandled exception: {exc!s}\n{traceback.format_exc()}")
         return ErrorResponse(
@@ -112,7 +113,7 @@ def handle_resolve_error(exc: Exception) -> dict:
                 "type": type(exc).__name__,
                 "traceback": traceback.format_exc(),
             },
-        ).dict()
+        ).model_dump()
 
 
 def create_tool(func: F, **tool_kwargs) -> F:

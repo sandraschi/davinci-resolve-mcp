@@ -6,14 +6,14 @@ the DaVinci Resolve MCP system. These types provide the foundation for all other
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.functional_serializers import field_serializer
 
 
-class ErrorCode(str, Enum):
+class ErrorCode(StrEnum):
     """Standard error codes for DaVinci Resolve operations."""
 
     SUCCESS = "success"
@@ -96,9 +96,7 @@ class Success(BaseModel):
     success: bool = Field(default=True, description="Always True for success")
     data: Any | None = Field(None, description="Result data if applicable")
     message: str | None = Field(None, description="Success message")
-    timestamp: datetime = Field(
-        default_factory=datetime.now, description="When the result was created"
-    )
+    timestamp: datetime = Field(default_factory=datetime.now, description="When the result was created")
 
 
 class Failure(BaseModel):
@@ -120,9 +118,7 @@ class ValidationError(DaVinciResolveMCPError):
 class NotFoundError(DaVinciResolveMCPError):
     """Exception raised when a requested resource is not found."""
 
-    def __init__(
-        self, message: str, resource_type: str | None = None, resource_id: str | None = None
-    ):
+    def __init__(self, message: str, resource_type: str | None = None, resource_id: str | None = None):
         super().__init__(message, recovery_action="check_resource_exists")
         self.resource_type = resource_type
         self.resource_id = resource_id
@@ -435,12 +431,8 @@ class ResolveObject(BaseModel):
 
     id: str | None = Field(default=None, description="Unique identifier for the object")
     name: str | None = Field(default=None, description="Human-readable name of the object")
-    created_at: datetime | None = Field(
-        default=None, description="Timestamp when the object was created"
-    )
-    modified_at: datetime | None = Field(
-        default=None, description="Timestamp when the object was last modified"
-    )
+    created_at: datetime | None = Field(default=None, description="Timestamp when the object was created")
+    modified_at: datetime | None = Field(default=None, description="Timestamp when the object was last modified")
 
     model_config = ConfigDict(
         extra="allow",
@@ -468,9 +460,7 @@ class TimeCode(BaseModel):
     hours: int = Field(default=0, ge=0, le=23, description="Hours component (0-23)")
     minutes: int = Field(default=0, ge=0, le=59, description="Minutes component (0-59)")
     seconds: int = Field(default=0, ge=0, le=59, description="Seconds component (0-59)")
-    frames: int = Field(
-        default=0, ge=0, le=29, description="Frames component (0-29, depends on frame rate)"
-    )
+    frames: int = Field(default=0, ge=0, le=29, description="Frames component (0-29, depends on frame rate)")
     drop_frame: bool = Field(
         default=False, description="Whether this is a drop-frame timecode (for 29.97, 59.94, etc.)"
     )
@@ -563,12 +553,8 @@ class FrameRate(BaseModel):
     """
 
     value: float = Field(gt=0, description="Frame rate value")
-    timebase: float | None = Field(
-        default=None, description="Timebase (e.g., 24, 25, 29.97, 30, 50, 59.94, 60)"
-    )
-    drop_frame: bool = Field(
-        default=False, description="Whether this is a drop-frame rate (for 29.97, 59.94)"
-    )
+    timebase: float | None = Field(default=None, description="Timebase (e.g., 24, 25, 29.97, 30, 50, 59.94, 60)")
+    drop_frame: bool = Field(default=False, description="Whether this is a drop-frame rate (for 29.97, 59.94)")
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -590,7 +576,7 @@ class FrameRate(BaseModel):
         return cls(value=value, drop_frame=drop_frame)
 
 
-class ColorSpace(str, Enum):
+class ColorSpace(StrEnum):
     """Standard color spaces used in DaVinci Resolve."""
 
     REC709 = "Rec.709"
@@ -608,7 +594,7 @@ class ColorSpace(str, Enum):
     SRGB = "sRGB"
 
 
-class FileFormat(str, Enum):
+class FileFormat(StrEnum):
     """Common file formats for media and projects."""
 
     # Video/Audio Formats
@@ -639,7 +625,7 @@ class FileFormat(str, Enum):
     EDL = "edl"  # Edit Decision List
 
 
-class MediaType(str, Enum):
+class MediaType(StrEnum):
     """Types of media in DaVinci Resolve."""
 
     VIDEO = "video"
@@ -653,7 +639,7 @@ class MediaType(str, Enum):
     UNKNOWN = "unknown"
 
 
-class ChannelLayout(str, Enum):
+class ChannelLayout(StrEnum):
     """Audio channel layouts."""
 
     MONO = "mono"
@@ -666,7 +652,7 @@ class ChannelLayout(str, Enum):
     OTHER = "other"
 
 
-class FieldOrder(str, Enum):
+class FieldOrder(StrEnum):
     """Video field order for interlaced footage."""
 
     PROGRESSIVE = "progressive"
@@ -674,7 +660,7 @@ class FieldOrder(str, Enum):
     LOWER_FIRST = "lower_first"
 
 
-class PixelFormat(str, Enum):
+class PixelFormat(StrEnum):
     """Pixel formats for video data."""
 
     U8 = "8-bit"
@@ -700,7 +686,7 @@ class PixelFormat(str, Enum):
     YUV_444_16 = "16-bit YUV 4:4:4"
 
 
-class TimecodeDisplayFormat(str, Enum):
+class TimecodeDisplayFormat(StrEnum):
     """Timecode display formats."""
 
     FRAMES = "frames"
@@ -710,7 +696,7 @@ class TimecodeDisplayFormat(str, Enum):
     FEET_AND_FRAMES_35MM = "35mm"
 
 
-class ProjectType(str, Enum):
+class ProjectType(StrEnum):
     """Types of DaVinci Resolve projects."""
 
     FEATURE_FILM = "feature_film"
@@ -725,7 +711,7 @@ class ProjectType(str, Enum):
     OTHER = "other"
 
 
-class VersionControlStatus(str, Enum):
+class VersionControlStatus(StrEnum):
     """Version control status for project files."""
 
     CURRENT = "current"
@@ -736,7 +722,7 @@ class VersionControlStatus(str, Enum):
     UNTRACKED = "untracked"
 
 
-class MediaStorageType(str, Enum):
+class MediaStorageType(StrEnum):
     """Types of media storage locations."""
 
     LOCAL = "local"
@@ -746,7 +732,7 @@ class MediaStorageType(str, Enum):
     OFFLINE = "offline"
 
 
-class ErrorSeverity(str, Enum):
+class ErrorSeverity(StrEnum):
     """Severity levels for error reporting."""
 
     INFO = "info"
@@ -755,7 +741,7 @@ class ErrorSeverity(str, Enum):
     CRITICAL = "critical"
 
 
-class LogLevel(str, Enum):
+class LogLevel(StrEnum):
     """Logging levels for the application."""
 
     DEBUG = "debug"
@@ -778,12 +764,8 @@ class Result(BaseModel):
 
     success: bool = Field(..., description="Whether the operation was successful")
     message: str = Field(..., description="Human-readable message about the result")
-    data: dict[str, Any] | None = Field(
-        default=None, description="Optional data returned by the operation"
-    )
-    error: dict[str, Any] | None = Field(
-        default=None, description="Error details if the operation failed"
-    )
+    data: dict[str, Any] | None = Field(default=None, description="Optional data returned by the operation")
+    error: dict[str, Any] | None = Field(default=None, description="Error details if the operation failed")
     warnings: list[str] = Field(default_factory=list, description="List of warning messages")
 
     @classmethod
@@ -811,6 +793,4 @@ class Result(BaseModel):
             "message": message,
             "details": error_details or {},
         }
-        return cls(
-            success=False, message=message, error=error, data=data or {}, warnings=warnings or []
-        )
+        return cls(success=False, message=message, error=error, data=data or {}, warnings=warnings or [])

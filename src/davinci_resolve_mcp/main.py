@@ -12,6 +12,7 @@ Logging rules:
 """
 
 import logging
+import os
 import sys
 from contextlib import contextmanager
 from pathlib import Path
@@ -140,7 +141,7 @@ def start(
         console.print(f"❌ Error: {e!s}", style="red")
         if debug:
             logger.exception("Detailed error:")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     console.print(f"🚀 Starting DaVinci Resolve MCP server on {host}:{port}")
     try:
@@ -151,7 +152,7 @@ def start(
         console.print(f"❌ Server error: {e!s}", style="red")
         if debug:
             logger.exception("Detailed error:")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
 
 @app.command()
@@ -179,9 +180,7 @@ def mcp():
     # the 'mcp' subcommand as an unrecognized positional arg, causing parse failure).
     import argparse as _argparse
 
-    _stdio_args = _argparse.Namespace(
-        stdio=True, http=False, sse=False, host=None, port=None, path=None, debug=False
-    )
+    _stdio_args = _argparse.Namespace(stdio=True, http=False, sse=False, host=None, port=None, path=None, debug=False)
     try:
         with _stdio_single_instance_lock():
             run_server(mcp_app, args=_stdio_args, server_name="davinci-resolve-mcp")
@@ -217,7 +216,7 @@ def web(
         console.print("\nShutting down...")
     except Exception as e:
         console.print(f"Server error: {e!s}", style="red")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command()
@@ -235,9 +234,7 @@ def check():
         console.print(f"   • Running: {'✅ Yes' if is_running else '❌ No'}")
 
         if not install_path:
-            console.print(
-                "\n❌ [yellow]Warning:[/yellow] DaVinci Resolve installation not detected."
-            )
+            console.print("\n❌ [yellow]Warning:[/yellow] DaVinci Resolve installation not detected.")
             console.print("   Make sure DaVinci Resolve is installed.")
             raise typer.Exit(1)
 
@@ -249,7 +246,7 @@ def check():
         raise
     except Exception as e:
         console.print(f"❌ [red]Error:[/red] {e!s}")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command()
@@ -291,7 +288,7 @@ def run_script(
         import DaVinciResolveScript as dvr_script
     except ImportError as e:
         console.print(f"❌ [red]Cannot import DaVinciResolveScript: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     resolve = dvr_script.scriptapp("Resolve")
     if not resolve:
@@ -336,7 +333,7 @@ def run_script(
         console.print("─" * 60)
         console.print(f"❌ [red]Script error:[/red] {e}")
         logger.exception("Script execution failed")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
 
 @app.command()
@@ -377,7 +374,7 @@ def render(
         import DaVinciResolveScript as dvr_script
     except ImportError as e:
         console.print(f"❌ [red]Cannot import DaVinciResolveScript: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     resolve = dvr_script.scriptapp("Resolve")
     if not resolve:
@@ -475,9 +472,11 @@ def render(
         try:
             project.SetRenderSettings(key, value)
         except Exception:
-            pass
+            logger.warning("Failed to set render setting %s", key, exc_info=True)
 
-    project.SetCurrentRenderFormatAndCodec(render_settings.get("Format", "mp4"), render_settings.get("VideoCodec", "h264"))
+    project.SetCurrentRenderFormatAndCodec(
+        render_settings.get("Format", "mp4"), render_settings.get("VideoCodec", "h264")
+    )
 
     if not project.StartRendering(job_id):
         console.print("❌ [red]Failed to start rendering[/red]")
@@ -528,7 +527,7 @@ def import_media(
         import DaVinciResolveScript as dvr_script
     except ImportError as e:
         console.print(f"❌ [red]Cannot import DaVinciResolveScript: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     resolve = dvr_script.scriptapp("Resolve")
     if not resolve:
@@ -577,7 +576,7 @@ def import_media(
             if folder in subfolders:
                 media_pool.SetCurrentFolder(subfolders[folder])
 
-    valid_paths = [p for p in paths if _os.path.exists(p)]
+    valid_paths = [p for p in paths if os.path.exists(p)]
     if not valid_paths:
         console.print("❌ [red]No valid files found[/red]")
         raise typer.Exit(1)
@@ -616,7 +615,7 @@ def open_project(
         import DaVinciResolveScript as dvr_script
     except ImportError as e:
         console.print(f"❌ [red]Cannot import DaVinciResolveScript: {e}[/red]")
-        raise typer.Exit(1)
+        raise typer.Exit(1) from e
 
     resolve = dvr_script.scriptapp("Resolve")
     if not resolve:

@@ -6,7 +6,7 @@ in DaVinci Resolve projects.
 """
 
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import Field
@@ -15,7 +15,7 @@ from .common import FrameRate, Resolution, ResolveObject, TimeCode
 from .media import MediaItem
 
 
-class TrackType(str, Enum):
+class TrackType(StrEnum):
     """Types of tracks in a timeline."""
 
     VIDEO = "video"

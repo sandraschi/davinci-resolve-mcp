@@ -1,97 +1,37 @@
-Param([switch]$Headless)
-$SkipFrontend = $Headless
+﻿# Fleet unified launcher - do not edit logic here.
+# Change fleet-start.config.ps1 at the repo root instead.
+param(
+    [switch]$Headless,
+    [switch]$BackendOnly,
+    [switch]$FrontendOnly,
+    [switch]$NoBrowser,
+    [switch]$ReuseIfRunning
+)
 
-# --- SOTA Headless Standard ---
-if ($Headless -and ($Host.UI.RawUI.WindowTitle -notmatch 'Hidden')) {
-    Start-Process pwsh -ArgumentList '-NoProfile', '-File', $PSCommandPath, '-Headless' -WindowStyle Hidden
-    exit
-}
-$WindowStyle = if ($Headless) { 'Hidden' } else { 'Normal' }
-# ------------------------------
-
-# Start SOTA webapp: backend on 10843, then Vite on 10842.
-# Run from repo root: .\web_sota\start.ps1   OR from web_sota: .\start.ps1
-$BackendPort = 10843
-$FleetStartPath = Join-Path $ProjectRoot "scripts\FleetStartMode.ps1"
-if (-not (Test-Path -LiteralPath $FleetStartPath)) {
-    Write-Host "ERROR: Missing vendored launcher helper: $FleetStartPath" -ForegroundColor Red
+$ErrorActionPreference = 'Stop'
+$ReposRoot = if ($env:FLEET_REPOS_ROOT) { $env:FLEET_REPOS_ROOT } else { 'D:\Dev\repos' }
+$EnginePath = Join-Path $ReposRoot 'mcp-central-docs\scripts\Invoke-FleetWebappStart.ps1'
+if (-not (Test-Path -LiteralPath $EnginePath)) {
+    Write-Host "ERROR: Missing fleet start engine: $EnginePath" -ForegroundColor Red
     exit 1
 }
-. $FleetStartPath
+. $EnginePath
 
-$FrontendPort = 10842
-$ApiHealth = "http://127.0.0.1:$BackendPort/api/v1/health"
-$MaxWaitSec = 30
-
-if (Test-Path (Join-Path $PSScriptRoot "package.json")) {
-    $WebSotaRoot = $PSScriptRoot
-    $RepoRoot = Split-Path -Parent $WebSotaRoot
-} else {
-    $RepoRoot = $PSScriptRoot
-    $WebSotaRoot = Join-Path $RepoRoot "web_sota"
-}
-
-function Stop-PortProcess {
-    param([int]$Port)
-$SkipFrontend = $Headless
-    $conn = Get-NetTCPConnection -LocalPort $Port -ErrorAction SilentlyContinue
-    if ($conn) {
-        $procId = $conn.OwningProcess | Select-Object -First 1 -Unique
-        if ($procId) {
-            Write-Host "Stopping process on port $Port (PID: $procId)"
-            Stop-Process -Id $procId -Force -ErrorAction SilentlyContinue
-            Start-Sleep -Seconds 1
-        }
+$configCandidates = @(
+    (Join-Path $PSScriptRoot 'fleet-start.config.ps1'),
+    (Join-Path (Split-Path -Parent $PSScriptRoot) 'fleet-start.config.ps1')
+)
+$configPath = $null
+foreach ($candidate in $configCandidates) {
+    if (Test-Path -LiteralPath $candidate) {
+        $configPath = $candidate
+        break
     }
 }
-
-Write-Host "Checking for port squatters on $FrontendPort and $BackendPort..."
-Stop-PortProcess -Port $BackendPort
-Stop-PortProcess -Port $FrontendPort
-
-# Prefer .venv\python.exe -m ... so we do not run `uv sync` (which replaces Scripts\davinci-resolve-mcp.exe).
-# That step fails with Windows error 32 if Cursor/MCP or another instance still loads that .exe.
-$venvPython = Join-Path $RepoRoot ".venv\Scripts\python.exe"
-Write-Host "Starting Python backend on port $BackendPort ..."
-if (Test-Path $venvPython) {
-    $backendProc = Start-Process -FilePath $venvPython `
-        -ArgumentList "-m", "davinci_resolve_mcp.run_api", "--port", "$BackendPort", "--host", "127.0.0.1" `
-        -WorkingDirectory $RepoRoot -PassThru -NoNewWindow
-} else {
-    $env:UV_NO_SYNC = "1"
-    $backendProc = Start-Process -FilePath "uv" `
-        -ArgumentList "run", "python", "-m", "davinci_resolve_mcp.run_api", "--port", "$BackendPort", "--host", "127.0.0.1" `
-        -WorkingDirectory $RepoRoot -PassThru -NoNewWindow
-}
-$env:PORT = "$BackendPort"
-$env:HOST = "127.0.0.1"
-
-$waited = 0
-$BackendStarted = $false
-while ($waited -lt $MaxWaitSec) {
-    try {
-        $r = Invoke-WebRequest -Uri $ApiHealth -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
-        if ($r.StatusCode -eq 200) {
-            $BackendStarted = $true
-            Write-Host "Backend ready at $ApiHealth"
-            break
-        }
-    } catch {
-        if (-not $backendProc.HasExited) { Start-Sleep -Seconds 2 }
-        $waited += 2
-    }
-}
-if (-not $BackendStarted) {
-    Write-Host "WARNING: Backend did not respond at $ApiHealth within ${MaxWaitSec}s. Frontend may see proxy errors."
+if (-not $configPath) {
+    Write-Host 'ERROR: Missing fleet-start.config.ps1 (repo root or beside start.ps1).' -ForegroundColor Red
+    exit 1
 }
 
-# 4b. Launch background task to open browser once frontend is ready (Auto-opened by Antigravity)
-$frontendUrl = "http://127.0.0.1:$FrontendPort/"
-$pollAndOpen = "for (`$i = 0; `$i -lt 60; `$i++) { try { `$null = Invoke-WebRequest -Uri '$frontendUrl' -TimeoutSec 2 -UseBasicParsing -ErrorAction Stop; Start-Process '$frontendUrl'; exit } catch { Start-Sleep -Seconds 1 } }"
-Start-Process powershell -ArgumentList "-NoProfile", "-WindowStyle", "Hidden", "-Command", $pollAndOpen
-
-Write-Host "Browser will open automatically when Vite is ready." -ForegroundColor Gray
-Set-Location $WebSotaRoot
-if ($SkipFrontend) { return }
-npm run dev
+Start-FleetWebapp @PSBoundParameters -ConfigPath $configPath -LauncherRoot $PSScriptRoot
 

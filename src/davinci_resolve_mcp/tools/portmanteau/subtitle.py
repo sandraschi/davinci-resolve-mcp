@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 _MUTATING = {}
 
+
 def setup_subtitle_portmanteau(app):
     """Register the subtitle portmanteau tool."""
 
@@ -75,7 +76,9 @@ def setup_subtitle_portmanteau(app):
             return await get_subtitles(app, track_index, timeline_name)
 
         elif action == "edit":
-            return await edit_subtitle(app, track_index, subtitle_index, text or None, start_frame, end_frame, name, timeline_name)
+            return await edit_subtitle(
+                app, track_index, subtitle_index, text or None, start_frame, end_frame, name, timeline_name
+            )
 
         elif action == "delete":
             return await delete_subtitle(app, track_index, subtitle_index, timeline_name)

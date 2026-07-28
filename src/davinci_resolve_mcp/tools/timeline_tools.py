@@ -6,7 +6,7 @@ including creating, editing, and manipulating timelines and their contents.
 """
 
 import logging
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -17,7 +17,7 @@ from ..utils.exceptions import ResolveOperationError
 logger = logging.getLogger(__name__)
 
 
-class TrackType(str, Enum):
+class TrackType(StrEnum):
     """Types of tracks in a timeline."""
 
     VIDEO = "video"
@@ -83,9 +83,7 @@ async def create_timeline(
     Returns:
         Dict containing timeline creation result
     """
-    return await create_timeline_impl(
-        app, name, frame_rate, width, height, start_frame, timeline_name
-    )
+    return await create_timeline_impl(app, name, frame_rate, width, height, start_frame, timeline_name)
 
 
 async def get_timeline_info(app, timeline_name: str | None = None) -> dict[str, Any]:
@@ -124,9 +122,7 @@ async def add_clip_to_timeline(
     Returns:
         Dict containing clip addition result
     """
-    return await add_clip_to_timeline_impl(
-        app, clip_path, track_index, track_type, start_frame, timeline_name
-    )
+    return await add_clip_to_timeline_impl(app, clip_path, track_index, track_type, start_frame, timeline_name)
 
 
 async def cut_clip(
@@ -152,9 +148,7 @@ async def cut_clip(
     return await cut_clip_impl(app, frame, track_index, track_type, timeline_name)
 
 
-async def set_timeline_playhead(
-    app, frame: int, timeline_name: str | None = None
-) -> dict[str, Any]:
+async def set_timeline_playhead(app, frame: int, timeline_name: str | None = None) -> dict[str, Any]:
     """
     Set the playhead position in a timeline.
 
@@ -211,7 +205,7 @@ async def create_timeline_impl(
 
     except Exception as e:
         logger.error(f"Error creating timeline: {e!s}")
-        raise ResolveOperationError(f"Failed to create timeline: {e!s}")
+        raise ResolveOperationError(f"Failed to create timeline: {e!s}") from e
 
 
 async def get_timeline_info_impl(app, timeline_name: str | None = None) -> dict[str, Any]:
@@ -268,7 +262,7 @@ async def get_timeline_info_impl(app, timeline_name: str | None = None) -> dict[
 
     except Exception as e:
         logger.error(f"Error getting timeline info: {e!s}")
-        raise ResolveOperationError(f"Failed to get timeline info: {e!s}")
+        raise ResolveOperationError(f"Failed to get timeline info: {e!s}") from e
 
 
 async def add_clip_to_timeline_impl(
@@ -359,7 +353,7 @@ async def add_clip_to_timeline_impl(
 
     except Exception as e:
         logger.error(f"Error adding clip to timeline: {e!s}")
-        raise ResolveOperationError(f"Failed to add clip to timeline: {e!s}")
+        raise ResolveOperationError(f"Failed to add clip to timeline: {e!s}") from e
 
 
 async def cut_clip_impl(
@@ -406,12 +400,10 @@ async def cut_clip_impl(
 
     except Exception as e:
         logger.error(f"Error cutting clip: {e!s}")
-        raise ResolveOperationError(f"Failed to cut clip: {e!s}")
+        raise ResolveOperationError(f"Failed to cut clip: {e!s}") from e
 
 
-async def set_timeline_playhead_impl(
-    app, frame: int, timeline_name: str | None = None
-) -> dict[str, Any]:
+async def set_timeline_playhead_impl(app, frame: int, timeline_name: str | None = None) -> dict[str, Any]:
     """
     Implementation of playhead setting (shared between individual and portmanteau tools).
     """
@@ -448,7 +440,7 @@ async def set_timeline_playhead_impl(
 
     except Exception as e:
         logger.error(f"Error setting playhead: {e!s}")
-        raise ResolveOperationError(f"Failed to set playhead: {e!s}")
+        raise ResolveOperationError(f"Failed to set playhead: {e!s}") from e
 
 
 # ── Marker Operations ──────────────────────────────────────────────
@@ -482,7 +474,24 @@ async def add_marker_impl(
             if not timeline:
                 raise ResolveOperationError("No timeline is currently open")
 
-        valid_colors = {"Blue", "Cyan", "Green", "Yellow", "Red", "Pink", "Purple", "Fuchsia", "Rose", "Lavender", "Sky", "Mint", "Lemon", "Sand", "Cocoa", "Cream"}
+        valid_colors = {
+            "Blue",
+            "Cyan",
+            "Green",
+            "Yellow",
+            "Red",
+            "Pink",
+            "Purple",
+            "Fuchsia",
+            "Rose",
+            "Lavender",
+            "Sky",
+            "Mint",
+            "Lemon",
+            "Sand",
+            "Cocoa",
+            "Cream",
+        }
         if color not in valid_colors:
             logger.warning(f"Unknown marker color '{color}', defaulting to Blue")
             color = "Blue"
@@ -505,7 +514,7 @@ async def add_marker_impl(
 
     except Exception as e:
         logger.error(f"Error adding marker: {e!s}")
-        raise ResolveOperationError(f"Failed to add marker: {e!s}")
+        raise ResolveOperationError(f"Failed to add marker: {e!s}") from e
 
 
 async def get_markers_impl(
@@ -537,14 +546,16 @@ async def get_markers_impl(
 
         marker_list = []
         for frame, marker_info in markers.items():
-            marker_list.append({
-                "frame": frame,
-                "color": marker_info.get("color", ""),
-                "name": marker_info.get("name", ""),
-                "note": marker_info.get("note", ""),
-                "duration": marker_info.get("duration", 1),
-                "customData": marker_info.get("customData", ""),
-            })
+            marker_list.append(
+                {
+                    "frame": frame,
+                    "color": marker_info.get("color", ""),
+                    "name": marker_info.get("name", ""),
+                    "note": marker_info.get("note", ""),
+                    "duration": marker_info.get("duration", 1),
+                    "customData": marker_info.get("customData", ""),
+                }
+            )
 
         return {
             "status": "success",
@@ -555,7 +566,7 @@ async def get_markers_impl(
 
     except Exception as e:
         logger.error(f"Error getting markers: {e!s}")
-        raise ResolveOperationError(f"Failed to get markers: {e!s}")
+        raise ResolveOperationError(f"Failed to get markers: {e!s}") from e
 
 
 async def delete_marker_impl(
@@ -596,7 +607,7 @@ async def delete_marker_impl(
 
     except Exception as e:
         logger.error(f"Error deleting marker: {e!s}")
-        raise ResolveOperationError(f"Failed to delete marker: {e!s}")
+        raise ResolveOperationError(f"Failed to delete marker: {e!s}") from e
 
 
 # ── Keyframe Operations ────────────────────────────────────────────
@@ -651,7 +662,7 @@ async def add_keyframe_impl(
 
     except Exception as e:
         logger.error(f"Error adding keyframe: {e!s}")
-        raise ResolveOperationError(f"Failed to add keyframe: {e!s}")
+        raise ResolveOperationError(f"Failed to add keyframe: {e!s}") from e
 
 
 async def get_keyframes_impl(
@@ -703,7 +714,7 @@ async def get_keyframes_impl(
 
     except Exception as e:
         logger.error(f"Error getting keyframes: {e!s}")
-        raise ResolveOperationError(f"Failed to get keyframes: {e!s}")
+        raise ResolveOperationError(f"Failed to get keyframes: {e!s}") from e
 
 
 async def delete_keyframe_impl(
@@ -753,7 +764,7 @@ async def delete_keyframe_impl(
 
     except Exception as e:
         logger.error(f"Error deleting keyframe: {e!s}")
-        raise ResolveOperationError(f"Failed to delete keyframe: {e!s}")
+        raise ResolveOperationError(f"Failed to delete keyframe: {e!s}") from e
 
 
 def register_tools(app):
@@ -822,7 +833,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to create timeline: {e!s}")
+            raise ResolveOperationError(f"Failed to create timeline: {e!s}") from e
 
     @app.tool()
     async def get_timeline_info(timeline_name: str | None = None) -> dict[str, Any]:
@@ -864,9 +875,7 @@ def register_tools(app):
                     track_count = timeline.GetTrackCount(track_type)
                     for i in range(1, track_count + 1):
                         is_muted = timeline.GetTrackProperty(f"showTrackMute{i}", track_type) == "1"
-                        is_locked = (
-                            timeline.GetTrackProperty(f"showTrackLock{i}", track_type) == "1"
-                        )
+                        is_locked = timeline.GetTrackProperty(f"showTrackLock{i}", track_type) == "1"
 
                         track = {
                             "track_type": track_type,
@@ -891,7 +900,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to get timeline info: {e!s}")
+            raise ResolveOperationError(f"Failed to get timeline info: {e!s}") from e
 
     @app.tool()
     async def add_clip_to_timeline(
@@ -978,7 +987,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to add clip to timeline: {e!s}")
+            raise ResolveOperationError(f"Failed to add clip to timeline: {e!s}") from e
 
     @app.tool()
     async def cut_clip(
@@ -1038,7 +1047,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to cut clip: {e!s}")
+            raise ResolveOperationError(f"Failed to cut clip: {e!s}") from e
 
     @app.tool()
     async def set_timeline_playhead(frame: int, timeline_name: str | None = None) -> dict[str, Any]:
@@ -1078,7 +1087,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to set playhead position: {e!s}")
+            raise ResolveOperationError(f"Failed to set playhead position: {e!s}") from e
 
     @app.tool()
     async def add_timeline_marker(
@@ -1103,7 +1112,24 @@ def register_tools(app):
                     timeline = project.GetCurrentTimeline()
                     if not timeline:
                         raise ResolveOperationError("No timeline is currently open")
-                valid_colors = {"Blue", "Cyan", "Green", "Yellow", "Red", "Pink", "Purple", "Fuchsia", "Rose", "Lavender", "Sky", "Mint", "Lemon", "Sand", "Cocoa", "Cream"}
+                valid_colors = {
+                    "Blue",
+                    "Cyan",
+                    "Green",
+                    "Yellow",
+                    "Red",
+                    "Pink",
+                    "Purple",
+                    "Fuchsia",
+                    "Rose",
+                    "Lavender",
+                    "Sky",
+                    "Mint",
+                    "Lemon",
+                    "Sand",
+                    "Cocoa",
+                    "Cream",
+                }
                 if color not in valid_colors:
                     color = "Blue"
                 if hasattr(timeline, "AddMarker"):
@@ -1119,7 +1145,7 @@ def register_tools(app):
                     "message": f"Added {color} marker at frame {frame}" + (f": {name}" if name else ""),
                 }
         except Exception as e:
-            raise ResolveOperationError(f"Failed to add marker: {e!s}")
+            raise ResolveOperationError(f"Failed to add marker: {e!s}") from e
 
     @app.tool()
     async def get_timeline_markers(timeline_name: str | None = None) -> dict[str, Any]:
@@ -1140,16 +1166,23 @@ def register_tools(app):
                 markers = timeline.GetMarkers() if hasattr(timeline, "GetMarkers") else {}
                 marker_list = []
                 for frame, info in (markers or {}).items():
-                    marker_list.append({
-                        "frame": frame,
-                        "color": info.get("color", ""),
-                        "name": info.get("name", ""),
-                        "note": info.get("note", ""),
-                        "duration": info.get("duration", 1),
-                    })
-                return {"status": "success", "timeline_name": timeline.GetName(), "markers": marker_list, "count": len(marker_list)}
+                    marker_list.append(
+                        {
+                            "frame": frame,
+                            "color": info.get("color", ""),
+                            "name": info.get("name", ""),
+                            "note": info.get("note", ""),
+                            "duration": info.get("duration", 1),
+                        }
+                    )
+                return {
+                    "status": "success",
+                    "timeline_name": timeline.GetName(),
+                    "markers": marker_list,
+                    "count": len(marker_list),
+                }
         except Exception as e:
-            raise ResolveOperationError(f"Failed to get markers: {e!s}")
+            raise ResolveOperationError(f"Failed to get markers: {e!s}") from e
 
     @app.tool()
     async def delete_timeline_marker(frame: int, timeline_name: str | None = None) -> dict[str, Any]:
@@ -1171,9 +1204,14 @@ def register_tools(app):
                     timeline.DeleteMarkerAtFrame(frame)
                 else:
                     raise ResolveOperationError("DeleteMarkerAtFrame not available in this API version")
-                return {"status": "success", "timeline_name": timeline.GetName(), "frame": frame, "message": f"Deleted marker at frame {frame}"}
+                return {
+                    "status": "success",
+                    "timeline_name": timeline.GetName(),
+                    "frame": frame,
+                    "message": f"Deleted marker at frame {frame}",
+                }
         except Exception as e:
-            raise ResolveOperationError(f"Failed to delete marker: {e!s}")
+            raise ResolveOperationError(f"Failed to delete marker: {e!s}") from e
 
     # Add more timeline-related tools as needed
     # - Add transitions

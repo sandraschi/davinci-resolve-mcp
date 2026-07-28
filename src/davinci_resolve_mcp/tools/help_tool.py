@@ -115,9 +115,7 @@ class HelpTool:
             },
             {
                 UserLevel.BEGINNER: ["create_project('My Project')"],
-                UserLevel.INTERMEDIATE: [
-                    "create_project('My Project', width=1920, height=1080, frame_rate=24.0)"
-                ],
+                UserLevel.INTERMEDIATE: ["create_project('My Project', width=1920, height=1080, frame_rate=24.0)"],
                 UserLevel.ADVANCED: [
                     "create_project('My Project', width=3840, height=2160, frame_rate=24.0, \
                     color_science='ACEScct', working_folder='/path/to/project')"
@@ -208,9 +206,7 @@ class HelpTool:
         # Multiple matches found
         result = f"Multiple matches found for '{topic}':\n\n"
         for match in sorted(matches):
-            result += (
-                f"- {self._help_content[match].name}: {self._help_content[match].description}\n"
-            )
+            result += f"- {self._help_content[match].name}: {self._help_content[match].description}\n"
         result += "\nType 'help(topic)' where 'topic' is one of the above for more information."
         return result
 

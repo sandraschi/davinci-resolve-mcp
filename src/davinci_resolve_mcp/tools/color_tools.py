@@ -6,7 +6,7 @@ including node-based color operations, LUT management, and color matching.
 """
 
 import logging
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -17,7 +17,7 @@ from ..utils.exceptions import ResolveOperationError
 logger = logging.getLogger(__name__)
 
 
-class ColorCorrectionType(str, Enum):
+class ColorCorrectionType(StrEnum):
     """Types of color correction operations."""
 
     PRIMARY = "primary"
@@ -148,9 +148,7 @@ async def adjust_color_wheels(
     Returns:
         Dict containing color wheel adjustment result
     """
-    return await adjust_color_wheels_impl(
-        app, lift, gamma, gain, offset, clip_path, node_name, timeline_name
-    )
+    return await adjust_color_wheels_impl(app, lift, gamma, gain, offset, clip_path, node_name, timeline_name)
 
 
 async def create_color_node_impl(
@@ -232,7 +230,7 @@ async def create_color_node_impl(
 
     except Exception as e:
         logger.error(f"Error creating color node: {e!s}")
-        raise ResolveOperationError(f"Failed to create color node: {e!s}")
+        raise ResolveOperationError(f"Failed to create color node: {e!s}") from e
 
 
 async def apply_lut_impl(
@@ -295,7 +293,7 @@ async def apply_lut_impl(
 
     except Exception as e:
         logger.error(f"Error applying LUT: {e!s}")
-        raise ResolveOperationError(f"Failed to apply LUT: {e!s}")
+        raise ResolveOperationError(f"Failed to apply LUT: {e!s}") from e
 
 
 async def set_color_space_impl(
@@ -364,7 +362,7 @@ async def set_color_space_impl(
 
     except Exception as e:
         logger.error(f"Error setting color space: {e!s}")
-        raise ResolveOperationError(f"Failed to set color space: {e!s}")
+        raise ResolveOperationError(f"Failed to set color space: {e!s}") from e
 
 
 async def adjust_color_wheels_impl(
@@ -462,7 +460,7 @@ async def adjust_color_wheels_impl(
 
     except Exception as e:
         logger.error(f"Error adjusting color wheels: {e!s}")
-        raise ResolveOperationError(f"Failed to adjust color wheels: {e!s}")
+        raise ResolveOperationError(f"Failed to adjust color wheels: {e!s}") from e
 
 
 # ── Gallery / Stills Operations ─────────────────────────────────────
@@ -514,7 +512,7 @@ async def grab_still_impl(
 
     except Exception as e:
         logger.error(f"Error grabbing still: {e!s}")
-        raise ResolveOperationError(f"Failed to grab still: {e!s}")
+        raise ResolveOperationError(f"Failed to grab still: {e!s}") from e
 
 
 async def get_stills_impl(app) -> dict[str, Any]:
@@ -545,11 +543,16 @@ async def get_stills_impl(app) -> dict[str, Any]:
                         still_list.append(still_info)
                     return {"status": "success", "stills": still_list, "count": len(still_list)}
 
-        return {"status": "success", "stills": [], "count": 0, "message": "Gallery stills not available in this API version"}
+        return {
+            "status": "success",
+            "stills": [],
+            "count": 0,
+            "message": "Gallery stills not available in this API version",
+        }
 
     except Exception as e:
         logger.error(f"Error getting stills: {e!s}")
-        raise ResolveOperationError(f"Failed to get stills: {e!s}")
+        raise ResolveOperationError(f"Failed to get stills: {e!s}") from e
 
 
 async def apply_grade_from_still_impl(
@@ -602,7 +605,7 @@ async def apply_grade_from_still_impl(
 
     except Exception as e:
         logger.error(f"Error applying grade from still: {e!s}")
-        raise ResolveOperationError(f"Failed to apply grade from still: {e!s}")
+        raise ResolveOperationError(f"Failed to apply grade from still: {e!s}") from e
 
 
 def register_tools(app):
@@ -702,7 +705,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to create color node: {e!s}")
+            raise ResolveOperationError(f"Failed to create color node: {e!s}") from e
 
     @app.tool()
     async def apply_lut(
@@ -766,12 +769,10 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to apply LUT: {e!s}")
+            raise ResolveOperationError(f"Failed to apply LUT: {e!s}") from e
 
     @app.tool()
-    async def set_color_space(
-        transform: ColorSpaceTransform, timeline_name: str | None = None
-    ) -> dict[str, Any]:
+    async def set_color_space(transform: ColorSpaceTransform, timeline_name: str | None = None) -> dict[str, Any]:
         """
         Set the color space transform for the current clip.
 
@@ -835,7 +836,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to set color space: {e!s}")
+            raise ResolveOperationError(f"Failed to set color space: {e!s}") from e
 
     @app.tool()
     async def adjust_color_wheels(
@@ -933,7 +934,7 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to adjust color wheels: {e!s}")
+            raise ResolveOperationError(f"Failed to adjust color wheels: {e!s}") from e
 
     @app.tool()
     async def grab_still(still_name: str | None = None, timeline_name: str | None = None) -> dict[str, Any]:
@@ -957,10 +958,14 @@ def register_tools(app):
                     album = gallery.GetCurrentStillAlbum()
                     if album and hasattr(album, "GrabStill"):
                         album.GrabStill(still_name or "")
-                        return {"status": "success", "still_name": still_name or "Untitled", "clip_name": current_clip.GetName()}
+                        return {
+                            "status": "success",
+                            "still_name": still_name or "Untitled",
+                            "clip_name": current_clip.GetName(),
+                        }
                 raise ResolveOperationError("GrabStill not available")
         except Exception as e:
-            raise ResolveOperationError(f"Failed to grab still: {e!s}")
+            raise ResolveOperationError(f"Failed to grab still: {e!s}") from e
 
     @app.tool()
     async def get_stills() -> dict[str, Any]:
@@ -985,7 +990,7 @@ def register_tools(app):
                             return {"status": "success", "stills": still_list, "count": len(still_list)}
                 return {"status": "success", "stills": [], "count": 0}
         except Exception as e:
-            raise ResolveOperationError(f"Failed to get stills: {e!s}")
+            raise ResolveOperationError(f"Failed to get stills: {e!s}") from e
 
     @app.tool()
     async def apply_grade_from_still(still_index: int, timeline_name: str | None = None) -> dict[str, Any]:
@@ -1014,10 +1019,14 @@ def register_tools(app):
                         still = stills[still_index]
                         if hasattr(current_clip, "ApplyGradeFromStill"):
                             current_clip.ApplyGradeFromStill(still)
-                            return {"status": "success", "still_index": still_index, "clip_name": current_clip.GetName()}
+                            return {
+                                "status": "success",
+                                "still_index": still_index,
+                                "clip_name": current_clip.GetName(),
+                            }
                 raise ResolveOperationError("ApplyGradeFromStill not available")
         except Exception as e:
-            raise ResolveOperationError(f"Failed to apply grade from still: {e!s}")
+            raise ResolveOperationError(f"Failed to apply grade from still: {e!s}") from e
 
     # Add more color grading tools as needed
     # - Color match

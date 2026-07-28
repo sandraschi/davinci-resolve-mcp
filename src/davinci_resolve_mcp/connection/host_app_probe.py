@@ -11,13 +11,13 @@ Provides 4-state detection for any host application:
 import socket
 import subprocess
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 
 import psutil
 
 
-class AppState(str, Enum):
+class AppState(StrEnum):
     NOT_INSTALLED = "not_installed"
     INSTALLED_STOPPED = "installed_stopped"
     RUNNING_UNREACHABLE = "running_unreachable"
@@ -167,8 +167,7 @@ def probe_host_app(
                 state=AppState.RUNNING_UNREACHABLE,
                 app_name=app_name,
                 message=(
-                    f"{app_name} is running (PID {pid}) but HTTP API at "
-                    f"{http_health_url} is not responding: {exc}"
+                    f"{app_name} is running (PID {pid}) but HTTP API at {http_health_url} is not responding: {exc}"
                 ),
                 install_path=found_path,
                 pid=pid,
@@ -201,10 +200,7 @@ def launch_app(status: HostAppStatus) -> tuple[bool, str]:
         return False, msg
 
     if status.state == AppState.RUNNING_UNREACHABLE:
-        return False, (
-            f"{status.app_name} is already starting up. "
-            f"Wait a few seconds and retry get_host_app_status."
-        )
+        return False, (f"{status.app_name} is already starting up. Wait a few seconds and retry get_host_app_status.")
 
     # INSTALLED_STOPPED
     if not status.launch_cmd:
@@ -220,8 +216,7 @@ def launch_app(status: HostAppStatus) -> tuple[bool, str]:
         )
         return (
             True,
-            f"Launch command sent for {status.app_name}. "
-            f"Allow 10-20 seconds to start, then retry get_host_app_status.",
+            f"Launch command sent for {status.app_name}. Allow 10-20 seconds to start, then retry get_host_app_status.",
         )
     except Exception as exc:
         return False, f"Launch failed for {status.app_name}: {exc}"

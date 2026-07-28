@@ -7,7 +7,7 @@ in DaVinci Resolve, including render presets, format settings, and batch operati
 
 import logging
 import os
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -18,7 +18,7 @@ from ..utils.exceptions import ResolveOperationError
 logger = logging.getLogger(__name__)
 
 
-class RenderFormat(str, Enum):
+class RenderFormat(StrEnum):
     """Supported render formats."""
 
     MP4 = "mp4"
@@ -35,7 +35,7 @@ class RenderFormat(str, Enum):
     PNG = "png"
 
 
-class RenderCodec(str, Enum):
+class RenderCodec(StrEnum):
     """Supported codecs for rendering."""
 
     H264 = "h264"
@@ -111,9 +111,7 @@ async def render_timeline(
     Returns:
         Dict containing render job information
     """
-    return await render_timeline_impl(
-        app, output_path, format, codec, preset_name, custom_name, timeline_name
-    )
+    return await render_timeline_impl(app, output_path, format, codec, preset_name, custom_name, timeline_name)
 
 
 async def get_render_presets(app) -> dict[str, Any]:
@@ -228,7 +226,7 @@ async def render_timeline_impl(
 
     except Exception as e:
         logger.error(f"Error rendering timeline: {e!s}")
-        raise ResolveOperationError(f"Failed to render timeline: {e!s}")
+        raise ResolveOperationError(f"Failed to render timeline: {e!s}") from e
 
 
 async def get_render_presets_impl(app) -> dict[str, Any]:
@@ -265,7 +263,7 @@ async def get_render_presets_impl(app) -> dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error getting render presets: {e!s}")
-        raise ResolveOperationError(f"Failed to get render presets: {e!s}")
+        raise ResolveOperationError(f"Failed to get render presets: {e!s}") from e
 
 
 async def render_with_preset_impl(
@@ -324,7 +322,7 @@ async def render_with_preset_impl(
 
     except Exception as e:
         logger.error(f"Error rendering with preset: {e!s}")
-        raise ResolveOperationError(f"Failed to render with preset: {e!s}")
+        raise ResolveOperationError(f"Failed to render with preset: {e!s}") from e
 
 
 async def get_render_job_status_impl(app, job_id: str) -> dict[str, Any]:
@@ -356,7 +354,7 @@ async def get_render_job_status_impl(app, job_id: str) -> dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error getting render job status: {e!s}")
-        raise ResolveOperationError(f"Failed to get render job status: {e!s}")
+        raise ResolveOperationError(f"Failed to get render job status: {e!s}") from e
 
 
 def register_tools(app):
@@ -413,15 +411,13 @@ def register_tools(app):
                 # Configure render settings
                 render_settings = {
                     "SelectAllFrames": True,
-                    "CustomName": custom_name
-                    or (timeline.GetName() if use_timeline_name else "render"),
+                    "CustomName": custom_name or (timeline.GetName() if use_timeline_name else "render"),
                     "TargetDir": os.path.dirname(os.path.abspath(output_path)),
                     "ExportVideo": True,
                     "ExportAudio": True,
                     "FormatWidth": 1920,  # Default values, will be updated
                     "FormatHeight": 1080,
-                    "FrameRate": frame_rate
-                    or float(timeline.GetSetting("timelineFrameRate") or "24.0"),
+                    "FrameRate": frame_rate or float(timeline.GetSetting("timelineFrameRate") or "24.0"),
                     "PixelAspectRatio": "square",
                     "VideoQuality": 0,  # 0 = Best, 1 = Good, 2 = Max Render Quality
                     "AudioBitDepth": 16,
@@ -510,7 +506,7 @@ def register_tools(app):
                     }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to render timeline: {e!s}")
+            raise ResolveOperationError(f"Failed to render timeline: {e!s}") from e
 
     @app.tool()
     async def get_render_presets() -> list[dict[str, Any]]:
@@ -536,7 +532,7 @@ def register_tools(app):
                 return {"status": "success", "presets": presets}
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to get render presets: {e!s}")
+            raise ResolveOperationError(f"Failed to get render presets: {e!s}") from e
 
     @app.tool()
     async def render_with_preset(
@@ -595,15 +591,9 @@ def register_tools(app):
                 project.LoadRenderPreset(preset_index)
 
                 # Configure output settings
-                output_filename = custom_name or (
-                    timeline.GetName() if use_timeline_name else "render"
-                )
-                project.SetCurrentRenderFormatAndCodec(
-                    project.GetSetting("format"), project.GetSetting("codec")
-                )
-                project.SetRenderSettings(
-                    "TargetDir", os.path.dirname(os.path.abspath(output_path))
-                )
+                output_filename = custom_name or (timeline.GetName() if use_timeline_name else "render")
+                project.SetCurrentRenderFormatAndCodec(project.GetSetting("format"), project.GetSetting("codec"))
+                project.SetRenderSettings("TargetDir", os.path.dirname(os.path.abspath(output_path)))
                 project.SetRenderSettings("CustomName", output_filename)
                 project.SetRenderSettings("OverwriteExistingFile", overwrite)
 
@@ -641,7 +631,7 @@ def register_tools(app):
                     }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to render with preset: {e!s}")
+            raise ResolveOperationError(f"Failed to render with preset: {e!s}") from e
 
     @app.tool()
     async def get_render_job_status(job_id: int) -> dict[str, Any]:
@@ -673,4 +663,4 @@ def register_tools(app):
                 }
 
         except Exception as e:
-            raise ResolveOperationError(f"Failed to get render job status: {e!s}")
+            raise ResolveOperationError(f"Failed to get render job status: {e!s}") from e
