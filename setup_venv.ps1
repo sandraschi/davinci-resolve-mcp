@@ -25,7 +25,7 @@ function Test-Python {
     try {
         $pythonVersion = & python --version 2>$null
         if ($LASTEXITCODE -eq 0) {
-            Write-Colored "âœ“ Python found: $pythonVersion" -Color Green
+            Write-Colored "âœ" Python found: $pythonVersion" -Color Green
             return $true
         }
     }
@@ -34,7 +34,7 @@ function Test-Python {
         try {
             $pythonVersion = & python3 --version 2>$null
             if ($LASTEXITCODE -eq 0) {
-                Write-Colored "âœ“ Python found: $pythonVersion" -Color Green
+                Write-Colored "âœ" Python found: $pythonVersion" -Color Green
                 return $true
             }
         }
@@ -62,7 +62,7 @@ function New-VirtualEnvironment {
         if ($LASTEXITCODE -ne 0) {
             throw "Failed to create virtual environment"
         }
-        Write-Colored "âœ“ Virtual environment created successfully" -Color Green
+        Write-Colored "âœ" Virtual environment created successfully" -Color Green
         return $true
     }
     catch {
@@ -112,7 +112,7 @@ function Install-Dependencies {
             }
         }
 
-        Write-Colored "âœ“ Dependencies installed successfully" -Color Green
+        Write-Colored "âœ" Dependencies installed successfully" -Color Green
         return $true
     }
     catch {
@@ -151,7 +151,7 @@ except ImportError as e:
             throw "Package import test failed"
         }
 
-        Write-Colored "âœ“ Installation test passed" -Color Green
+        Write-Colored "âœ" Installation test passed" -Color Green
         Write-Colored $testResult -Color Green
         return $true
     }

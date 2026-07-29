@@ -44,7 +44,7 @@ if ($DaVinciResolve) {
     try {
         $resolveCheck = & $PythonPath check_resolve_running.py 2>$null
         if ($resolveCheck -match "DaVinci Resolve is running") {
-            Write-Colored "✓ DaVinci Resolve is running" -Color Green
+            Write-Colored "OK DaVinci Resolve is running" -Color Green
         } else {
             Write-Colored "⚠ DaVinci Resolve not detected - integration tests may fail" -Color Yellow
         }
