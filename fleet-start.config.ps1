@@ -8,7 +8,7 @@
     WebRoot      = 'D:\Dev\repos\davinci-resolve-mcp\web_sota'
     Backend = @{
         Kind          = 'uvicorn'
-        UvicornTarget = 'davinci_resolve_mcp.server:app'
+        UvicornTarget = 'davinci_resolve_mcp.server:api_app'
         SyncExtras    = @('dev')
         Env           = @{ WEB_PORT = '10843' }
     }

@@ -1,7 +1,7 @@
-﻿set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
+set windows-shell := ["powershell.exe", "-NoProfile", "-Command"]
 import 'scripts/just/fleet.just'
 
-# â”€â”€ Dashboard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Dashboard ---
 
 # Open the interactive recipe dashboard in the browser
 default:
@@ -14,7 +14,7 @@ bootstrap:
     uv run pre-commit install
     Set-Location web_sota; npm ci; if ($LASTEXITCODE -ne 0) { npm install }
     Write-Host "Pre-commit hooks installed." -ForegroundColor Green
-# â”€â”€ Quality â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Quality ---
 
 # Ruff lint (Python) + Biome CI check (webapp)
 lint:
@@ -36,7 +36,7 @@ ruff-check:
     Set-Location '{{justfile_directory()}}'
     uv run ruff check .
 
-# â”€â”€ Testing â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Testing ---
 
 # Run all unit tests
 test:
@@ -58,7 +58,7 @@ test-all:
 test-debug:
     uv run pytest tests/unit/ -vvs --timeout=30
 
-# â”€â”€ Security â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Security ---
 
 # Bandit security audit
 check-sec:
@@ -70,7 +70,7 @@ audit-deps:
     Set-Location '{{justfile_directory()}}'
     uv run pip-audit
 
-# â”€â”€ Development â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Development ---
 
 # Install dependencies (production)
 install:
@@ -88,9 +88,9 @@ lock:
 typecheck:
     uv run mypy src/davinci_resolve_mcp --ignore-missing-imports
 
-# â”€â”€ Run Modes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Run Modes ---
 
-# Run MCP server (stdio â€” for Claude Desktop / Cursor)
+# --- Run MCP server  stdio  for Claude Desktop  Cursor ---
 run:
     uv run davinci-resolve-mcp
 
@@ -110,7 +110,7 @@ start:
 check:
     uv run davinci-resolve-mcp check
 
-# â”€â”€ CLI Direct â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- CLI Direct ---
 
 # Open a project (create if needed)
 open project_name:
@@ -124,7 +124,7 @@ render timeline output:
 run-script script:
     uv run davinci-resolve-mcp run-script {{script}}
 
-# â”€â”€ Clean â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Clean ---
 
 # Remove __pycache__ and .pyc files
 clean-pyc:
@@ -138,7 +138,7 @@ clean:
     Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue
     Remove-Item -Recurse -Force build -ErrorAction SilentlyContinue
 
-# â”€â”€ Build â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Build ---
 
 # Build Python package
 build:
@@ -149,7 +149,7 @@ dev:
     uv sync --all-extras
     uv pip install -e .
 
-# â”€â”€ Stats â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# --- Stats ---
 
 # Repo statistics (tools, files, coverage)
 stats:
@@ -159,3 +159,5 @@ stats:
 count:
     Get-ChildItem -Recurse -Include '*.py' | Get-Content | Measure-Object -Line | Select-Object -ExpandProperty Lines
 
+
+# Bootstrap: install dev deps + pre-commit hook

@@ -47,7 +47,7 @@ If you prefer not to use `just`:
    uv run python -m davinci_resolve_mcp.server
 
    # HTTP mode (for web dashboard)
-   uv run uvicorn davinci_resolve_mcp.server:app --port 10843
+   uv run uvicorn davinci_resolve_mcp.server:api_app --port 10843
    ```
 5. Open `http://localhost:10843` or the frontend URL.
 

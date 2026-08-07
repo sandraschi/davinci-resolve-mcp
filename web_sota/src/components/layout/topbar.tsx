@@ -1,7 +1,33 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ExternalLink, HelpCircle, LayoutGrid, Loader2, Play, WifiOff } from "lucide-react";
+import { ExternalLink, HelpCircle, LayoutGrid, Loader2, Moon, Play, Sun, WifiOff } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { APPS_CATALOG } from "@/common/apps-catalog";
+
+// EXPERIMENTAL light mode (invert hack). Not fleet standard - see index.css.
+// Toggling `.dark` off the root flips the invert filter; persisted so the
+// choice survives reloads. Delete this + the CSS block to revert.
+const THEME_KEY = "davinci-light-mode";
+
+function useExperimentalTheme() {
+  const [light, setLight] = useState(() => {
+    try {
+      return localStorage.getItem(THEME_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", !light);
+    try {
+      localStorage.setItem(THEME_KEY, light ? "1" : "0");
+    } catch {
+      // ignore storage errors
+    }
+  }, [light]);
+
+  return { light, toggle: () => setLight((v) => !v) };
+}
 
 interface HostState {
   state: string;
@@ -13,6 +39,7 @@ interface HostState {
 export function Topbar() {
   const [host, setHost] = useState<HostState | null>(null);
   const [launching, setLaunching] = useState(false);
+  const { light, toggle } = useExperimentalTheme();
 
   const fetchStatus = useCallback(async () => {
     try {
@@ -53,6 +80,17 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Day mode toggle */}
+        <button
+          type="button"
+          onClick={toggle}
+          className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-800 bg-slate-900/50 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+          title={light ? "Switch to dark (experimental light mode)" : "Switch to light (experimental, ugly)"}
+          aria-label="Toggle light mode (experimental)"
+        >
+          {light ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+        </button>
+
         {/* Resolve Status Indicator */}
         {isReady ? (
           <div className="mr-2 flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs text-emerald-500 border border-emerald-500/20">
