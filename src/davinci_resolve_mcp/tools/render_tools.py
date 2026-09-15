@@ -5,6 +5,7 @@ This module provides tools for rendering and exporting projects and timelines
 in DaVinci Resolve, including render presets, format settings, and batch operations.
 """
 
+import asyncio
 import logging
 import os
 from enum import StrEnum
@@ -484,11 +485,9 @@ def register_tools(app):
                 # Start rendering
                 project.StartRendering(job_id)
 
-                # Wait for render to complete
+                # Wait for render to complete (async: renders run minutes)
                 while project.IsRenderingInProgress():
-                    import time
-
-                    time.sleep(1)  # Check every second
+                    await asyncio.sleep(1)  # Check every second
 
                 # Check if render was successful
                 if project.GetRenderJobStatus(job_id)["Status"] == "Complete":
@@ -605,11 +604,9 @@ def register_tools(app):
                 # Start rendering
                 project.StartRendering(job_id)
 
-                # Wait for render to complete
+                # Wait for render to complete (async: renders run minutes)
                 while project.IsRenderingInProgress():
-                    import time
-
-                    time.sleep(1)  # Check every second
+                    await asyncio.sleep(1)  # Check every second
 
                 # Check if render was successful
                 if project.GetRenderJobStatus(job_id)["Status"] == "Complete":
