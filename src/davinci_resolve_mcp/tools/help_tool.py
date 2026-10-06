@@ -262,11 +262,14 @@ To change the user level, use 'set_user_level("beginner"|"intermediate"|"advance
 
     def _format_help_content(self, content: HelpContent, level: UserLevel) -> str:
         """Format help content for display."""
-        # Find the most appropriate content level
-        content_level = level
-        while content_level not in content.content and content_level != UserLevel.BEGINNER:
+        # Find the most appropriate content level (plain Enum has no ordering;
+        # walk an explicit ladder instead of value arithmetic)
+        ladder = [UserLevel.BEGINNER, UserLevel.INTERMEDIATE, UserLevel.ADVANCED, UserLevel.DEVELOPER]
+        idx = ladder.index(level) if level in ladder else 0
+        while ladder[idx] not in content.content and idx > 0:
             # Move to a lower level if content isn't available at the requested level
-            content_level = UserLevel(max(content_level.value - 1, 1))
+            idx -= 1
+        content_level = ladder[idx]
 
         # Fall back to any available content if needed
         if content_level not in content.content and content.content:

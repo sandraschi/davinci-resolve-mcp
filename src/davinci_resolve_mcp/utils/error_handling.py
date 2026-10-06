@@ -10,7 +10,7 @@ import logging
 import traceback
 from collections.abc import Callable
 from functools import wraps
-from typing import Any
+from typing import Any, cast
 
 from fastmcp import FastMCP
 
@@ -135,7 +135,7 @@ def create_tool(func: F, **tool_kwargs) -> F:
     wrapped_func.__doc__ = func.__doc__
     wrapped_func.__annotations__ = func.__annotations__
 
-    return wrapped_func
+    return cast(F, wrapped_func)
 
 
 def register_error_handlers(app: FastMCP) -> None:

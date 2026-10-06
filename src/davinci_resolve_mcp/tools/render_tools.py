@@ -13,7 +13,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from ..connection.manager import ResolveConnectionManager
 from ..utils.exceptions import ResolveOperationError
 
 logger = logging.getLogger(__name__)
@@ -391,7 +390,7 @@ def register_tools(app):
             Dictionary with render job details
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -508,7 +507,7 @@ def register_tools(app):
             raise ResolveOperationError(f"Failed to render timeline: {e!s}") from e
 
     @app.tool()
-    async def get_render_presets() -> list[dict[str, Any]]:
+    async def get_render_presets() -> dict[str, Any]:
         """
         Get a list of available render presets.
 
@@ -516,7 +515,7 @@ def register_tools(app):
             List of render presets with their settings
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -557,7 +556,7 @@ def register_tools(app):
             Dictionary with render job details
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -642,7 +641,7 @@ def register_tools(app):
             Dictionary with job status and details
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")

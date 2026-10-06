@@ -547,7 +547,7 @@ def register_tools(app):
                         continue
 
                     # Import options
-                    import_options = {
+                    import_options: dict[str, Any] = {
                         "importAsNumberedStills": as_sequence,
                     }
 

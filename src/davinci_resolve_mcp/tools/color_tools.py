@@ -11,7 +11,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from ..connection.manager import ResolveConnectionManager
 from ..utils.exceptions import ResolveOperationError
 
 logger = logging.getLogger(__name__)
@@ -41,7 +40,8 @@ class ColorSpaceTransform(BaseModel):
     output_color_space: str = Field(..., description="Output color space")
     input_gamma: str = Field(..., description="Input gamma")
     output_gamma: str = Field(..., description="Output gamma")
-    tone_mapping: str = Field("Hue Mapping", description="Tone mapping method")
+    # Plain default (not Field(default=...)) so static type checkers see the default.
+    tone_mapping: str = "Hue Mapping"
 
 
 class ColorNode(BaseModel):
@@ -535,7 +535,7 @@ async def get_stills_impl(app) -> dict[str, Any]:
                     stills = album.GetStills() or []
                     still_list = []
                     for i, still in enumerate(stills):
-                        still_info = {"index": i}
+                        still_info: dict[str, Any] = {"index": i}
                         if hasattr(still, "GetLabel"):
                             still_info["label"] = still.GetLabel()
                         if hasattr(still, "GetClipProperty"):
@@ -631,7 +631,7 @@ def register_tools(app):
             Dictionary with node creation status and details
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -724,7 +724,7 @@ def register_tools(app):
             Dictionary with operation status
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -784,7 +784,7 @@ def register_tools(app):
             Dictionary with operation status
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -860,7 +860,7 @@ def register_tools(app):
             Dictionary with operation status
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -940,7 +940,7 @@ def register_tools(app):
     async def grab_still(still_name: str | None = None, timeline_name: str | None = None) -> dict[str, Any]:
         """Grab a still from the current clip to the gallery."""
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -971,7 +971,7 @@ def register_tools(app):
     async def get_stills() -> dict[str, Any]:
         """Get all stills in the current gallery album."""
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -996,7 +996,7 @@ def register_tools(app):
     async def apply_grade_from_still(still_index: int, timeline_name: str | None = None) -> dict[str, Any]:
         """Apply a grade from a gallery still to the current clip."""
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
