@@ -7,7 +7,8 @@ Consolidates Fairlight (DAW) operations: open page, tracks, mute, solo, volume, 
 import logging
 from typing import Annotated, Any, Literal
 
-from fastmcp.tools.tool import ToolAnnotations
+# fastmcp.tools.tool resolves via vendored mcp.server.fastmcp at runtime (shadowed by tool() fn)
+from fastmcp.tools.tool import ToolAnnotations  # pyright: ignore[reportMissingImports]
 from pydantic import Field
 
 from ..fairlight_tools import (
