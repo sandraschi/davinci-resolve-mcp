@@ -1,0 +1,1 @@
+{"commit": "7250e5b5f4f0e94ba0b5b6a92daf7c04e205c1a1", "host": "Goliath", "report": "docs/assess-reports/2026-10-06.md", "score_after": 0, "score_after_note": "raw -42 floored; self-assessed (unverified) - cold rescore preferred", "score_before": 0, "score_before_note": "raw -215 floored", "timestamp": "2026-10-06T04:01:57+02:00"}
