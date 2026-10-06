@@ -1,4 +1,17 @@
 
+## [Unreleased] - 2026-10-06
+
+### Fixed (assfix 2026-10-06)
+- Fleet launcher contract: `UvicornTarget` now `server:api_app` (was raw FastMCP `server:app`)
+- Frontend CORS: same-origin `/api/v1` + Tauri gate in `lib/api.ts`; fixed doubled
+  `/api` prefix in Settings/Logging calls (they 404'd)
+- Biome gate: schema bumped to 2.5.0, `biome.json` formatted, `src/index.css` formatted
+- Ruff: removed `S110`/`S112` ignores, enforcing `T20` print ban
+- REST: added `/capabilities`, `/skills`, `/llm/discover`, `/llm/providers`, `/llm/onboarding`
+- `POST /api/v1/shutdown` now responds 200 before exiting
+- justfile: `serve`, `fmt`, `ci`, `mcpb-pack`, `build-native`, `cua-*` recipes
+- Session injection: `.cursorrules`/`.windsurfrules` Session Context block
+
 ## [Unreleased] — 2026-06-14
 
 ### Added
@@ -184,4 +197,3 @@ Example entry:
 ---
 
 *For older versions, see the Git history or archived documentation.*
-

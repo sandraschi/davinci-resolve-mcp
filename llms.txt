@@ -1,5 +1,7 @@
 # davinci-resolve-mcp
 > FastMCP 3.1+ server for DaVinci Resolve automation. 9 portmanteau tools, 38 individual tools, CLI commands.
+>
+> Full reference: [llms-full.txt](llms-full.txt)
 
 This project includes automated llms.txt generation for AI accessibility.
 
