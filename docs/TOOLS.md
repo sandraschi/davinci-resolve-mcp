@@ -25,9 +25,17 @@ Set `RESOLVE_TOOL_MODE=individual` for 38 single-purpose tools
 
 ## REST (prefix `/api/v1`, backend :10843)
 
-`health`, `status`, `diagnostics`, `logs`, `capabilities`, `skills`,
-`resolve-info`, `projects`, `timeline`, `fairlight/*`, `host-status`,
-`host/launch`, `shutdown` (POST), `llm/models`, `llm/load` (POST),
-`llm/generate` (POST), `llm/discover`, `llm/providers`, `llm/onboarding`.
+Core: `health`, `status`, `diagnostics`, `logs`, `capabilities`, `skills`,
+`/` (banner), `shutdown` (POST, 200-then-exit).
+Resolve: `resolve-info`, `projects` (GET list, POST create),
+`projects/{name}/settings` (GET, PATCH), `timeline`, `fairlight/*`,
+`host-status`, `host/launch` (POST).
+Media: `media` (GET list), `media/import` (POST multipart),
+`media/folders` (POST), `media/metadata/{clip}`.
+LLM: `llm/models`, `llm/load` (POST), `llm/generate` (POST, stream+system),
+`llm/chat` (POST OpenAI-style, streamable), `llm/discover`,
+`llm/providers`, `llm/onboarding`.
+Chat: `chat` (POST skill-aware: message + personality + model).
 
-Full parameter reference: `llms-full.txt` + `docs/USAGE.md`.
+Full parameter reference: `llms-full.txt` (regenerate via
+`scripts/build-llms-full.ps1`) + `docs/USAGE.md`.

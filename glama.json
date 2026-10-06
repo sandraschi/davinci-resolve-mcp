@@ -55,7 +55,7 @@
   "type": "mcp_server",
   "status": "beta",
   "framework": "FastMCP 3.4.4+",
-  "tools": 12,
+  "tools": 15,
   "transport": ["stdio"],
   "keywords": [
     "davinci-resolve",

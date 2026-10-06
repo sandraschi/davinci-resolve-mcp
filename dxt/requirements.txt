@@ -1,5 +1,5 @@
-# Core MCP dependencies
-fastmcp>=2.12.0,<3.0.0
+# Core MCP dependencies (must match pyproject.toml)
+fastmcp>=3.4.4,<4
 fastapi>=0.95.0
 uvicorn[standard]>=0.22.0
 pydantic>=2.0.0,<3.0.0

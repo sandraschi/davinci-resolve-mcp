@@ -33,7 +33,7 @@
     "pydantic": ">=2.0.0,<3.0.0"
   },
   "features": [
-    "44+ professional video editing tools",
+    "15 MCP tools (9 portmanteau + help/status/shutdown + 3 agentic, 38 individual in classic mode)",
     "Natural language workflow automation",
     "Project management (create, import, export)",
     "Timeline editing (clips, transitions, effects)",
@@ -41,13 +41,11 @@
     "Audio mixing and sound design",
     "Multi-format rendering and delivery",
     "Media pool organization",
-    "Fusion compositing integration",
     "Fairlight audio post-production",
-    "87% test coverage (74 unit + 12 integration tests)",
+    "94 tests green, coverage floor enforced",
     "Cross-platform (Windows, macOS, Linux)",
     "Production-ready workflows",
-    "Comprehensive error handling",
-    "Austrian engineering quality"
+    "Comprehensive error handling"
   ],
   "supported_resolve_versions": [
     "DaVinci Resolve 18+",

@@ -3,8 +3,8 @@
 ## Project Identity
 
 - **Name**: davinci-resolve-mcp
-- **Version**: 0.3.0-beta
-- **Purpose**: FastMCP 3.1+ server that exposes a running DaVinci Resolve session to AI agents via the Model Context Protocol
+- **Version**: 0.1.0 (pyproject; AGENTS.md history lines may lag — trust pyproject)
+- **Purpose**: FastMCP 3.4.4+ server that exposes a running DaVinci Resolve session to AI agents via the Model Context Protocol
 - **Language**: Python 3.12+ (backend), TypeScript/React (webapp)
 - **Ports**: 10842 (webapp frontend), 10843 (API backend)
 - **License**: MIT
@@ -37,8 +37,8 @@ src/davinci_resolve_mcp/
 ├── api/routes.py         # FastAPI routes for webapp
 └── utils/                # Exceptions, error handling, validators
 web_sota/src/
-├── App.tsx               # React Router v6
-├── pages/                # 12 page components
+├── App.tsx               # React Router v7
+├── pages/                # 15 page components (incl. inbox, skills)
 └── components/           # Layout + UI primitives
 ```
 
@@ -61,7 +61,8 @@ web_sota/src/
 ### Tool Implementation Pattern
 - Each tools file has `_impl()` functions (shared logic) and `register_tools(app)` (FastMCP decorators)
 - `_impl` functions use `app.state.connection_manager` for Resolve access
-- `register_tools` functions use `with ResolveConnectionManager() as resolve:` context manager
+- Individual tool wrappers use `with app.state.connection_manager as resolve:` (shared live
+  connection — never construct a fresh `ResolveConnectionManager()`; it would be unconnected)
 - Portmanteau tools import and delegate to `_impl` functions
 - Tool mode controlled by `RESOLVE_TOOL_MODE` env var (default: `portmanteau`)
 
@@ -77,9 +78,9 @@ web_sota/src/
 - New pages: create `web_sota/src/pages/<name>.tsx`, add route in `App.tsx`, add nav in `sidebar.tsx`
 
 ### Linting & Quality
-- Python: `just lint` (ruff) or `just fix` (ruff + format)
+- Python: `just lint` (ruff) or `just fix` (ruff + format); `uv run pyright src/` must be 0 errors
 - Webapp: `just lint` runs Biome CI; `just fix` runs Biome check --write
-- Run `just test` before committing
+- Run `just test` before committing (94 tests, coverage floor 30 in addopts)
 - No console.log in webapp (Biome enforces this)
 - No f-strings in docstrings
 - Use `Annotated[T, Field(description="...")]` for all tool parameters
@@ -89,11 +90,15 @@ web_sota/src/
 just run              # MCP stdio (default)
 just mcp              # MCP stdio explicit
 just web              # Webapp API on 10843
+just serve            # Uvicorn api_app on 10843 (fleet launcher target)
 just start            # HTTP MCP server
 just check            # Verify Resolve env
 just open <name>      # Open/create project
 just render <t> <out> # Render timeline
 just run-script <f>   # Execute Resolve Python script
+just ci               # Five-gate: ruff + format-check + pytest + tsc + biome
+just e2e              # Playwright end-to-end (needs backend + frontend up)
+just mcpb-pack        # Fresh-stage + pack MCPB bundle
 ```
 
 ### Dependencies
@@ -102,6 +107,7 @@ just run-script <f>   # Execute Resolve Python script
 - Dev deps: `uv sync --all-extras` or `just install-dev`
 
 ### Testing
-- Unit tests: `tests/unit/` — mock-based, no Resolve needed
-- Integration tests: `tests/integration/` — need running Resolve
+- Unit tests: `tests/unit/` — mock-based, no Resolve needed (82 tests)
+- Integration tests: `tests/integration/` — mock-based, no Resolve needed (12 tests)
+- Full suite: 94 green, coverage floor 30 enforced in pytest addopts
 - New tests: `tests/unit/tools/test_timeline_extended.py`, `tests/unit/tools/test_subtitle_tools.py`
