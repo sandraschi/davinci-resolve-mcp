@@ -1,17 +1,30 @@
-# MCPB Pack Exclusion List
+# MCPB Pack Exclusion List (fleet MCPB_PACKAGING_STANDARDS.md S2.4)
 tests/
 .git/
 __pycache__/
 *.pyc
 .venv/
+node_modules/
+web_sota/
+webapp/
+web/
+native/
 dist/
 build/
 target/
 docs/
 scripts/
-*.dxt
+data/
 .cursor/
 .windsurf/
 .pytest_cache/
 .coverage
-Cargo.lock
+*.dxt
+*.db
+*.sqlite3
+*.mcpb
+*.bak
+*.bak.*
+.env
+_dashboard/
+mcpb/src/

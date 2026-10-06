@@ -9,7 +9,7 @@
         "PYTHONPATH": "${workspaceFolder}/davinci-resolve-mcp/src",
         "PYTHONUNBUFFERED": "1"
       },
-      "description": "FastMCP 2.14.1 compatible MCP server for professional DaVinci Resolve video editing automation. 7 portmanteau tools (or 26 individual tools) for project management, media operations, timeline editing, color grading, rendering, and audio processing.",
+      "description": "FastMCP 3.x MCP server for professional DaVinci Resolve video editing automation. 9 portmanteau tools (resolve_project/media/timeline/color/render/audio/fairlight/subtitle/system) plus help/status/agentic tools for project management, media operations, timeline editing, color grading, rendering, and audio processing.",
       "capabilities": {
         "tools": {
           "enabled": true
@@ -51,11 +51,11 @@
   },
   "maintainers": ["sandraschi"],
   "name": "davinci-resolve-mcp",
-  "description": "FastMCP 2.14.1 compatible MCP server for professional DaVinci Resolve video editing automation. 7 portmanteau tools (or 26 individual tools) for complete video production workflows. Beta status.",
+  "description": "FastMCP 3.x MCP server for professional DaVinci Resolve video editing automation. 9 portmanteau tools plus help/status/agentic tools for complete video production workflows. Beta status.",
   "type": "mcp_server",
   "status": "beta",
-  "framework": "FastMCP 2.14.1",
-  "tools": 7,
+  "framework": "FastMCP 3.4.4+",
+  "tools": 12,
   "transport": ["stdio"],
   "keywords": [
     "davinci-resolve",
