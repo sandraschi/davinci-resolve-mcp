@@ -9,7 +9,32 @@ import pytest
 from fastapi.testclient import TestClient
 
 from davinci_resolve_mcp.config import DaVinciResolveConfig
-from davinci_resolve_mcp.server import AppState, app
+from davinci_resolve_mcp.server import api_app
+from davinci_resolve_mcp.server import app as server_app
+
+
+def _clip_props_mock(**overrides):
+    """Clip mock whose GetClipProperty serves full-dict and per-key calls."""
+    base = {
+        "Duration": "00:01:30:00",
+        "FPS": "24.0",
+        "Width": "1920",
+        "Height": "1080",
+        "Has Video": "1",
+        "Has Audio": "1",
+        "Audio Channels": "2",
+        "Sample Rate": "48000",
+        "Codec": "H.264",
+        "File Size": "1024000",
+        "Date Created": "2025-01-01 12:00:00",
+        "Date Modified": "2025-01-01 12:30:00",
+    }
+    base.update(overrides)
+    mock_clip = MagicMock()
+    mock_clip.GetName.return_value = "test_clip.mp4"
+    mock_clip.GetMediaPath.return_value = "/path/to/test_clip.mp4"
+    mock_clip.GetClipProperty.side_effect = lambda *a: dict(base) if not a else base.get(a[0], "")
+    return mock_clip
 
 
 class TestResolveAPI:
@@ -21,16 +46,12 @@ class TestResolveAPI:
         # Create a test config
         self.config = DaVinciResolveConfig()
 
-        # Create a test app with our mocks
-        self.test_app = app
-
-        # Set up app state with our mocks (AppState takes no ctor args)
-        self.test_app.state = AppState()
-        self.test_app.state.config = self.config
-        self.test_app.state.connection_manager = mock_connection_manager
+        # Wire mocks into the real server app state read by the routes,
+        # and drive the real FastAPI app (api_app, not the raw FastMCP object)
+        server_app.state.connection_manager = mock_connection_manager
 
         # Create a test client
-        self.client = TestClient(self.test_app)
+        self.client = TestClient(api_app)
 
         # Set up test data
         self.test_project_name = "Test Project"
@@ -71,15 +92,14 @@ class TestResolveAPI:
         self.mock_resolve.IsConsole.return_value = False
 
         # Make the request
-        response = self.client.get("/api/v1/resolve/info")
+        response = self.client.get("/api/v1/resolve-info")
 
-        # Verify the response
+        # Verify the response (real route shape)
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "success"
+        assert data["status"] == "connected"
         assert data["version"] == "18.5.0"
-        assert data["api_version"] == "1.0"
-        assert data["is_console"] is False
+        assert data["project_name"] == "Test Project"
 
     def test_list_projects(self):
         """Test listing all projects."""
@@ -93,14 +113,15 @@ class TestResolveAPI:
         # Make the request
         response = self.client.get("/api/v1/projects")
 
-        # Verify the response
+        # Verify the response (impl returns name/is_active dicts)
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "success"
         assert data["current_project"] == self.test_project_name
-        assert "Project 1" in data["projects"]
-        assert self.test_project_name in data["projects"]
-        assert "Project 2" in data["projects"]
+        names = [p["name"] for p in data["projects"]]
+        assert "Project 1" in names
+        assert self.test_project_name in names
+        assert "Project 2" in names
 
     def test_create_project(self):
         """Test creating a new project."""
@@ -167,8 +188,8 @@ class TestResolveAPI:
 
         # Verify the settings were updated
         self.mock_project.SetSetting.assert_any_call("timelineFrameRate", "30.0")
-        self.mock_project.Setting.assert_any_call("timelineResolutionWidth", "1280")
-        self.mock_project.Setting.assert_any_call("timelineResolutionHeight", "720")
+        self.mock_project.SetSetting.assert_any_call("timelineResolutionWidth", "1280")
+        self.mock_project.SetSetting.assert_any_call("timelineResolutionHeight", "720")
 
     def test_import_media(self):
         """Test importing media files."""
@@ -193,18 +214,8 @@ class TestResolveAPI:
 
     def test_list_media(self):
         """Test listing media in the current folder."""
-        # Configure mock
-        mock_clip = MagicMock()
-        mock_clip.GetName.return_value = "test_clip.mp4"
-        mock_clip.GetMediaPath.return_value = "/path/to/test_clip.mp4"
-        mock_clip.GetClipProperty.side_effect = lambda x: {
-            "Duration": "00:01:30:00",
-            "FPS": "24.0",
-            "Width": "1920",
-            "Height": "1080",
-            "Has Video": "1",
-            "Has Audio": "1",
-        }.get(x, "")
+        # Configure mock (tolerant of argless + per-key GetClipProperty calls)
+        mock_clip = _clip_props_mock()
 
         self.mock_media_pool.GetClipsInFolder.return_value = {1: mock_clip}
 
@@ -244,24 +255,8 @@ class TestResolveAPI:
 
     def test_get_media_metadata(self):
         """Test getting metadata for a media item."""
-        # Configure mock
-        mock_clip = MagicMock()
-        mock_clip.GetName.return_value = "test_clip.mp4"
-        mock_clip.GetMediaPath.return_value = "/path/to/test_clip.mp4"
-        mock_clip.GetClipProperty.side_effect = lambda x: {
-            "Duration": "00:01:30:00",
-            "FPS": "24.0",
-            "Width": "1920",
-            "Height": "1080",
-            "Has Video": "1",
-            "Has Audio": "1",
-            "Audio Channels": "2",
-            "Sample Rate": "48000",
-            "Codec": "H.264",
-            "File Size": "1024000",
-            "Date Created": "2025-01-01 12:00:00",
-            "Date Modified": "2025-01-01 12:30:00",
-        }.get(x, "")
+        # Configure mock (tolerant of argless + per-key GetClipProperty calls)
+        mock_clip = _clip_props_mock()
 
         self.mock_media_pool.GetClipsInFolder.return_value = {1: mock_clip}
 

@@ -19,7 +19,7 @@ _MUTATING = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
 def setup_subtitle_portmanteau(app):
     """Register the subtitle portmanteau tool."""
 
-    @app.tool(annotations=_MUTATING)
+    @app.tool(annotations=_MUTATING, output_schema={"type": "object"})
     async def resolve_subtitle(
         action: Annotated[
             Literal["add", "get", "edit", "delete", "import_srt", "export_srt"],

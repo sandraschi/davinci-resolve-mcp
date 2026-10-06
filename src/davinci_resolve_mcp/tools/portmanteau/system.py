@@ -19,7 +19,7 @@ _READ_ONLY = ToolAnnotations(readOnlyHint=True)
 def setup_system_portmanteau(app):
     """Register the system portmanteau tool with conversational capabilities."""
 
-    @app.tool(annotations=_READ_ONLY)
+    @app.tool(annotations=_READ_ONLY, output_schema={"type": "object"})
     async def resolve_system(
         action: Annotated[
             Literal["info", "status", "health", "help", "host_status", "host_launch"],

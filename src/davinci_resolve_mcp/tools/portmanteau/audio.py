@@ -19,7 +19,7 @@ _MUTATING = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
 def setup_audio_portmanteau(app):
     """Register the audio portmanteau tool."""
 
-    @app.tool(annotations=_MUTATING)
+    @app.tool(annotations=_MUTATING, output_schema={"type": "object"})
     async def resolve_audio(
         action: Annotated[
             Literal["get_tracks", "add_effect", "adjust_levels", "normalize"], Field(description="Operation to perform")

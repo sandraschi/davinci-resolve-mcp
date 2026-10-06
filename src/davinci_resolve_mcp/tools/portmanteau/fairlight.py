@@ -31,7 +31,7 @@ _MUTATING = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
 def setup_fairlight_portmanteau(app):
     """Register the Fairlight portmanteau tool."""
 
-    @app.tool(annotations=_MUTATING)
+    @app.tool(annotations=_MUTATING, output_schema={"type": "object"})
     async def resolve_fairlight(
         operation: Annotated[
             Literal[
