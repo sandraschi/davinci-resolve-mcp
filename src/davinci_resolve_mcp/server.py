@@ -1,5 +1,5 @@
 """
-DaVinci Resolve MCP — FastMCP 3.1+ server.
+DaVinci Resolve MCP - FastMCP 3.1+ server.
 
 Implements the MCP server for DaVinci Resolve. Fleet standards: MCP Central Docs
 (`standards/AGENT_PROTOCOLS.md`, `standards/SOTA_REQUIREMENTS.md`).
@@ -226,7 +226,7 @@ async def api_lifespan(_http: FastAPI):
     """Initialize shared MCP state in the ASGI process.
 
     Uvicorn ``--reload`` (DEBUG) and some workers import ``api_app`` without re-running
-    ``run_api``'s ``__main__`` block, so ``initialize_server()`` never ran — connection
+    ``run_api``'s ``__main__`` block, so ``initialize_server()`` never ran - connection
     manager stayed None and the dashboard always showed disconnected.
     """
     if app.state.connection_manager is None:
