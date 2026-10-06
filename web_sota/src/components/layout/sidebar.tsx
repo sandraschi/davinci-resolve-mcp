@@ -8,11 +8,13 @@ import {
   Film,
   FolderOpen,
   HelpCircle,
+  Inbox as InboxIcon,
   LayoutDashboard,
   MonitorPlay,
   Music2,
   Server,
   Settings,
+  Sparkles,
   Video,
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
@@ -35,6 +37,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     { href: "/workflows", label: "AI Workflows", icon: Brain },
     { href: "/tools", label: "Video Tools", icon: Film },
     { href: "/actions", label: "Production Actions", icon: Video },
+    { href: "/inbox", label: "Inbox", icon: InboxIcon },
+    { href: "/skills", label: "Skills", icon: Sparkles },
     { href: "/chat", label: "AI Editor", icon: Bot },
     { href: "/logs", label: "System Logs", icon: Server },
     { href: "/help", label: "Help", icon: HelpCircle },

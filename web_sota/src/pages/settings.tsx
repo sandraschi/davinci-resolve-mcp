@@ -3,61 +3,72 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { API_BASE } from "../lib/api";
+import { useLlmStore } from "@/store/llm";
+
+function detectGpu(): string | null {
+  try {
+    const canvas = document.createElement("canvas");
+    const gl = canvas.getContext("webgl");
+    if (!gl) return null;
+    const ext = gl.getExtension("WEBGL_debug_renderer_info");
+    const renderer = ext ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) : String(gl.getParameter(gl.RENDERER));
+    return /nvidia|geforce|rtx|radeon|amd|apple|intel/i.test(renderer) ? renderer : null;
+  } catch {
+    return null;
+  }
+}
 
 function LLMSettings() {
-  const [providers, setProviders] = useState<Record<string, { name: string }[]>>({});
-  const [selectedProvider, setSelectedProvider] = useState("ollama");
-  const [selectedModel, setSelectedModel] = useState("");
+  const {
+    providers,
+    models,
+    provider: selectedProvider,
+    model: selectedModel,
+    setProvider,
+    setModel,
+    refresh,
+    probing,
+    setGpuDetected,
+  } = useLlmStore();
+  const [gpu, setGpu] = useState<string | null>(null);
   useEffect(() => {
-    fetch(`${API_BASE}/llm/providers`)
-      .then((r) => r.json())
-      .then((d) => {
-        setProviders(d);
-        const savedP = localStorage.getItem("llm_provider") || "ollama";
-        const savedM = localStorage.getItem("llm_model") || "";
-        setSelectedProvider(savedP);
-        const models = d[savedP === "ollama" ? "ollama" : "lm_studio"] || [];
-        setSelectedModel(
-          savedM && models.some((m: { name: string }) => m.name === savedM) ? savedM : models[0]?.name || "",
-        );
-      })
-      .catch(() => {
-        setProviders({ ollama: [{ name: "llama3.2:3b" }] });
-        setSelectedModel(localStorage.getItem("llm_model") || "llama3.2:3b");
-      });
+    refresh();
+    const found = detectGpu();
+    setGpu(found);
+    setGpuDetected(found !== null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  const save = (p: string, m: string) => {
-    localStorage.setItem("llm_provider", p);
-    localStorage.setItem("llm_model", m);
-  };
-  const models = providers[selectedProvider === "ollama" ? "ollama" : "lm_studio"] || [];
+  const detected = providers.some((p) => p.detected);
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-testid="settings-llm-controls">
+      {gpu && !detected && !probing ? (
+        <p
+          className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300"
+          data-testid="llm-gpu-hint"
+        >
+          GPU detected ({gpu}) but no local LLM is running — install Ollama and pull a model to enable Chat.
+        </p>
+      ) : null}
       <select
         data-testid="llm-provider-select"
         className="h-9 w-full rounded-md border border-slate-700 bg-slate-900 px-3 text-sm text-slate-200"
         value={selectedProvider}
-        onChange={(e) => {
-          setSelectedProvider(e.target.value);
-          save(e.target.value, "");
-        }}
+        onChange={(e) => setProvider(e.target.value)}
       >
         <option value="ollama">Ollama</option>
-        <option value="lm_studio">LM Studio</option>
+        <option value="lmstudio">LM Studio</option>
       </select>
       <select
         data-testid="llm-model-select"
         className="h-9 w-full rounded-md border border-slate-700 bg-slate-900 px-3 text-sm text-slate-200"
         value={selectedModel}
-        onChange={(e) => {
-          setSelectedModel(e.target.value);
-          save(selectedProvider, e.target.value);
-        }}
+        onChange={(e) => setModel(e.target.value)}
       >
+        {probing && <option>Probing providers...</option>}
+        {!probing && models.length === 0 && <option value="">No models detected</option>}
         {models.map((m) => (
-          <option key={m.name} value={m.name}>
-            {m.name}
+          <option key={m} value={m}>
+            {m}
           </option>
         ))}
       </select>

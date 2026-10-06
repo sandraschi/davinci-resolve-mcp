@@ -5,10 +5,12 @@ import { Chat } from "@/pages/chat";
 import { Dashboard } from "@/pages/dashboard";
 import { Fairlight } from "@/pages/fairlight";
 import { Help } from "@/pages/help";
+import { Inbox } from "@/pages/inbox";
 import Logs from "@/pages/logs";
 import { Projects } from "@/pages/projects";
 import { Render } from "@/pages/render";
 import { Settings } from "@/pages/settings";
+import { Skills } from "@/pages/skills";
 import { Timeline } from "@/pages/timeline";
 import { Tools } from "@/pages/tools";
 import { Workflows } from "@/pages/workflows";
@@ -26,6 +28,8 @@ function App() {
           <Route path="/workflows" element={<Workflows />} />
           <Route path="/tools" element={<Tools />} />
           <Route path="/actions" element={<Actions />} />
+          <Route path="/inbox" element={<Inbox />} />
+          <Route path="/skills" element={<Skills />} />
           <Route path="/logs" element={<Logs />} />
           <Route path="/chat" element={<Chat />} />
           <Route path="/settings" element={<Settings />} />
