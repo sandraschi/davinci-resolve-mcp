@@ -11,7 +11,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from ..connection.manager import ResolveConnectionManager
 from ..utils.exceptions import ResolveOperationError
 
 logger = logging.getLogger(__name__)
@@ -796,7 +795,7 @@ def register_tools(app):
             Dictionary with timeline creation status and details
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 # Get the project
                 project_manager = resolve.GetProjectManager()
                 if project_name:
@@ -849,7 +848,7 @@ def register_tools(app):
             Dictionary with timeline information
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -926,7 +925,7 @@ def register_tools(app):
             Dictionary with operation status and clip details
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -1011,7 +1010,7 @@ def register_tools(app):
             Dictionary with operation status
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -1064,7 +1063,7 @@ def register_tools(app):
             Dictionary with operation status
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -1102,7 +1101,7 @@ def register_tools(app):
     ) -> dict[str, Any]:
         """Add a marker at a specific frame in the timeline."""
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -1153,7 +1152,7 @@ def register_tools(app):
     async def get_timeline_markers(timeline_name: str | None = None) -> dict[str, Any]:
         """Get all markers in the timeline."""
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -1190,7 +1189,7 @@ def register_tools(app):
     async def delete_timeline_marker(frame: int, timeline_name: str | None = None) -> dict[str, Any]:
         """Delete a marker at a specific frame in the timeline."""
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")

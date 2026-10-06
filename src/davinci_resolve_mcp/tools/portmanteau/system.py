@@ -5,9 +5,10 @@ Consolidates system/utility operations into a single tool with conversational re
 """
 
 import logging
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, cast
 
-from fastmcp.tools.tool import ToolAnnotations
+# fastmcp.tools.tool resolves via vendored mcp.server.fastmcp at runtime (shadowed by tool() fn)
+from fastmcp.tools.tool import ToolAnnotations  # pyright: ignore[reportMissingImports]
 from pydantic import Field
 
 logger = logging.getLogger(__name__)
@@ -59,8 +60,8 @@ def setup_system_portmanteau(app):
             try:
                 from ...server import app as server_app
 
-                if server_app.state.connection_manager:
-                    mgr = server_app.state.connection_manager
+                if cast(Any, server_app).state.connection_manager:
+                    mgr = cast(Any, server_app).state.connection_manager
                     if not await mgr.ensure_connection():
                         return {
                             "success": False,
@@ -108,8 +109,8 @@ def setup_system_portmanteau(app):
             try:
                 from ...server import app as server_app
 
-                if server_app.state.connection_manager:
-                    status_data = server_app.state.connection_manager.get_status()
+                if cast(Any, server_app).state.connection_manager:
+                    status_data = cast(Any, server_app).state.connection_manager.get_status()
                     message = "DaVinci Resolve MCP server is running"
                     if status_data.get("connected"):
                         message += " and connected to DaVinci Resolve"
@@ -139,8 +140,8 @@ def setup_system_portmanteau(app):
             try:
                 from ...server import app as server_app
 
-                if server_app.state.connection_manager:
-                    health_data = await server_app.state.connection_manager.health_check()
+                if cast(Any, server_app).state.connection_manager:
+                    health_data = await cast(Any, server_app).state.connection_manager.health_check()
                     is_healthy = health_data.get("overall_status") == "healthy"
                     message = "System health check completed"
                     if is_healthy:

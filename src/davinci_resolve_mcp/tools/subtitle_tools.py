@@ -8,7 +8,6 @@ Uses the Resolve Scripting API timeline clip properties for subtitle manipulatio
 import logging
 from typing import Any
 
-from ..connection.manager import ResolveConnectionManager
 from ..utils.exceptions import ResolveOperationError
 
 logger = logging.getLogger(__name__)
@@ -52,8 +51,9 @@ async def add_subtitle_impl(
             subtitle = _insert(track_index, name, start_frame, end_frame)
             if not subtitle:
                 raise ResolveOperationError("Failed to insert subtitle")
-            if text and hasattr(subtitle, "SetClipProperty"):
-                subtitle.SetClipProperty("Text", text)
+            _set_prop = getattr(subtitle, "SetClipProperty", None)
+            if text and callable(_set_prop):
+                _set_prop("Text", text)
             return {
                 "status": "success",
                 "timeline_name": timeline.GetName(),
@@ -394,7 +394,7 @@ def register_tools(app):
     ) -> dict[str, Any]:
         """Add a subtitle item to a subtitle track."""
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -409,8 +409,9 @@ def register_tools(app):
                 _insert = getattr(timeline, "InsertSubtitle", None)
                 if callable(_insert):
                     subtitle = _insert(track_index, name, start_frame, end_frame)
-                    if text and subtitle and hasattr(subtitle, "SetClipProperty"):
-                        subtitle.SetClipProperty("Text", text)
+                    _set_prop = getattr(subtitle, "SetClipProperty", None)
+                    if text and subtitle and callable(_set_prop):
+                        _set_prop("Text", text)
                     return {
                         "status": "success",
                         "name": name,
@@ -429,7 +430,7 @@ def register_tools(app):
     ) -> dict[str, Any]:
         """Get all subtitle items from a subtitle track."""
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -474,7 +475,7 @@ def register_tools(app):
 
             if not _os.path.exists(srt_path):
                 raise ResolveOperationError(f"SRT file not found: {srt_path}")
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")

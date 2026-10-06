@@ -11,7 +11,6 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from ..connection.manager import ResolveConnectionManager
 from ..utils.exceptions import ResolveOperationError
 
 logger = logging.getLogger(__name__)
@@ -430,7 +429,7 @@ def register_tools(app):
             Dictionary with audio track information
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -518,7 +517,7 @@ def register_tools(app):
             Dictionary with operation status
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -612,7 +611,7 @@ def register_tools(app):
             Dictionary with operation status
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")
@@ -679,7 +678,7 @@ def register_tools(app):
             Dictionary with operation status
         """
         try:
-            with ResolveConnectionManager() as resolve:
+            with app.state.connection_manager as resolve:
                 project = resolve.GetProjectManager().GetCurrentProject()
                 if not project:
                     raise ResolveOperationError("No project is currently open")

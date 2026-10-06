@@ -7,7 +7,8 @@ Consolidates timeline editing operations into a single tool.
 import logging
 from typing import Annotated, Any, Literal
 
-from fastmcp.tools.tool import ToolAnnotations
+# fastmcp.tools.tool resolves via vendored mcp.server.fastmcp at runtime (shadowed by tool() fn)
+from fastmcp.tools.tool import ToolAnnotations  # pyright: ignore[reportMissingImports]
 from pydantic import Field
 
 logger = logging.getLogger(__name__)
@@ -182,10 +183,8 @@ def setup_timeline_portmanteau(app):
         elif action == "set_clip_property":
             if not property_name or value is None:
                 return {"status": "error", "message": "property_name and value are required for set_clip_property"}
-            from ..timeline_tools import ResolveConnectionManager
-
             try:
-                with ResolveConnectionManager() as resolve:
+                with app.state.connection_manager as resolve:
                     project = resolve.GetProjectManager().GetCurrentProject()
                     if not project:
                         return {"status": "error", "message": "No project is currently open"}
