@@ -1,0 +1,1123 @@
+[
+    {
+        "id":  1,
+        "tool":  "resolve_project",
+        "action":  "create",
+        "arguments":  {
+                          "width":  3840,
+                          "name":  "Summer Ad",
+                          "height":  2160,
+                          "frame_rate":  24
+                      },
+        "description":  "Create a 4K project"
+    },
+    {
+        "id":  2,
+        "tool":  "resolve_project",
+        "action":  "create",
+        "arguments":  {
+                          "width":  1920,
+                          "name":  "Podcast Ep 12",
+                          "height":  1080,
+                          "frame_rate":  30
+                      },
+        "description":  "Create a 1080p30 project"
+    },
+    {
+        "id":  3,
+        "tool":  "resolve_project",
+        "action":  "open",
+        "arguments":  {
+                          "name":  "Summer Ad"
+                      },
+        "description":  "Open an existing project"
+    },
+    {
+        "id":  4,
+        "tool":  "resolve_project",
+        "action":  "open",
+        "arguments":  {
+                          "name":  "Client Video"
+                      },
+        "description":  "Open another project"
+    },
+    {
+        "id":  5,
+        "tool":  "resolve_project",
+        "action":  "list",
+        "arguments":  {
+
+                      },
+        "description":  "List all projects"
+    },
+    {
+        "id":  6,
+        "tool":  "resolve_project",
+        "action":  "list",
+        "arguments":  {
+
+                      },
+        "description":  "List projects again after creating one"
+    },
+    {
+        "id":  7,
+        "tool":  "resolve_project",
+        "action":  "get_settings",
+        "arguments":  {
+
+                      },
+        "description":  "Read current project settings"
+    },
+    {
+        "id":  8,
+        "tool":  "resolve_project",
+        "action":  "get_settings",
+        "arguments":  {
+
+                      },
+        "description":  "Read settings before changing frame rate"
+    },
+    {
+        "id":  9,
+        "tool":  "resolve_project",
+        "action":  "update_settings",
+        "arguments":  {
+                          "settings":  {
+                                           "timelineFrameRate":  "30.0"
+                                       }
+                      },
+        "description":  "Set timeline frame rate"
+    },
+    {
+        "id":  10,
+        "tool":  "resolve_project",
+        "action":  "update_settings",
+        "arguments":  {
+                          "settings":  {
+                                           "timelineResolutionHeight":  "720",
+                                           "timelineResolutionWidth":  "1280"
+                                       }
+                      },
+        "description":  "Downscale timeline resolution"
+    },
+    {
+        "id":  11,
+        "tool":  "resolve_media",
+        "action":  "import",
+        "arguments":  {
+                          "paths":  [
+                                        "C:/Footage/a001.mp4",
+                                        "C:/Footage/a002.mp4"
+                                    ]
+                      },
+        "description":  "Import two clips"
+    },
+    {
+        "id":  12,
+        "tool":  "resolve_media",
+        "action":  "import",
+        "arguments":  {
+                          "paths":  [
+                                        "C:/Footage/raw.mp4"
+                                    ],
+                          "target_folder":  "Raw Footage"
+                      },
+        "description":  "Import into a folder"
+    },
+    {
+        "id":  13,
+        "tool":  "resolve_media",
+        "action":  "list",
+        "arguments":  {
+                          "folder_path":  "Raw Footage"
+                      },
+        "description":  "List a folder"
+    },
+    {
+        "id":  14,
+        "tool":  "resolve_media",
+        "action":  "list",
+        "arguments":  {
+
+                      },
+        "description":  "List media pool root"
+    },
+    {
+        "id":  15,
+        "tool":  "resolve_media",
+        "action":  "create_folder",
+        "arguments":  {
+                          "folder_path":  "Assets/Music"
+                      },
+        "description":  "Create a folder"
+    },
+    {
+        "id":  16,
+        "tool":  "resolve_media",
+        "action":  "create_folder",
+        "arguments":  {
+                          "folder_path":  "Parent/Child"
+                      },
+        "description":  "Create nested folders"
+    },
+    {
+        "id":  17,
+        "tool":  "resolve_media",
+        "action":  "get_metadata",
+        "arguments":  {
+                          "clip_path":  "C:/Footage/a001.mp4"
+                      },
+        "description":  "Read clip metadata by path"
+    },
+    {
+        "id":  18,
+        "tool":  "resolve_media",
+        "action":  "get_metadata",
+        "arguments":  {
+                          "clip_path":  "a001.mp4"
+                      },
+        "description":  "Read clip metadata by name"
+    },
+    {
+        "id":  19,
+        "tool":  "resolve_timeline",
+        "action":  "create",
+        "arguments":  {
+                          "width":  3840,
+                          "name":  "Main Edit",
+                          "height":  2160
+                      },
+        "description":  "Create 4K timeline"
+    },
+    {
+        "id":  20,
+        "tool":  "resolve_timeline",
+        "action":  "create",
+        "arguments":  {
+                          "frame_rate":  25,
+                          "name":  "Selects"
+                      },
+        "description":  "Create PAL timeline"
+    },
+    {
+        "id":  21,
+        "tool":  "resolve_timeline",
+        "action":  "info",
+        "arguments":  {
+
+                      },
+        "description":  "Describe current timeline"
+    },
+    {
+        "id":  22,
+        "tool":  "resolve_timeline",
+        "action":  "info",
+        "arguments":  {
+                          "timeline_name":  "Main Edit"
+                      },
+        "description":  "Describe a named timeline"
+    },
+    {
+        "id":  23,
+        "tool":  "resolve_timeline",
+        "action":  "add_clip",
+        "arguments":  {
+                          "clip_path":  "C:/Footage/a001.mp4"
+                      },
+        "description":  "Add clip to video track 1"
+    },
+    {
+        "id":  24,
+        "tool":  "resolve_timeline",
+        "action":  "add_clip",
+        "arguments":  {
+                          "clip_path":  "C:/Audio/vo.wav",
+                          "track_type":  "audio",
+                          "track_index":  1
+                      },
+        "description":  "Add voiceover to audio track 1"
+    },
+    {
+        "id":  25,
+        "tool":  "resolve_timeline",
+        "action":  "cut",
+        "arguments":  {
+                          "track_index":  1,
+                          "frame":  240
+                      },
+        "description":  "Cut at frame 240"
+    },
+    {
+        "id":  26,
+        "tool":  "resolve_timeline",
+        "action":  "cut",
+        "arguments":  {
+                          "track_type":  "audio",
+                          "track_index":  2,
+                          "frame":  48
+                      },
+        "description":  "Cut audio at frame 48"
+    },
+    {
+        "id":  27,
+        "tool":  "resolve_timeline",
+        "action":  "set_playhead",
+        "arguments":  {
+                          "frame":  120
+                      },
+        "description":  "Move playhead"
+    },
+    {
+        "id":  28,
+        "tool":  "resolve_timeline",
+        "action":  "set_playhead",
+        "arguments":  {
+                          "frame":  0
+                      },
+        "description":  "Park playhead at start"
+    },
+    {
+        "id":  29,
+        "tool":  "resolve_timeline",
+        "action":  "add_marker",
+        "arguments":  {
+                          "color":  "Red",
+                          "name":  "VFX cue",
+                          "frame":  120
+                      },
+        "description":  "Add red marker"
+    },
+    {
+        "id":  30,
+        "tool":  "resolve_timeline",
+        "action":  "add_marker",
+        "arguments":  {
+                          "color":  "Green",
+                          "note":  "Good take",
+                          "frame":  48
+                      },
+        "description":  "Add green marker with note"
+    },
+    {
+        "id":  31,
+        "tool":  "resolve_timeline",
+        "action":  "get_markers",
+        "arguments":  {
+
+                      },
+        "description":  "List markers"
+    },
+    {
+        "id":  32,
+        "tool":  "resolve_timeline",
+        "action":  "get_markers",
+        "arguments":  {
+                          "timeline_name":  "Main Edit"
+                      },
+        "description":  "List markers on named timeline"
+    },
+    {
+        "id":  33,
+        "tool":  "resolve_timeline",
+        "action":  "delete_marker",
+        "arguments":  {
+                          "frame":  120
+                      },
+        "description":  "Delete marker"
+    },
+    {
+        "id":  34,
+        "tool":  "resolve_timeline",
+        "action":  "delete_marker",
+        "arguments":  {
+                          "frame":  48
+                      },
+        "description":  "Delete another marker"
+    },
+    {
+        "id":  35,
+        "tool":  "resolve_timeline",
+        "action":  "add_keyframe",
+        "arguments":  {
+                          "property_name":  "Zoom",
+                          "value":  1,
+                          "frame":  0
+                      },
+        "description":  "Add zoom keyframe"
+    },
+    {
+        "id":  36,
+        "tool":  "resolve_timeline",
+        "action":  "add_keyframe",
+        "arguments":  {
+                          "property_name":  "Opacity",
+                          "value":  0.5,
+                          "frame":  24
+                      },
+        "description":  "Add opacity keyframe"
+    },
+    {
+        "id":  37,
+        "tool":  "resolve_timeline",
+        "action":  "get_keyframes",
+        "arguments":  {
+                          "property_name":  "Zoom"
+                      },
+        "description":  "List zoom keyframes"
+    },
+    {
+        "id":  38,
+        "tool":  "resolve_timeline",
+        "action":  "get_keyframes",
+        "arguments":  {
+                          "property_name":  "Speed"
+                      },
+        "description":  "List speed keyframes"
+    },
+    {
+        "id":  39,
+        "tool":  "resolve_timeline",
+        "action":  "delete_keyframe",
+        "arguments":  {
+                          "frame":  0,
+                          "property_name":  "Zoom"
+                      },
+        "description":  "Delete keyframe"
+    },
+    {
+        "id":  40,
+        "tool":  "resolve_timeline",
+        "action":  "delete_keyframe",
+        "arguments":  {
+                          "frame":  24,
+                          "property_name":  "Opacity"
+                      },
+        "description":  "Delete opacity keyframe"
+    },
+    {
+        "id":  41,
+        "tool":  "resolve_timeline",
+        "action":  "set_clip_property",
+        "arguments":  {
+                          "value":  2,
+                          "property_name":  "Speed"
+                      },
+        "description":  "Double clip speed"
+    },
+    {
+        "id":  42,
+        "tool":  "resolve_timeline",
+        "action":  "set_clip_property",
+        "arguments":  {
+                          "value":  1.5,
+                          "property_name":  "Zoom"
+                      },
+        "description":  "Punch in 150 percent"
+    },
+    {
+        "id":  43,
+        "tool":  "resolve_color",
+        "action":  "create_node",
+        "arguments":  {
+                          "node_name":  "Base Grade",
+                          "node_type":  "primary"
+                      },
+        "description":  "Create primary node"
+    },
+    {
+        "id":  44,
+        "tool":  "resolve_color",
+        "action":  "create_node",
+        "arguments":  {
+                          "node_name":  "Contrast",
+                          "node_type":  "curves"
+                      },
+        "description":  "Create curves node"
+    },
+    {
+        "id":  45,
+        "tool":  "resolve_color",
+        "action":  "apply_lut",
+        "arguments":  {
+                          "clip_path":  "C:/Footage/a001.mp4",
+                          "lut_path":  "C:/LUTs/Film.cube"
+                      },
+        "description":  "Apply LUT full strength"
+    },
+    {
+        "id":  46,
+        "tool":  "resolve_color",
+        "action":  "apply_lut",
+        "arguments":  {
+                          "clip_path":  "C:/Footage/a001.mp4",
+                          "lut_path":  "C:/LUTs/Film.cube",
+                          "intensity":  0.8
+                      },
+        "description":  "Apply LUT at 80 percent"
+    },
+    {
+        "id":  47,
+        "tool":  "resolve_color",
+        "action":  "set_color_space",
+        "arguments":  {
+                          "output_color_space":  "DaVinci Wide Gamut",
+                          "input_color_space":  "Rec.709"
+                      },
+        "description":  "Wide gamut transform"
+    },
+    {
+        "id":  48,
+        "tool":  "resolve_color",
+        "action":  "set_color_space",
+        "arguments":  {
+                          "input_color_space":  "Rec.709",
+                          "input_gamma":  "Rec.709",
+                          "output_gamma":  "sRGB",
+                          "output_color_space":  "Rec.709"
+                      },
+        "description":  "Gamma-only transform"
+    },
+    {
+        "id":  49,
+        "tool":  "resolve_color",
+        "action":  "adjust_wheels",
+        "arguments":  {
+                          "lift":  {
+                                       "g":  0,
+                                       "r":  0.1,
+                                       "b":  -0.1
+                                   }
+                      },
+        "description":  "Cool the shadows"
+    },
+    {
+        "id":  50,
+        "tool":  "resolve_color",
+        "action":  "adjust_wheels",
+        "arguments":  {
+                          "gain":  {
+                                       "g":  0.05,
+                                       "r":  0.05,
+                                       "b":  0.05
+                                   }
+                      },
+        "description":  "Warm the highlights"
+    },
+    {
+        "id":  51,
+        "tool":  "resolve_color",
+        "action":  "grab_still",
+        "arguments":  {
+
+                      },
+        "description":  "Checkpoint current grade"
+    },
+    {
+        "id":  52,
+        "tool":  "resolve_color",
+        "action":  "grab_still",
+        "arguments":  {
+                          "still_name":  "Approved v1"
+                      },
+        "description":  "Named checkpoint"
+    },
+    {
+        "id":  53,
+        "tool":  "resolve_color",
+        "action":  "get_stills",
+        "arguments":  {
+
+                      },
+        "description":  "List gallery stills"
+    },
+    {
+        "id":  54,
+        "tool":  "resolve_color",
+        "action":  "get_stills",
+        "arguments":  {
+
+                      },
+        "description":  "List stills before matching"
+    },
+    {
+        "id":  55,
+        "tool":  "resolve_color",
+        "action":  "apply_grade_from_still",
+        "arguments":  {
+                          "still_index":  0
+                      },
+        "description":  "Apply grade from still 0"
+    },
+    {
+        "id":  56,
+        "tool":  "resolve_color",
+        "action":  "apply_grade_from_still",
+        "arguments":  {
+                          "still_index":  2
+                      },
+        "description":  "Apply grade from still 2"
+    },
+    {
+        "id":  57,
+        "tool":  "resolve_render",
+        "action":  "timeline",
+        "arguments":  {
+                          "output_path":  "C:/Output",
+                          "format":  "mp4"
+                      },
+        "description":  "Render MP4"
+    },
+    {
+        "id":  58,
+        "tool":  "resolve_render",
+        "action":  "timeline",
+        "arguments":  {
+                          "output_path":  "C:/Output",
+                          "codec":  "prores_422_hq",
+                          "format":  "prores",
+                          "resolution":  "3840x2160"
+                      },
+        "description":  "Render 4K ProRes master"
+    },
+    {
+        "id":  59,
+        "tool":  "resolve_render",
+        "action":  "presets",
+        "arguments":  {
+
+                      },
+        "description":  "List render presets"
+    },
+    {
+        "id":  60,
+        "tool":  "resolve_render",
+        "action":  "presets",
+        "arguments":  {
+
+                      },
+        "description":  "List presets before delivery"
+    },
+    {
+        "id":  61,
+        "tool":  "resolve_render",
+        "action":  "with_preset",
+        "arguments":  {
+                          "preset_name":  "YouTube 4K",
+                          "output_path":  "C:/Output"
+                      },
+        "description":  "Render with preset"
+    },
+    {
+        "id":  62,
+        "tool":  "resolve_render",
+        "action":  "with_preset",
+        "arguments":  {
+                          "preset_name":  "Vimeo 1080p",
+                          "output_path":  "C:/Output"
+                      },
+        "description":  "Render Vimeo version"
+    },
+    {
+        "id":  63,
+        "tool":  "resolve_render",
+        "action":  "job_status",
+        "arguments":  {
+                          "job_id":  1
+                      },
+        "description":  "Check job 1"
+    },
+    {
+        "id":  64,
+        "tool":  "resolve_render",
+        "action":  "job_status",
+        "arguments":  {
+                          "job_id":  2
+                      },
+        "description":  "Check job 2"
+    },
+    {
+        "id":  65,
+        "tool":  "resolve_audio",
+        "action":  "get_tracks",
+        "arguments":  {
+
+                      },
+        "description":  "List audio tracks"
+    },
+    {
+        "id":  66,
+        "tool":  "resolve_audio",
+        "action":  "get_tracks",
+        "arguments":  {
+                          "timeline_name":  "Main Edit"
+                      },
+        "description":  "List tracks on named timeline"
+    },
+    {
+        "id":  67,
+        "tool":  "resolve_audio",
+        "action":  "add_effect",
+        "arguments":  {
+                          "effect_type":  "eq",
+                          "track_index":  1
+                      },
+        "description":  "Add EQ"
+    },
+    {
+        "id":  68,
+        "tool":  "resolve_audio",
+        "action":  "add_effect",
+        "arguments":  {
+                          "effect_type":  "compressor",
+                          "track_index":  2
+                      },
+        "description":  "Add compressor"
+    },
+    {
+        "id":  69,
+        "tool":  "resolve_audio",
+        "action":  "adjust_levels",
+        "arguments":  {
+                          "pan":  -0.5,
+                          "track_index":  1,
+                          "volume":  0.8
+                      },
+        "description":  "Set level and pan"
+    },
+    {
+        "id":  70,
+        "tool":  "resolve_audio",
+        "action":  "adjust_levels",
+        "arguments":  {
+                          "mute":  true,
+                          "track_index":  2
+                      },
+        "description":  "Mute track 2"
+    },
+    {
+        "id":  71,
+        "tool":  "resolve_audio",
+        "action":  "normalize",
+        "arguments":  {
+                          "target_level":  -23
+                      },
+        "description":  "Normalize to broadcast"
+    },
+    {
+        "id":  72,
+        "tool":  "resolve_audio",
+        "action":  "normalize",
+        "arguments":  {
+                          "track_indices":  [
+                                                1,
+                                                2,
+                                                3
+                                            ]
+                      },
+        "description":  "Normalize first three tracks"
+    },
+    {
+        "id":  73,
+        "tool":  "resolve_fairlight",
+        "action":  "open_page",
+        "arguments":  {
+
+                      },
+        "description":  "Switch to Fairlight page"
+    },
+    {
+        "id":  74,
+        "tool":  "resolve_fairlight",
+        "action":  "open_page",
+        "arguments":  {
+
+                      },
+        "description":  "Open Fairlight before mixing"
+    },
+    {
+        "id":  75,
+        "tool":  "resolve_fairlight",
+        "action":  "get_tracks",
+        "arguments":  {
+
+                      },
+        "description":  "List Fairlight tracks"
+    },
+    {
+        "id":  76,
+        "tool":  "resolve_fairlight",
+        "action":  "get_tracks",
+        "arguments":  {
+                          "timeline_name":  "Main Edit"
+                      },
+        "description":  "List tracks on named timeline"
+    },
+    {
+        "id":  77,
+        "tool":  "resolve_fairlight",
+        "action":  "set_mute",
+        "arguments":  {
+                          "mute":  true,
+                          "track_index":  2
+                      },
+        "description":  "Mute track 2"
+    },
+    {
+        "id":  78,
+        "tool":  "resolve_fairlight",
+        "action":  "set_mute",
+        "arguments":  {
+                          "mute":  false,
+                          "track_index":  2
+                      },
+        "description":  "Unmute track 2"
+    },
+    {
+        "id":  79,
+        "tool":  "resolve_fairlight",
+        "action":  "set_solo",
+        "arguments":  {
+                          "solo":  true,
+                          "track_index":  1
+                      },
+        "description":  "Solo dialogue"
+    },
+    {
+        "id":  80,
+        "tool":  "resolve_fairlight",
+        "action":  "set_solo",
+        "arguments":  {
+                          "solo":  false,
+                          "track_index":  1
+                      },
+        "description":  "Unsolo dialogue"
+    },
+    {
+        "id":  81,
+        "tool":  "resolve_fairlight",
+        "action":  "set_volume",
+        "arguments":  {
+                          "volume":  0.8,
+                          "track_index":  1
+                      },
+        "description":  "Set dialogue level"
+    },
+    {
+        "id":  82,
+        "tool":  "resolve_fairlight",
+        "action":  "set_volume",
+        "arguments":  {
+                          "volume":  0.5,
+                          "track_index":  3
+                      },
+        "description":  "Set music bed level"
+    },
+    {
+        "id":  83,
+        "tool":  "resolve_fairlight",
+        "action":  "track_eq",
+        "arguments":  {
+                          "eq_band":  1,
+                          "track_index":  1,
+                          "eq_gain_db":  -3.5
+                      },
+        "description":  "Cut band 1"
+    },
+    {
+        "id":  84,
+        "tool":  "resolve_fairlight",
+        "action":  "track_eq",
+        "arguments":  {
+                          "track_index":  1
+                      },
+        "description":  "Read EQ state"
+    },
+    {
+        "id":  85,
+        "tool":  "resolve_fairlight",
+        "action":  "track_send",
+        "arguments":  {
+                          "send_level":  0.75,
+                          "bus_index":  1,
+                          "track_index":  1
+                      },
+        "description":  "Send to bus 1"
+    },
+    {
+        "id":  86,
+        "tool":  "resolve_fairlight",
+        "action":  "track_send",
+        "arguments":  {
+                          "send_pre_fader":  true,
+                          "send_level":  0.5,
+                          "bus_index":  1,
+                          "track_index":  2
+                      },
+        "description":  "Pre-fader send"
+    },
+    {
+        "id":  87,
+        "tool":  "resolve_fairlight",
+        "action":  "get_buses",
+        "arguments":  {
+
+                      },
+        "description":  "Show bus configuration"
+    },
+    {
+        "id":  88,
+        "tool":  "resolve_fairlight",
+        "action":  "get_buses",
+        "arguments":  {
+                          "timeline_name":  "Main Edit"
+                      },
+        "description":  "Show buses for timeline"
+    },
+    {
+        "id":  89,
+        "tool":  "resolve_fairlight",
+        "action":  "track_automation",
+        "arguments":  {
+                          "track_index":  1
+                      },
+        "description":  "Read volume automation"
+    },
+    {
+        "id":  90,
+        "tool":  "resolve_fairlight",
+        "action":  "track_automation",
+        "arguments":  {
+                          "automation_param":  "pan",
+                          "track_index":  1
+                      },
+        "description":  "Read pan automation"
+    },
+    {
+        "id":  91,
+        "tool":  "resolve_subtitle",
+        "action":  "add",
+        "arguments":  {
+                          "start_frame":  0,
+                          "name":  "Intro",
+                          "end_frame":  48,
+                          "text":  "Hello"
+                      },
+        "description":  "Add opening caption"
+    },
+    {
+        "id":  92,
+        "tool":  "resolve_subtitle",
+        "action":  "add",
+        "arguments":  {
+                          "start_frame":  2400,
+                          "name":  "Outro",
+                          "end_frame":  2448,
+                          "text":  "Thanks"
+                      },
+        "description":  "Add closing caption"
+    },
+    {
+        "id":  93,
+        "tool":  "resolve_subtitle",
+        "action":  "get",
+        "arguments":  {
+                          "track_index":  1
+                      },
+        "description":  "List track 1 captions"
+    },
+    {
+        "id":  94,
+        "tool":  "resolve_subtitle",
+        "action":  "get",
+        "arguments":  {
+                          "track_index":  2
+                      },
+        "description":  "List track 2 captions"
+    },
+    {
+        "id":  95,
+        "tool":  "resolve_subtitle",
+        "action":  "edit",
+        "arguments":  {
+                          "text":  "Welcome back",
+                          "subtitle_index":  0
+                      },
+        "description":  "Fix caption text"
+    },
+    {
+        "id":  96,
+        "tool":  "resolve_subtitle",
+        "action":  "edit",
+        "arguments":  {
+                          "start_frame":  100,
+                          "end_frame":  148,
+                          "subtitle_index":  1
+                      },
+        "description":  "Retimime caption"
+    },
+    {
+        "id":  97,
+        "tool":  "resolve_subtitle",
+        "action":  "delete",
+        "arguments":  {
+                          "subtitle_index":  2
+                      },
+        "description":  "Delete caption 2"
+    },
+    {
+        "id":  98,
+        "tool":  "resolve_subtitle",
+        "action":  "delete",
+        "arguments":  {
+                          "subtitle_index":  0
+                      },
+        "description":  "Delete first caption"
+    },
+    {
+        "id":  99,
+        "tool":  "resolve_subtitle",
+        "action":  "import_srt",
+        "arguments":  {
+                          "srt_path":  "C:/captions.srt"
+                      },
+        "description":  "Import SRT file"
+    },
+    {
+        "id":  100,
+        "tool":  "resolve_subtitle",
+        "action":  "import_srt",
+        "arguments":  {
+                          "srt_path":  "C:/captions.srt",
+                          "track_index":  2
+                      },
+        "description":  "Import SRT to track 2"
+    },
+    {
+        "id":  101,
+        "tool":  "resolve_subtitle",
+        "action":  "export_srt",
+        "arguments":  {
+                          "output_path":  "C:/delivery/captions.srt"
+                      },
+        "description":  "Export delivery SRT"
+    },
+    {
+        "id":  102,
+        "tool":  "resolve_subtitle",
+        "action":  "export_srt",
+        "arguments":  {
+                          "output_path":  "C:/delivery/captions.srt",
+                          "track_index":  1
+                      },
+        "description":  "Export track 1 SRT"
+    },
+    {
+        "id":  103,
+        "tool":  "resolve_system",
+        "action":  "info",
+        "arguments":  {
+
+                      },
+        "description":  "Resolve version and connection"
+    },
+    {
+        "id":  104,
+        "tool":  "resolve_system",
+        "action":  "info",
+        "arguments":  {
+
+                      },
+        "description":  "Version check before delivery"
+    },
+    {
+        "id":  105,
+        "tool":  "resolve_system",
+        "action":  "status",
+        "arguments":  {
+
+                      },
+        "description":  "Server and connection status"
+    },
+    {
+        "id":  106,
+        "tool":  "resolve_system",
+        "action":  "status",
+        "arguments":  {
+
+                      },
+        "description":  "Status check after reconnect"
+    },
+    {
+        "id":  107,
+        "tool":  "resolve_system",
+        "action":  "health",
+        "arguments":  {
+
+                      },
+        "description":  "Full health check"
+    },
+    {
+        "id":  108,
+        "tool":  "resolve_system",
+        "action":  "health",
+        "arguments":  {
+
+                      },
+        "description":  "Health check before batch"
+    },
+    {
+        "id":  109,
+        "tool":  "resolve_system",
+        "action":  "help",
+        "arguments":  {
+
+                      },
+        "description":  "General help"
+    },
+    {
+        "id":  110,
+        "tool":  "resolve_system",
+        "action":  "help",
+        "arguments":  {
+                          "topic":  "color_grading",
+                          "level":  "beginner"
+                      },
+        "description":  "Beginner color help"
+    },
+    {
+        "id":  111,
+        "tool":  "resolve_system",
+        "action":  "host_status",
+        "arguments":  {
+
+                      },
+        "description":  "Host lifecycle probe"
+    },
+    {
+        "id":  112,
+        "tool":  "resolve_system",
+        "action":  "host_status",
+        "arguments":  {
+
+                      },
+        "description":  "Probe when disconnected"
+    },
+    {
+        "id":  113,
+        "tool":  "resolve_system",
+        "action":  "host_launch",
+        "arguments":  {
+
+                      },
+        "description":  "Launch installed Resolve"
+    },
+    {
+        "id":  114,
+        "tool":  "resolve_system",
+        "action":  "host_launch",
+        "arguments":  {
+
+                      },
+        "description":  "Launch before morning batch"
+    }
+]
