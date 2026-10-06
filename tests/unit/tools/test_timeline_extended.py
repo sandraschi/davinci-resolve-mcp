@@ -134,6 +134,8 @@ class TestKeyframeOperations:
 
     @pytest.mark.asyncio
     async def test_add_keyframe_no_api(self, mock_app):
+        clip = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value.GetCurrentVideoItem.return_value
+        clip.AddKeyframe = None
         with pytest.raises(ResolveOperationError, match="does not support AddKeyframe"):
             await add_keyframe_impl(mock_app, clip_path="", property_name="Zoom", frame=0, value=2.0)
 

@@ -23,7 +23,7 @@ class MediaItem(BaseModel):
     name: str = Field(..., description="Name of the media item")
     file_path: str = Field(..., description="File system path to the media")
     media_type: str = Field(..., description="Type of media (video, audio, image, etc.)")
-    duration: float | None = Field(None, description="Duration in seconds")
+    duration: float | None = Field(None, ge=0.0, description="Duration in seconds")
     frame_rate: float | None = Field(None, description="Frame rate (for video)")
     resolution: str | None = Field(None, description="Resolution (e.g., '1920x1080')")
     channels: int | None = Field(None, description="Audio channels (for audio)")
@@ -793,10 +793,11 @@ def register_tools(app):
                 "date_modified": clip.GetClipProperty("Date Modified"),
             }
 
-            # Add any additional properties
+            # Add any additional properties (never clobber typed fields above)
             for key, value in properties.items():
-                if key not in metadata:
-                    metadata[key.lower().replace(" ", "_")] = value
+                norm = key.lower().replace(" ", "_")
+                if norm not in metadata:
+                    metadata[norm] = value
 
             return {"status": "success", "metadata": metadata}
 

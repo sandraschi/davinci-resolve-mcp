@@ -20,7 +20,7 @@ class ProjectInfo(BaseModel):
 
     name: str = Field(..., description="Name of the project")
     path: str | None = Field(None, description="File path of the project")
-    frame_rate: float | None = Field(None, description="Project frame rate")
+    frame_rate: float | None = Field(None, ge=0.0, description="Project frame rate")
     resolution: str | None = Field(None, description="Project resolution (WxH)")
     is_active: bool = Field(False, description="Whether this is the active project")
 

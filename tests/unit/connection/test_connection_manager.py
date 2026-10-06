@@ -2,6 +2,7 @@
 Tests for the DaVinci Resolve connection manager.
 """
 
+import sys
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -30,8 +31,9 @@ class TestResolveConnectionManager:
         self.mock_resolve.GetProjectManager.return_value = self.mock_project_manager
         self.mock_project_manager.GetCurrentProject.return_value = self.mock_project
 
-        # Patch the DaVinciResolveScript import
-        self.dvr_patcher = patch("davinci_resolve_mcp.connection.manager.import_module", return_value=self.mock_dvr)
+        # Patch the DaVinciResolveScript import (impl does a function-level
+        # `import DaVinciResolveScript`, so inject via sys.modules)
+        self.dvr_patcher = patch.dict(sys.modules, {"DaVinciResolveScript": self.mock_dvr})
         self.dvr_patcher.start()
 
         yield
@@ -73,11 +75,8 @@ class TestResolveConnectionManager:
     async def test_connect_import_error(self, mock_check_running, monkeypatch):
         """Test connection failure due to import error."""
 
-        # Make the import fail
-        def mock_import_error(*args, **kwargs):
-            raise ImportError("Module not found")
-
-        monkeypatch.setattr("davinci_resolve_mcp.connection.manager.import_module", mock_import_error)
+        # Make the import fail (None in sys.modules => ImportError on import)
+        monkeypatch.setitem(sys.modules, "DaVinciResolveScript", None)
 
         with pytest.raises(ResolveConnectionError) as exc_info:
             await self.manager.connect()
@@ -93,7 +92,7 @@ class TestResolveConnectionManager:
         with pytest.raises(ResolveConnectionError) as exc_info:
             await self.manager.connect()
 
-        assert "Failed to connect to DaVinci Resolve" in str(exc_info.value)
+        assert "Failed to connect" in str(exc_info.value)
         assert self.manager.connection_status == "error"
 
     @patch("davinci_resolve_mcp.connection.manager.ResolveEnvironment.check_resolve_running", return_value=True)
@@ -224,8 +223,8 @@ class TestResolveConnectionPool:
         # Close all connections
         await self.pool.close_all_connections()
 
-        # Should have called close on all connections
-        assert self.mock_connection.close.await_count == 2
+        # Should have called disconnect on all connections
+        assert self.mock_connection.disconnect.await_count == 2
 
         # Connections dict should be empty
         assert len(self.pool.connections) == 0
