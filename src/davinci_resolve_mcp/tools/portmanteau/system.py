@@ -7,10 +7,12 @@ Consolidates system/utility operations into a single tool with conversational re
 import logging
 from typing import Any, Literal
 
+from fastmcp.tools.tool import ToolAnnotations
+
 logger = logging.getLogger(__name__)
 
 
-_READ_ONLY = {"readonly": True}
+_READ_ONLY = ToolAnnotations(readOnlyHint=True)
 
 
 def setup_system_portmanteau(app):
