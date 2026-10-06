@@ -10,5 +10,19 @@
     "window_title_re": "DaVinci Resolve MCP",
     "nsis_glob": "native/target/release/bundle/nsis/DaVinci Resolve MCP_*_x64-setup.exe",
     "bridge_ok_text": "REST bridge reachable",
+    "nav_routes": [
+        {"label": "Overview", "href": "/"},
+        {"label": "Projects", "href": "/projects"},
+        {"label": "Timeline", "href": "/timeline"},
+        {"label": "Fairlight", "href": "/fairlight"},
+        {"label": "Render Queue", "href": "/render"},
+        {"label": "AI Workflows", "href": "/workflows"},
+        {"label": "Video Tools", "href": "/tools"},
+        {"label": "Production Actions", "href": "/actions"},
+        {"label": "AI Editor", "href": "/chat"},
+        {"label": "System Logs", "href": "/logs"},
+        {"label": "Help", "href": "/help"},
+        {"label": "Settings", "href": "/settings"}
+    ],
     "uninstall_registry_filter": "*DaVinci Resolve MCP*"
 }
