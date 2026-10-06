@@ -1,4 +1,18 @@
 
+## [Unreleased] - 2026-10-06 (follow-up 2: remaining gates)
+
+### Fixed
+- pyright 198 -> 0 errors: typed FastMCP state access, probe-config kwargs bag,
+  typed sampling messages (mcp dep declared), shared-connection `with` blocks
+  (27 dead individual-tool paths now use the live connection), model variance
+  fixes, TimeCode subtraction, exception hierarchy kwargs bugs, gamma/codec
+  passthrough fixes. Real bugs fixed along the way: LoadProject-per-entry
+  listing, `all()` used as a class, str-arithmetic level stepping.
+- MCPB 3-4-100: system.md 3063 words, user.md 4012 words, examples.json with
+  114 authored tool-call examples via scripts/gen-mcpb-examples.ps1.
+- useZoom Ctrl+Scroll (+Ctrl+0 reset) wired into the app layout.
+- Playwright browsers installed; e2e 3/3 pass.
+
 ## [Unreleased] - 2026-10-06 (follow-up)
 
 ### Fixed (assfix follow-up — deferred list)
