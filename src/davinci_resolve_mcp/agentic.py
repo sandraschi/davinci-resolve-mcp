@@ -9,8 +9,23 @@ import json
 from typing import Any
 
 from fastmcp import Context
+from mcp.types import SamplingMessage, TextContent
 
 from .server import app
+
+
+def _user_message(text: str) -> SamplingMessage:
+    """Build a typed user sampling message (mcp.types, not a raw dict)."""
+    return SamplingMessage(role="user", content=TextContent(type="text", text=text))
+
+
+def _result_text(msg: Any) -> str:
+    """Extract text from a sampling result across content shapes."""
+    content = msg.content
+    if isinstance(content, TextContent):
+        return content.text
+    blocks = content if isinstance(content, list) else [content]
+    return "".join(block.text for block in blocks if isinstance(block, TextContent))
 
 
 def register_agentic_tools():
@@ -57,16 +72,15 @@ def register_agentic_tools():
             try:
                 msg = await ctx.session.create_message(
                     messages=[
-                        {
-                            "role": "user",
-                            "content": f'Analyze this DaVinci Resolve workflow request and determine the category (rendering, color_grading, editing, media_management, project_setup, audio_processing) and return a JSON list of the tools required from these available options: {available_tools}.\n\nWorkflow request: \'{workflow_prompt}\'\n\nReturn EXACTLY this JSON structure: {{"workflow_type": "string", "recommended_tools": ["tool_1", "tool_2"]}}',
-                        }
+                        _user_message(
+                            f'Analyze this DaVinci Resolve workflow request and determine the category (rendering, color_grading, editing, media_management, project_setup, audio_processing) and return a JSON list of the tools required from these available options: {available_tools}.\n\nWorkflow request: \'{workflow_prompt}\'\n\nReturn EXACTLY this JSON structure: {{"workflow_type": "string", "recommended_tools": ["tool_1", "tool_2"]}}'
+                        )
                     ],
                     max_tokens=256,
                 )
 
                 # Parse the response text as JSON
-                response_text = msg.content.text
+                response_text = _result_text(msg)
                 if "```json" in response_text:
                     response_text = response_text.split("```json")[1].split("```")[0].strip()
                 elif "```" in response_text:
@@ -171,14 +185,13 @@ def register_agentic_tools():
             try:
                 msg = await ctx.session.create_message(
                     messages=[
-                        {
-                            "role": "user",
-                            "content": f"Given these projects (Count: {len(projects)}, Formats: {project_analysis['formats']}, Complexity: {project_analysis['complexity']}) and the goal '{processing_goal}', which batch strategy (adaptive, parallel, sequential) is optimal?\nReturn only the single word.",
-                        }
+                        _user_message(
+                            f"Given these projects (Count: {len(projects)}, Formats: {project_analysis['formats']}, Complexity: {project_analysis['complexity']}) and the goal '{processing_goal}', which batch strategy (adaptive, parallel, sequential) is optimal?\nReturn only the single word."
+                        )
                     ],
                     max_tokens=64,
                 )
-                optimal_strategy = msg.content.text.strip().lower()
+                optimal_strategy = _result_text(msg).strip().lower()
                 if optimal_strategy not in ["adaptive", "parallel", "sequential"]:
                     optimal_strategy = _determine_optimal_strategy(project_analysis, processing_strategy)
             except Exception:
@@ -260,14 +273,13 @@ def register_agentic_tools():
             try:
                 msg = await ctx.session.create_message(
                     messages=[
-                        {
-                            "role": "user",
-                            "content": f"Analyze this user query about DaVinci Resolve: '{user_query}'. Identify the core intent (e.g., 'project_creation', 'timeline_editing', 'color_grading', 'rendering'). Return exactly this JSON: {{\"intent\": \"string\"}}",
-                        }
+                        _user_message(
+                            f"Analyze this user query about DaVinci Resolve: '{user_query}'. Identify the core intent (e.g., 'project_creation', 'timeline_editing', 'color_grading', 'rendering'). Return exactly this JSON: {{\"intent\": \"string\"}}"
+                        )
                     ],
                     max_tokens=128,
                 )
-                response_text = msg.content.text
+                response_text = _result_text(msg)
                 if "```json" in response_text:
                     response_text = response_text.split("```json")[1].split("```")[0].strip()
                 elif "```" in response_text:

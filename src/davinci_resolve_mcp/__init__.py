@@ -45,7 +45,7 @@ __all__ = [
 
 
 # Create a more user-friendly help function that delegates to the help tool
-def help(topic: str | None = None, level: str | UserLevel = None) -> str:
+def help(topic: str | None = None, level: str | UserLevel | None = None) -> str:
     """
     Display help information for the DaVinci Resolve MCP package.
 

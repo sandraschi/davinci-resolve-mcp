@@ -266,13 +266,13 @@ def run_script(
     """
     _configure_cli_logging()
 
-    script_path = Path(script_path).resolve()
-    if not script_path.exists():
-        console.print(f"❌ [red]Script not found:[/red] {script_path}")
+    script_file = Path(script_path).resolve()
+    if not script_file.exists():
+        console.print(f"❌ [red]Script not found:[/red] {script_file}")
         raise typer.Exit(1)
 
     if dry_run:
-        console.print(f"Would execute: {script_path}")
+        console.print(f"Would execute: {script_file}")
         console.print(f"Project: {project_name or 'current'}")
         return
 
@@ -285,7 +285,7 @@ def run_script(
         raise typer.Exit(1)
 
     try:
-        import DaVinciResolveScript as dvr_script
+        import DaVinciResolveScript as dvr_script  # pyright: ignore[reportMissingImports] (wrappee module; only present with Resolve installed)
     except ImportError as e:
         console.print(f"❌ [red]Cannot import DaVinciResolveScript: {e}[/red]")
         raise typer.Exit(1) from e
@@ -313,7 +313,7 @@ def run_script(
     else:
         console.print("⚠️  No project open (some scripts may fail)")
 
-    console.print(f"🚀 Executing: {script_path.name}")
+    console.print(f"🚀 Executing: {script_file.name}")
     console.print("─" * 60)
 
     script_globals = {
@@ -325,8 +325,8 @@ def run_script(
     }
 
     try:
-        script_code = script_path.read_text(encoding="utf-8")
-        exec(compile(script_code, str(script_path), "exec"), script_globals)
+        script_code = script_file.read_text(encoding="utf-8")
+        exec(compile(script_code, str(script_file), "exec"), script_globals)
         console.print("─" * 60)
         console.print("✅ [green]Script completed successfully[/green]")
     except Exception as e:
@@ -371,7 +371,7 @@ def render(
         raise typer.Exit(1)
 
     try:
-        import DaVinciResolveScript as dvr_script
+        import DaVinciResolveScript as dvr_script  # pyright: ignore[reportMissingImports] (wrappee module; only present with Resolve installed)
     except ImportError as e:
         console.print(f"❌ [red]Cannot import DaVinciResolveScript: {e}[/red]")
         raise typer.Exit(1) from e
@@ -524,7 +524,7 @@ def import_media(
         raise typer.Exit(1)
 
     try:
-        import DaVinciResolveScript as dvr_script
+        import DaVinciResolveScript as dvr_script  # pyright: ignore[reportMissingImports] (wrappee module; only present with Resolve installed)
     except ImportError as e:
         console.print(f"❌ [red]Cannot import DaVinciResolveScript: {e}[/red]")
         raise typer.Exit(1) from e
@@ -612,7 +612,7 @@ def open_project(
         raise typer.Exit(1)
 
     try:
-        import DaVinciResolveScript as dvr_script
+        import DaVinciResolveScript as dvr_script  # pyright: ignore[reportMissingImports] (wrappee module; only present with Resolve installed)
     except ImportError as e:
         console.print(f"❌ [red]Cannot import DaVinciResolveScript: {e}[/red]")
         raise typer.Exit(1) from e

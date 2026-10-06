@@ -198,20 +198,20 @@ class DaVinciResolveConfig(BaseModel):
             script_lib = self.environment.script_lib_path or lib_path
 
             if script_api:
-                os.environ["RESOLVE_SCRIPT_API"] = script_api
-                modules_path = os.path.join(script_api, "Modules")
+                os.environ["RESOLVE_SCRIPT_API"] = str(script_api)
+                modules_path = os.path.join(str(script_api), "Modules")
                 if os.path.exists(modules_path):
                     current_path = os.environ.get("PYTHONPATH", "")
                     if modules_path not in current_path:
                         os.environ["PYTHONPATH"] = f"{current_path};{modules_path}" if current_path else modules_path
 
             if script_lib:
-                os.environ["RESOLVE_SCRIPT_LIB"] = script_lib
+                os.environ["RESOLVE_SCRIPT_LIB"] = str(script_lib)
 
             # Add any additional Python path entries
             if self.environment.python_path_additions:
                 current_path = os.environ.get("PYTHONPATH", "")
-                additional = ";".join(self.environment.python_path_additions)
+                additional = ";".join(str(p) for p in self.environment.python_path_additions)
                 os.environ["PYTHONPATH"] = f"{current_path};{additional}" if current_path else additional
 
             return True
