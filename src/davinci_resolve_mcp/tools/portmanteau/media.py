@@ -19,7 +19,7 @@ _MUTATING = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
 def setup_media_portmanteau(app):
     """Register the media portmanteau tool."""
 
-    @app.tool(annotations=_MUTATING)
+    @app.tool(annotations=_MUTATING, output_schema={"type": "object"})
     async def resolve_media(
         action: Annotated[
             Literal["import", "list", "create_folder", "get_metadata"], Field(description="Operation to perform")

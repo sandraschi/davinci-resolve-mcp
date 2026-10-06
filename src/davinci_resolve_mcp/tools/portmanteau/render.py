@@ -19,7 +19,7 @@ _MUTATING = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
 def setup_render_portmanteau(app):
     """Register the render portmanteau tool."""
 
-    @app.tool(annotations=_MUTATING)
+    @app.tool(annotations=_MUTATING, output_schema={"type": "object"})
     async def resolve_render(
         action: Annotated[
             Literal["timeline", "presets", "with_preset", "job_status"], Field(description="Operation to perform")

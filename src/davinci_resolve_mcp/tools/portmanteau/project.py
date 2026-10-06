@@ -19,7 +19,7 @@ _MUTATING = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
 def setup_project_portmanteau(app):
     """Register the project portmanteau tool with conversational capabilities."""
 
-    @app.tool(annotations=_MUTATING)
+    @app.tool(annotations=_MUTATING, output_schema={"type": "object"})
     async def resolve_project(
         action: Annotated[
             Literal["create", "open", "list", "get_settings", "update_settings"],

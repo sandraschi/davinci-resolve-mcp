@@ -19,7 +19,7 @@ _MUTATING = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
 def setup_color_portmanteau(app):
     """Register the color portmanteau tool."""
 
-    @app.tool(annotations=_MUTATING)
+    @app.tool(annotations=_MUTATING, output_schema={"type": "object"})
     async def resolve_color(
         action: Annotated[
             Literal[

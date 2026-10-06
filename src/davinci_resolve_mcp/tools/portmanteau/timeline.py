@@ -19,7 +19,7 @@ _MUTATING = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
 def setup_timeline_portmanteau(app):
     """Register the timeline portmanteau tool."""
 
-    @app.tool(annotations=_MUTATING)
+    @app.tool(annotations=_MUTATING, output_schema={"type": "object"})
     async def resolve_timeline(
         action: Annotated[
             Literal[
