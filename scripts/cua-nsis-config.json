@@ -19,6 +19,8 @@
         {"label": "AI Workflows", "href": "/workflows"},
         {"label": "Video Tools", "href": "/tools"},
         {"label": "Production Actions", "href": "/actions"},
+        {"label": "Inbox", "href": "/inbox"},
+        {"label": "Skills", "href": "/skills"},
         {"label": "AI Editor", "href": "/chat"},
         {"label": "System Logs", "href": "/logs"},
         {"label": "Help", "href": "/help"},

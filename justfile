@@ -182,4 +182,8 @@ cua-nsis-test:
 cua-webapp-test:
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File '{{justfile_directory()}}\scripts\just\cua-webapp-test.ps1'
 
+# Playwright e2e (needs backend on :10843 + frontend dev on :10842)
+e2e:
+    Set-Location '{{justfile_directory()}}\web_sota'; npx playwright test
+
 # Bootstrap: install dev deps + pre-commit hook

@@ -10,7 +10,7 @@
 [![CI/CD](https://github.com/sandraschi/davinci-resolve-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/sandraschi/davinci-resolve-mcp/actions)
 [![Coverage](https://img.shields.io/badge/API_Coverage-~65%25-10B981?style=flat-square)](https://github.com/sandraschi/davinci-resolve-mcp)
 
-> **[DaVinci Resolve](https://www.blackmagicdesign.com/products/davinciresolve)** is Blackmagic Designs post-production suite: editing, Fusion VFX, color grading, Fairlight audio, and delivery in one timeline.  
+> **[DaVinci Resolve](https://www.blackmagicdesign.com/products/davinciresolve)** is Blackmagic Designs post-production suite: editing, Fusion VFX, color grading, Fairlight audio, and delivery in one timeline.
 > Its used for everything from YouTube cuts to theatrical finish**this repo** automates a running session through Resolves **Python scripting API**, not a separate cloud service.
 
 ---
@@ -82,6 +82,52 @@ This project adheres to **SOTA 14.1** industrial standards for high-fidelity age
 - **Automation**: [Justfile](./justfile) recipes for all fleet operations (`just lint`, `just fix`, `just dev`).
 - **Security**: Automated audits via `bandit` and `safety`.
 
+## Stack
+
+Backend: Python 3.12, FastMCP 3.4.4+, FastAPI + Uvicorn, Pydantic v2, Typer CLI,
+`uv` deps, `ruff` lint, `pytest` tests.
+Webapp (`web_sota/`): React 19, Vite 7, TypeScript, TailwindCSS, Radix UI,
+TanStack Query, Zustand (LLM state), Lucide icons, React Router 7, Biome lint,
+Playwright e2e. Native: Tauri 2.0 (`native/`), NSIS installer.
+
+## Tools
+
+9 portmanteau tools by default (`RESOLVE_TOOL_MODE=portmanteau`): `resolve_project`,
+`resolve_media`, `resolve_timeline`, `resolve_color`, `resolve_render`, `resolve_audio`,
+`resolve_fairlight`, `resolve_subtitle`, `resolve_system` (READ-ONLY) — plus `help`,
+`get_status`, agentic workflows, 3 prompts (`edit_plan`, `color_recipe`, `render_checklist`)
+and `skill://` resources. Full catalog: [docs/TOOLS.md](docs/TOOLS.md).
+
+## Ports
+
+Backend **10843** (`/api/v1/*`), frontend **10842** (Vite dev, proxies `/api`).
+Registered pair — never 3000/5000/5173/8000/8080.
+
+## Environment
+
+| Var | Default |
+|-----|---------|
+| `RESOLVE_TOOL_MODE` | `portmanteau` |
+| `MCP_TRANSPORT` | `stdio` |
+| `HOST` / `PORT` | `127.0.0.1` / `10843` |
+| `OLLAMA_URL` | `http://127.0.0.1:11434` |
+
+See [docs/CONFIGURATION.md](docs/CONFIGURATION.md) and [docs/ONBOARDING.md](docs/ONBOARDING.md).
+
+## Claude Desktop config
+
+```json
+{
+  "mcpServers": {
+    "davinci-resolve": {
+      "command": "C:\\Users\\sandr\\.local\\bin\\uv.exe",
+      "args": ["run", "davinci-resolve-mcp", "mcp"],
+      "cwd": "D:\\Dev\\repos\\davinci-resolve-mcp"
+    }
+  }
+}
+```
+
 ## License
 
 MITsee [LICENSE](LICENSE).
@@ -92,7 +138,7 @@ DaVinci Resolve is a trademark of Blackmagic Design. This project is not affilia
 
 ## Support
 
-- **Issues:** [github.com/sandraschi/davinci-resolve-mcp/issues](https://github.com/sandraschi/davinci-resolve-mcp/issues)  
+- **Issues:** [github.com/sandraschi/davinci-resolve-mcp/issues](https://github.com/sandraschi/davinci-resolve-mcp/issues)
 - **Docs site (if published):** [sandraschi.github.io/davinci-resolve-mcp](https://sandraschi.github.io/davinci-resolve-mcp)
 
 ## GitHub Topics
