@@ -87,7 +87,7 @@ class ResolveConnectionManager:
                         raise ResolveNotRunningError("DaVinci Resolve is not running")
 
                     try:
-                        import DaVinciResolveScript as dvr_script
+                        import DaVinciResolveScript as dvr_script  # pyright: ignore[reportMissingImports] (wrappee module; only present with Resolve installed)
                     except ImportError as e:
                         raise ResolveConnectionError(f"Cannot import DaVinciResolveScript: {e}") from e
 
@@ -121,6 +121,15 @@ class ResolveConnectionManager:
                         await asyncio.sleep(retry_delay)
 
             raise ResolveConnectionError(f"Failed to connect: {last_error}" if last_error else "Failed to connect")
+
+    def __enter__(self) -> Any:
+        """Sync context support for tool wrappers: yields the live Resolve connection."""
+        if not self.resolve:
+            raise ResolveConnectionError("Not connected to DaVinci Resolve")
+        return self.resolve
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> bool:
+        return False
 
     async def disconnect(self) -> bool:
         """

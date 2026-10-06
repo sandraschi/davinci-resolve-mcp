@@ -10,6 +10,7 @@ import os
 import platform
 import subprocess
 from pathlib import Path
+from typing import Any
 
 import psutil
 
@@ -284,7 +285,7 @@ class ResolveEnvironment:
 
             # Try to import the DaVinci Resolve script module
             try:
-                import DaVinciResolveScript as dvr_script
+                import DaVinciResolveScript as dvr_script  # pyright: ignore[reportMissingImports] (wrappee module; only present with Resolve installed)
 
                 # Try to connect to Resolve (this will fail if Resolve isn't running, but validates API)
                 resolve = dvr_script.scriptapp("Resolve")
@@ -303,7 +304,7 @@ class ResolveEnvironment:
 
         return False
 
-    def get_environment_status(self) -> dict[str, any]:
+    def get_environment_status(self) -> dict[str, Any]:
         """
         Get comprehensive environment status.
 

@@ -11,7 +11,7 @@ import os
 import sys
 import time
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, cast
 
 import structlog
 from fastapi import FastAPI
@@ -164,7 +164,7 @@ if bridge_urls:
                 logger.warning("Failed to add bridge proxy: %s", url, exc_info=True)
 
 # Initialize application state
-app.state = AppState()
+cast(Any, app).state = AppState()
 
 # HTTP routes: must load after FastMCP `app` exists (routes import `app`). `api_app` is built after `initialize_server`.
 from .api.routes import router as api_router
@@ -194,21 +194,21 @@ def initialize_server():
         # Load configuration
         config_path = os.getenv("CONFIG_PATH")
         if config_path and os.path.exists(config_path):
-            app.state.config = DaVinciResolveConfig.load_from_file(config_path)
+            cast(Any, app).state.config = DaVinciResolveConfig.load_from_file(config_path)
         else:
-            app.state.config = load_default()
+            cast(Any, app).state.config = load_default()
 
         logger.info("Configuration loaded", config_path=config_path or "default")
 
         # Set up environment
-        app.state.config.setup_environment()
+        cast(Any, app).state.config.setup_environment()
 
         # Initialize connection manager
-        app.state.connection_manager = ResolveConnectionManager(app.state.config)
+        cast(Any, app).state.connection_manager = ResolveConnectionManager(cast(Any, app).state.config)
 
         # Initialize connection pool
-        app.state.connection_pool = ResolveConnectionPool(
-            config=app.state.config, max_connections=app.state.config.max_workers
+        cast(Any, app).state.connection_pool = ResolveConnectionPool(
+            config=cast(Any, app).state.config, max_connections=cast(Any, app).state.config.max_workers
         )
 
         # Register all tools
@@ -229,7 +229,7 @@ async def api_lifespan(_http: FastAPI):
     ``run_api``'s ``__main__`` block, so ``initialize_server()`` never ran - connection
     manager stayed None and the dashboard always showed disconnected.
     """
-    if app.state.connection_manager is None:
+    if cast(Any, app).state.connection_manager is None:
         try:
             initialize_server()
         except Exception as e:
@@ -299,13 +299,13 @@ async def get_resolve_info() -> dict[str, Any]:
             }
         }
     """
-    if not app.state.connection_manager:
+    if not cast(Any, app).state.connection_manager:
         raise ResolveConnectionError("Connection manager not initialized")
 
-    if not await app.state.connection_manager.ensure_connection():
+    if not await cast(Any, app).state.connection_manager.ensure_connection():
         raise ResolveConnectionError("Could not connect to DaVinci Resolve")
 
-    resolve = app.state.connection_manager.get_connection()
+    resolve = cast(Any, app).state.connection_manager.get_connection()
     project_manager = resolve.GetProjectManager()
     current_project = project_manager.GetCurrentProject()
 
@@ -335,13 +335,13 @@ async def list_projects() -> dict[str, Any]:
             }
         }
     """
-    if not app.state.connection_manager:
+    if not cast(Any, app).state.connection_manager:
         raise ResolveConnectionError("Connection manager not initialized")
 
-    if not await app.state.connection_manager.ensure_connection():
+    if not await cast(Any, app).state.connection_manager.ensure_connection():
         raise ResolveConnectionError("Could not connect to DaVinci Resolve")
 
-    resolve = app.state.connection_manager.get_connection()
+    resolve = cast(Any, app).state.connection_manager.get_connection()
     project_manager = resolve.GetProjectManager()
 
     current_project = project_manager.GetCurrentProject()
@@ -381,16 +381,16 @@ def register_tools():
             @app.tool()
             async def get_status() -> dict[str, Any]:
                 """Get the current status of DaVinci Resolve and MCP server."""
-                if not app.state.connection_manager:
+                if not cast(Any, app).state.connection_manager:
                     return {"status": "error", "message": "Connection manager not initialized"}
-                return app.state.connection_manager.get_status()
+                return cast(Any, app).state.connection_manager.get_status()
 
             @app.tool()
             async def health_check() -> dict[str, Any]:
                 """Perform a comprehensive health check of the system."""
-                if not app.state.connection_manager:
+                if not cast(Any, app).state.connection_manager:
                     return {"status": "error", "message": "Connection manager not initialized"}
-                return await app.state.connection_manager.health_check()
+                return await cast(Any, app).state.connection_manager.health_check()
 
             from .tools.audio_tools import register_tools as register_audio_tools
             from .tools.color_tools import register_tools as register_color_tools
@@ -437,7 +437,7 @@ def register_tools():
             if not confirm:
                 return {"success": False, "message": "Set confirm=True to shut down the server"}
             logger.warning("Server shutdown requested via MCP tool")
-            app.state.should_exit = True
+            cast(Any, app).state.should_exit = True
             import os
 
             os._exit(0)

@@ -7,12 +7,15 @@ Implements the HOST_APP_LIFECYCLE standard v1.0.
 
 import os
 from pathlib import Path
+from typing import Any
 
 # Build list of candidate install paths, including env-var-based locations
 _prog_files = os.environ.get("PROGRAMFILES", "C:/Program Files")
 _prog_files_x86 = os.environ.get("PROGRAMFILES(X86)", "C:/Program Files (x86)")
 
-RESOLVE_PROBE_CONFIG = dict(
+# Heterogeneous kwargs bag for probe_host_app(**...): typed Any so call
+# sites unpack cleanly under pyright.
+RESOLVE_PROBE_CONFIG: dict[str, Any] = dict(
     app_name="DaVinci Resolve",
     process_names=["Resolve"],  # matches "Resolve.exe" on Windows
     install_paths=[

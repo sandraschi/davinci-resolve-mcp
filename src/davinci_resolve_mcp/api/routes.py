@@ -5,6 +5,7 @@ FastMCP API routes for DaVinci Resolve MCP.
 import json
 import os
 import time
+from typing import Any, cast
 
 import httpx
 from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
@@ -206,10 +207,10 @@ async def get_resolve_info():
     try:
         from ..server import app as mcp_app
 
-        if not hasattr(mcp_app, "state") or not mcp_app.state.connection_manager:
+        if not hasattr(mcp_app, "state") or not cast(Any, mcp_app).state.connection_manager:
             return {"status": "disconnected", "message": "Connection manager not initialized"}
 
-        mgr = mcp_app.state.connection_manager
+        mgr = cast(Any, mcp_app).state.connection_manager
         try:
             if not await mgr.ensure_connection():
                 host = mgr.environment.check_resolve_running()
@@ -254,7 +255,7 @@ async def get_projects():
         from ..server import app as mcp_app
         from ..tools.project_tools import list_projects_impl
 
-        if not hasattr(mcp_app, "state") or not mcp_app.state.connection_manager:
+        if not hasattr(mcp_app, "state") or not cast(Any, mcp_app).state.connection_manager:
             return {"status": "success", "current_project": None, "projects": []}
 
         result = await list_projects_impl(mcp_app)
@@ -385,10 +386,10 @@ async def get_timeline_info():
     try:
         from ..server import app as mcp_app
 
-        if not hasattr(mcp_app, "state") or not mcp_app.state.connection_manager:
+        if not hasattr(mcp_app, "state") or not cast(Any, mcp_app).state.connection_manager:
             return {"timeline": None}
 
-        mgr = mcp_app.state.connection_manager
+        mgr = cast(Any, mcp_app).state.connection_manager
         if not await mgr.ensure_connection():
             return {"timeline": None, "error": "not_connected"}
 
@@ -424,7 +425,7 @@ async def fairlight_get_tracks(timeline_name: str | None = None):
         from ..server import app as mcp_app
         from ..tools.fairlight_tools import fairlight_get_timeline_tracks_impl
 
-        if not hasattr(mcp_app, "state") or not mcp_app.state.connection_manager:
+        if not hasattr(mcp_app, "state") or not cast(Any, mcp_app).state.connection_manager:
             return {"status": "disconnected", "tracks": [], "track_count": 0}
 
         result = await fairlight_get_timeline_tracks_impl(mcp_app, timeline_name)
@@ -440,7 +441,7 @@ async def fairlight_open_page():
         from ..server import app as mcp_app
         from ..tools.fairlight_tools import fairlight_open_page_impl
 
-        if not hasattr(mcp_app, "state") or not mcp_app.state.connection_manager:
+        if not hasattr(mcp_app, "state") or not cast(Any, mcp_app).state.connection_manager:
             raise HTTPException(status_code=503, detail="Connection manager not initialized")
 
         result = await fairlight_open_page_impl(mcp_app)
@@ -456,7 +457,7 @@ async def fairlight_set_mute(track_index: int, mute: bool, timeline_name: str | 
         from ..server import app as mcp_app
         from ..tools.fairlight_tools import fairlight_set_track_mute_impl
 
-        if not hasattr(mcp_app, "state") or not mcp_app.state.connection_manager:
+        if not hasattr(mcp_app, "state") or not cast(Any, mcp_app).state.connection_manager:
             raise HTTPException(status_code=503, detail="Connection manager not initialized")
 
         result = await fairlight_set_track_mute_impl(mcp_app, track_index, mute, timeline_name)
@@ -476,7 +477,7 @@ async def fairlight_set_solo(
         from ..server import app as mcp_app
         from ..tools.fairlight_tools import fairlight_set_track_solo_impl
 
-        if not hasattr(mcp_app, "state") or not mcp_app.state.connection_manager:
+        if not hasattr(mcp_app, "state") or not cast(Any, mcp_app).state.connection_manager:
             raise HTTPException(status_code=503, detail="Connection manager not initialized")
 
         result = await fairlight_set_track_solo_impl(mcp_app, track_index, solo, timeline_name)
@@ -496,7 +497,7 @@ async def fairlight_set_volume(
         from ..server import app as mcp_app
         from ..tools.fairlight_tools import fairlight_set_track_volume_impl
 
-        if not hasattr(mcp_app, "state") or not mcp_app.state.connection_manager:
+        if not hasattr(mcp_app, "state") or not cast(Any, mcp_app).state.connection_manager:
             raise HTTPException(status_code=503, detail="Connection manager not initialized")
 
         result = await fairlight_set_track_volume_impl(mcp_app, track_index, volume, timeline_name)
@@ -515,7 +516,7 @@ async def get_host_status():
         from ..connection.host_app_probe import probe_host_app
         from ..connection.resolve_probe_config import RESOLVE_PROBE_CONFIG
 
-        status = probe_host_app(**RESOLVE_PROBE_CONFIG)
+        status = probe_host_app(**cast(Any, RESOLVE_PROBE_CONFIG))
         return {
             "success": True,
             **status.to_dict(),
@@ -597,7 +598,7 @@ async def launch_host():
         from ..connection.host_app_probe import launch_app, probe_host_app
         from ..connection.resolve_probe_config import RESOLVE_PROBE_CONFIG
 
-        status = probe_host_app(**RESOLVE_PROBE_CONFIG)
+        status = probe_host_app(**cast(Any, RESOLVE_PROBE_CONFIG))
         ok, msg = launch_app(status)
         return {
             "success": ok,
