@@ -10,7 +10,7 @@ function LLMSettings() {
   const [selectedProvider, setSelectedProvider] = useState("ollama");
   const [selectedModel, setSelectedModel] = useState("");
   useEffect(() => {
-    fetch(`${API_BASE}/api/llm/providers`)
+    fetch(`${API_BASE}/llm/providers`)
       .then((r) => r.json())
       .then((d) => {
         setProviders(d);
