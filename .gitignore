@@ -71,6 +71,10 @@ reports/
 # Runtime state (Resolve chatbot session DB, regenerated at runtime)
 data/
 
+# Playwright output (regenerable per run)
+web_sota/test-results/
+web_sota/playwright-report/
+
 # Tauri build artifacts
 native/target/
 native/gen/
