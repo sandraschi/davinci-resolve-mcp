@@ -28,7 +28,7 @@ RESOLVE_PROBE_CONFIG = dict(
         Path("/usr/local/resolve/bin/resolve"),
     ],
     # DaVinci Resolve scripting API uses COM interop (Windows) / OSA (macOS)
-    # — NOT a TCP port. Do NOT set check_port; the real API connectivity
+    # - NOT a TCP port. Do NOT set check_port; the real API connectivity
     # test is handled by ResolveConnectionManager which calls scriptapp().
     #   check_port=9990,  ← incorrect; scripting bridge is not a TCP service
     download_url="https://www.blackmagicdesign.com/products/davinciresolve",

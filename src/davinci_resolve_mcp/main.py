@@ -8,7 +8,7 @@ Logging rules:
 - mcp() command: structlog → stderr only. No console.print, no print(). stdout is
   reserved for JSON-RPC. Logging output appears in the Claude Desktop MCP server log.
 - start/check/web commands: interactive CLI, console.print() is fine.
-- Module level: NO logging.basicConfig here — each command configures its own handlers.
+- Module level: NO logging.basicConfig here - each command configures its own handlers.
 """
 
 import logging
@@ -25,7 +25,7 @@ from .server import app as mcp_app
 from .server import initialize_server, start_server
 from .transport import run_server
 
-# Logger for this module — no handlers configured here; each command sets them up.
+# Logger for this module - no handlers configured here; each command sets them up.
 logger = logging.getLogger("davinci_resolve_mcp")
 
 # Typer app
@@ -36,7 +36,7 @@ app = typer.Typer(
 )
 
 # Console for interactive CLI commands only (start / check / web).
-# NEVER use this in mcp() — stdout is the JSON-RPC channel.
+# NEVER use this in mcp() - stdout is the JSON-RPC channel.
 console = Console()
 
 
@@ -162,16 +162,16 @@ def mcp():
     stdout is reserved for JSON-RPC. All logging goes to stderr and appears
     in the Claude Desktop MCP server log file.
     """
-    # Must be first — before any other code that might log or print.
+    # Must be first - before any other code that might log or print.
     _configure_mcp_logging()
 
-    # Initialize the server (lazy — don't fail if DaVinci Resolve not running).
+    # Initialize the server (lazy - don't fail if DaVinci Resolve not running).
     try:
         initialize_server()
         logger.info("Server initialized successfully")
     except Exception as e:
         logger.warning(
-            "Server initialization warning: %s — server will start but some tools "
+            "Server initialization warning: %s - server will start but some tools "
             "may not work until DaVinci Resolve is available.",
             e,
         )
@@ -454,7 +454,7 @@ def render(
         render_settings["VideoCodec"] = codec or "h264"
 
     if dry_run:
-        console.print("⚙️  [yellow]Dry run — render settings:[/yellow]")
+        console.print("⚙️  [yellow]Dry run - render settings:[/yellow]")
         for k, v in render_settings.items():
             console.print(f"   {k}: {v}")
         console.print(f"   Output: {output_dir}/{filename}.{fmt}")

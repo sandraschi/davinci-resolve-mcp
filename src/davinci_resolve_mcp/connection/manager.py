@@ -67,7 +67,7 @@ class ResolveConnectionManager:
         self.last_connection_check: float = 0.0
         self._lock = asyncio.Lock()
 
-        # Setup environment — add Resolve scripting module to sys.path
+        # Setup environment - add Resolve scripting module to sys.path
         self.environment.setup_environment_variables()
         _add_resolve_to_path()
 
@@ -91,7 +91,7 @@ class ResolveConnectionManager:
                     self.resolve = dvr_script.scriptapp("Resolve")
                     if not self.resolve:
                         raise ResolveConnectionError(
-                            "scriptapp returned None — Resolve is running but the scripting "
+                            "scriptapp returned None - Resolve is running but the scripting "
                             "bridge is not responding. Open a project and check Resolve > "
                             "Preferences > System > General > External Scripting 'Always'."
                         )
