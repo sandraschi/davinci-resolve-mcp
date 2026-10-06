@@ -47,8 +47,9 @@ async def add_subtitle_impl(
         if track_index < 1 or track_index > subtitle_track_count + 1:
             raise ResolveOperationError(f"Invalid subtitle track index: {track_index}")
 
-        if hasattr(timeline, "InsertSubtitle"):
-            subtitle = timeline.InsertSubtitle(track_index, name, start_frame, end_frame)
+        _insert = getattr(timeline, "InsertSubtitle", None)
+        if callable(_insert):
+            subtitle = _insert(track_index, name, start_frame, end_frame)
             if not subtitle:
                 raise ResolveOperationError("Failed to insert subtitle")
             if text and hasattr(subtitle, "SetClipProperty"):
@@ -405,8 +406,9 @@ def register_tools(app):
                     timeline = project.GetCurrentTimeline()
                     if not timeline:
                         raise ResolveOperationError("No timeline is currently open")
-                if hasattr(timeline, "InsertSubtitle"):
-                    subtitle = timeline.InsertSubtitle(track_index, name, start_frame, end_frame)
+                _insert = getattr(timeline, "InsertSubtitle", None)
+                if callable(_insert):
+                    subtitle = _insert(track_index, name, start_frame, end_frame)
                     if text and subtitle and hasattr(subtitle, "SetClipProperty"):
                         subtitle.SetClipProperty("Text", text)
                     return {
@@ -484,7 +486,7 @@ def register_tools(app):
                     timeline = project.GetCurrentTimeline()
                     if not timeline:
                         raise ResolveOperationError("No timeline is currently open")
-                if not hasattr(timeline, "InsertSubtitle"):
+                if not callable(getattr(timeline, "InsertSubtitle", None)):
                     raise ResolveOperationError("InsertSubtitle not available")
 
                 def _ts_to_frames(ts_str):

@@ -496,8 +496,9 @@ async def add_marker_impl(
             logger.warning(f"Unknown marker color '{color}', defaulting to Blue")
             color = "Blue"
 
-        if hasattr(timeline, "AddMarker"):
-            timeline.AddMarker(frame, color, name, note, duration)
+        _add_marker = getattr(timeline, "AddMarker", None)
+        if callable(_add_marker):
+            _add_marker(frame, color, name, note, duration)
         else:
             raise ResolveOperationError("Timeline does not support AddMarker (API version too old)")
 
@@ -645,8 +646,9 @@ async def add_keyframe_impl(
         if not current_clip:
             raise ResolveOperationError("No clip is currently selected")
 
-        if hasattr(current_clip, "AddKeyframe"):
-            current_clip.AddKeyframe(property_name, frame, value)
+        _add_keyframe = getattr(current_clip, "AddKeyframe", None)
+        if callable(_add_keyframe):
+            _add_keyframe(property_name, frame, value)
         else:
             raise ResolveOperationError("Clip does not support AddKeyframe (API version too old)")
 

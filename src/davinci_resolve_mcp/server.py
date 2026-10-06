@@ -265,6 +265,17 @@ api_app.add_middleware(
 api_app.include_router(api_router, prefix="/api/v1")
 
 
+@api_app.get("/")
+async def api_root() -> dict[str, Any]:
+    """Service banner for humans and smoke probes."""
+    return {
+        "service": "DaVinci Resolve MCP Server",
+        "version": "1.0.0",
+        "health": "/api/v1/health",
+        "docs": "/docs",
+    }
+
+
 # Note: Server initialization is handled in main.py and the MCP command
 
 

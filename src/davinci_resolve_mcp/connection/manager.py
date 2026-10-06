@@ -86,7 +86,10 @@ class ResolveConnectionManager:
                     if not self.environment.check_resolve_running():
                         raise ResolveNotRunningError("DaVinci Resolve is not running")
 
-                    import DaVinciResolveScript as dvr_script
+                    try:
+                        import DaVinciResolveScript as dvr_script
+                    except ImportError as e:
+                        raise ResolveConnectionError(f"Cannot import DaVinciResolveScript: {e}") from e
 
                     self.resolve = dvr_script.scriptapp("Resolve")
                     if not self.resolve:
@@ -97,6 +100,9 @@ class ResolveConnectionManager:
                         )
 
                     self.project_manager = self.resolve.GetProjectManager()
+                    if not self.project_manager:
+                        raise ResolveConnectionError("Failed to get project manager")
+                    self.current_project = self.project_manager.GetCurrentProject()
                     self.connection_status = ConnectionState.CONNECTED
                     self.last_connection_check = time.time()
                     logger.info("Connected to DaVinci Resolve")
@@ -106,6 +112,8 @@ class ResolveConnectionManager:
                     self.connection_status = ConnectionState.ERROR
                     raise
                 except Exception as e:
+                    # Includes ResolveConnectionError from the guards above:
+                    # surfaced uniformly as "Failed to connect: <cause>".
                     last_error = e
                     self.connection_status = ConnectionState.ERROR
                     if attempt < max_retries:
@@ -113,6 +121,26 @@ class ResolveConnectionManager:
                         await asyncio.sleep(retry_delay)
 
             raise ResolveConnectionError(f"Failed to connect: {last_error}" if last_error else "Failed to connect")
+
+    async def disconnect(self) -> bool:
+        """
+        Disconnect from DaVinci Resolve: save the current project (best effort)
+        and reset all connection state. Never raises on an idle manager.
+        """
+        try:
+            if self.current_project:
+                try:
+                    self.current_project.SaveProject()
+                except Exception as e:
+                    logger.warning(f"Could not save project on disconnect: {e}")
+            self.resolve = None
+            self.project_manager = None
+            self.current_project = None
+            self.connection_status = ConnectionState.DISCONNECTED
+            return True
+        except Exception as e:
+            logger.error(f"Failed to disconnect: {e}")
+            return False
 
     async def ensure_connection(self) -> bool:
         """
@@ -369,24 +397,38 @@ class ResolveConnectionPool:
         self.max_connections = max_connections
         self.connections: dict[str, ResolveConnectionManager] = {}
         self.connection_queue = asyncio.Queue()
+        self._permits_seeded = False
+
+    def _seed_permits(self) -> None:
+        """Lazily fill the permit queue (once): one token per max slot."""
+        if not self._permits_seeded:
+            for _ in range(self.max_connections):
+                self.connection_queue.put_nowait(True)
+            self._permits_seeded = True
 
     async def get_connection(self, connection_id: str = "default") -> ResolveConnectionManager:
         """
         Get a connection from the pool.
 
-        Args:
-            connection_id: Identifier for the connection
-
-        Returns:
-            ResolveConnectionManager: Connection manager instance
+        Raises ResolveConnectionError immediately when the pool is exhausted
+        (never blocks: blocking here hung callers with an empty queue).
         """
-        if connection_id not in self.connections:
-            if len(self.connections) >= self.max_connections:
-                # Wait for a connection to become available
-                await self.connection_queue.get()
+        if connection_id in self.connections:
+            return self.connections[connection_id]
 
-            # Create new connection
-            self.connections[connection_id] = ResolveConnectionManager(self.config)
+        if len(self.connections) >= self.max_connections:
+            raise ResolveConnectionError("Connection pool exhausted")
+
+        self._seed_permits()
+        try:
+            self.connection_queue.get_nowait()
+        except asyncio.QueueEmpty:
+            raise ResolveConnectionError("Connection pool exhausted") from None
+
+        # Create new connection
+        manager = ResolveConnectionManager(self.config)
+        await manager.connect()
+        self.connections[connection_id] = manager
 
         return self.connections[connection_id]
 
@@ -398,13 +440,22 @@ class ResolveConnectionPool:
             connection_id: Identifier for the connection to release
         """
         if connection_id in self.connections:
-            await self.connection_queue.put(connection_id)
+            del self.connections[connection_id]
+            self.connection_queue.put_nowait(True)
 
     async def close_all_connections(self) -> None:
         """Close all connections in the pool."""
         for connection in self.connections.values():
             await connection.disconnect()
         self.connections.clear()
+        # Restore a full set of permits
+        while not self.connection_queue.empty():
+            try:
+                self.connection_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+        self._permits_seeded = False
+        self._seed_permits()
 
     async def close(self) -> None:
         """Release all pooled connection managers."""
