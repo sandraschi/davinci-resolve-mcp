@@ -1,4 +1,33 @@
 
+## [Unreleased] - 2026-10-06 (follow-up)
+
+### Fixed (assfix follow-up — deferred list)
+- Test suite 0 -> 94/94 green: FastMCP 3.x migration (call_tool helper,
+  api_app TestClient), connection deadlock fixed (pool raised instead of
+  blocking forever), connect hardening (import guard, PM validation,
+  current_project), new `disconnect()`, 8 missing REST routes added
+  (projects POST/settings, media import/list/folders/metadata),
+  impl/wrapper unification (list, metadata, import keys, LoadProject-per-entry
+  removed), model positivity constraints, Windows mkstemp fix
+- Docstrings: all 9 portmanteau tools Annotated+Field with ## Return Format /
+  ## Examples; real `output_schema`; 3 MCP prompts + 2 resources
+  (`skill://`, `resolve://status`); `/llm/chat` + `/api/chat` (live-proven
+  against Ollama, incl. NDJSON-tolerant parsing for thinking models)
+- Frontend: every page >=3 data-testid; onboarding cue; backend-status hook
+  (Tauri event + backoff poll) + topbar dot; skill-first streaming chat with
+  personalities/examples/export/clear/persistence; Zustand LLM store + GPU
+  opportunity prompt; Skills + Inbox pages; projects dict-shape crash fixed;
+  10843 default port; fake KPIs removed; P4 contrast pass
+- Tooling: Playwright scaffold + e2e recipe, `just e2e`, pyright in dev deps,
+  coverage enforced in addopts (36% vs 30% floor), README sections
+- hooks.nsh: verified present at native/windows/ (earlier flag was a bad probe path)
+
+### Deferred (blocked or follow-up scope)
+- pyright: 198 errors across 12 files (installed, runnable; dedicated type pass)
+- MCPB 3-4-100 prompts (content work: system 793 -> 3000w, user.md, examples.json)
+- useZoom keyboard shortcuts; Playwright browser install (CI step)
+- native/resources/*.exe: needs Git LFS or release-asset decision (hook blocks >5MB)
+
 ## [Unreleased] - 2026-10-06
 
 ### Fixed (assfix 2026-10-06)
