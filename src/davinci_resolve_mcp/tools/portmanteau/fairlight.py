@@ -7,6 +7,8 @@ Consolidates Fairlight (DAW) operations: open page, tracks, mute, solo, volume, 
 import logging
 from typing import Any, Literal
 
+from fastmcp.tools.tool import ToolAnnotations
+
 from ..fairlight_tools import (
     fairlight_get_buses_impl,
     fairlight_get_timeline_tracks_impl,
@@ -22,7 +24,7 @@ from ..fairlight_tools import (
 logger = logging.getLogger(__name__)
 
 
-_MUTATING = {}
+_MUTATING = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
 
 
 def setup_fairlight_portmanteau(app):

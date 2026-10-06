@@ -7,10 +7,12 @@ Consolidates media pool operations into a single tool.
 import logging
 from typing import Any, Literal
 
+from fastmcp.tools.tool import ToolAnnotations
+
 logger = logging.getLogger(__name__)
 
 
-_MUTATING = {}
+_MUTATING = ToolAnnotations(readOnlyHint=False, destructiveHint=False)
 
 
 def setup_media_portmanteau(app):

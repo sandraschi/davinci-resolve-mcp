@@ -371,10 +371,12 @@ async def api_diagnostics():
 
 @router.post("/shutdown")
 async def api_shutdown():
-    """Gracefully shut down the server."""
+    """Gracefully shut down the server (respond 200, then exit after flush)."""
     import os
+    import threading
 
-    os._exit(0)
+    threading.Timer(0.5, lambda: os._exit(0)).start()
+    return {"success": True, "message": "Shutting down"}
 
 
 @router.post("/host/launch")
@@ -393,3 +395,164 @@ async def launch_host():
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+# ── Fleet standard surface ────────────────────────────────────────────
+
+
+_TOOL_REGISTRY = [
+    {"name": "resolve_project", "actions": ["create", "open", "list", "get_settings", "update_settings"]},
+    {"name": "resolve_media", "actions": ["import", "list", "create_folder", "get_metadata"]},
+    {
+        "name": "resolve_timeline",
+        "actions": [
+            "create",
+            "info",
+            "add_clip",
+            "cut",
+            "set_playhead",
+            "add_marker",
+            "get_markers",
+            "delete_marker",
+            "add_keyframe",
+            "get_keyframes",
+            "delete_keyframe",
+            "set_clip_property",
+        ],
+    },
+    {
+        "name": "resolve_color",
+        "actions": [
+            "create_node",
+            "apply_lut",
+            "set_color_space",
+            "adjust_wheels",
+            "grab_still",
+            "get_stills",
+            "apply_grade_from_still",
+        ],
+    },
+    {"name": "resolve_render", "actions": ["timeline", "presets", "with_preset", "job_status"]},
+    {"name": "resolve_audio", "actions": ["get_tracks", "add_effect", "adjust_levels", "normalize"]},
+    {
+        "name": "resolve_fairlight",
+        "actions": [
+            "open_page",
+            "get_tracks",
+            "set_mute",
+            "set_solo",
+            "set_volume",
+            "track_eq",
+            "track_send",
+            "get_buses",
+            "track_automation",
+        ],
+    },
+    {"name": "resolve_subtitle", "actions": ["add", "get", "edit", "delete", "import_srt", "export_srt"]},
+    {"name": "resolve_system", "actions": ["info", "status", "health", "help", "host_status", "host_launch"]},
+]
+
+
+@router.get("/capabilities")
+async def api_capabilities():
+    """Standard fleet capability shape for the webapp and IDE clients."""
+    return {
+        "status": "ok",
+        "server": "DaVinci Resolve MCP",
+        "version": "0.1.0",
+        "transport": ["stdio", "http"],
+        "ports": {"frontend": 10842, "backend": 10843},
+        "tool_count": len(_TOOL_REGISTRY),
+        "tools": _TOOL_REGISTRY,
+        "features": {
+            "portmanteau_tools": True,
+            "agentic_workflows": True,
+            "local_llm_proxy": True,
+            "tauri_native": True,
+        },
+    }
+
+
+@router.get("/skills")
+async def api_skills():
+    """Declared skill registry (static inventory of the 9 Resolve domains).
+
+    Consumed by the Chat page on mount for skill-first prompt construction.
+    """
+    return {
+        "skills": [
+            {
+                "name": name,
+                "uri": f"skill://davinci-resolve/{name}",
+                "description": f"DaVinci Resolve {name.removeprefix('resolve_')} operations "
+                f"({', '.join(t['actions'][:4])}, ...)",
+                "operations": t["actions"],
+            }
+            for name, t in ((t["name"], t) for t in _TOOL_REGISTRY)
+        ]
+    }
+
+
+_LM_STUDIO_URL = os.getenv("LM_STUDIO_URL", "http://127.0.0.1:1234")
+
+
+async def _probe_json(url: str, timeout: float = 3.0):
+    try:
+        async with httpx.AsyncClient(timeout=timeout) as client:
+            r = await client.get(url)
+            r.raise_for_status()
+            return r.json()
+    except Exception:
+        return None
+
+
+@router.get("/llm/discover")
+async def llm_discover():
+    """Auto-detect local LLM providers (Ollama :11434, LM Studio :1234)."""
+    ollama = await _probe_json(f"{OLLAMA_URL}/api/tags")
+    lmstudio = await _probe_json(f"{_LM_STUDIO_URL}/v1/models")
+    return {
+        "providers": [
+            {"id": "ollama", "label": "Ollama", "detected": ollama is not None, "url": OLLAMA_URL},
+            {"id": "lmstudio", "label": "LM Studio", "detected": lmstudio is not None, "url": _LM_STUDIO_URL},
+        ]
+    }
+
+
+@router.get("/llm/providers")
+async def llm_providers():
+    """Provider registry: local detected flags + cloud configured flags (never key bytes)."""
+    ollama = await _probe_json(f"{OLLAMA_URL}/api/tags")
+    lmstudio = await _probe_json(f"{_LM_STUDIO_URL}/v1/models")
+    return {
+        "local": [
+            {"id": "ollama", "detected": ollama is not None, "free": True},
+            {"id": "lmstudio", "detected": lmstudio is not None, "free": True},
+        ],
+        "cloud": [
+            {"id": "openai", "configured": bool(os.getenv("OPENAI_API_KEY"))},
+            {"id": "anthropic", "configured": bool(os.getenv("ANTHROPIC_API_KEY"))},
+        ],
+    }
+
+
+@router.get("/llm/onboarding")
+async def llm_onboarding():
+    """Fresh-install starter facts + recommended path for the under-hero cue."""
+    ollama = await _probe_json(f"{OLLAMA_URL}/api/tags")
+    models = [m.get("name") for m in (ollama or {}).get("models", [])] if ollama else []
+    if models:
+        return {
+            "ready": True,
+            "recommended": {"provider": "ollama", "model": models[0]},
+            "facts": [f"Ollama detected with {len(models)} model(s). Chat is ready."],
+        }
+    return {
+        "ready": False,
+        "recommended": {"provider": "ollama", "model": None},
+        "facts": [
+            "No local LLM detected.",
+            "Install Ollama (https://ollama.com) and pull a model, e.g. `ollama pull llama3.1:8b`.",
+            "Resolve scripting works without an LLM; chat needs one.",
+        ],
+    }
