@@ -5,6 +5,7 @@ This module contains data models for managing color grading nodes, LUTs, scopes,
 and other color-related functionality in DaVinci Resolve.
 """
 
+from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
@@ -130,8 +131,8 @@ class ColorGrade(ResolveObject):
     root_node_id: str | None = Field(default=None, description="ID of the root node")
     selected_node_id: str | None = Field(default=None, description="ID of the selected node")
     version: str = Field(default="1.0", description="Version string")
-    created_at: str = Field(..., description="Creation timestamp")
-    modified_at: str = Field(..., description="Last modified timestamp")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    modified_at: datetime = Field(..., description="Last modified timestamp")
     description: str | None = Field(default=None, description="Optional description")
     tags: list[str] = Field(default_factory=list, description="List of tags")
     thumbnail: str | None = Field(default=None, description="Path to thumbnail image")

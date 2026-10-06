@@ -47,7 +47,7 @@ class MediaItem(ResolveObject):
     name: str = Field(..., description="Display name of the media item")
     file_path: str = Field(..., description="Path to the source file")
     media_type: MediaType = Field(..., description="Type of media")
-    metadata: MediaMetadata = Field(default_factory=MediaMetadata, description="Media metadata")
+    metadata: MediaMetadata | None = Field(default=None, description="Media metadata")
     in_point: TimeCode | None = Field(default=None, description="In point timecode")
     out_point: TimeCode | None = Field(default=None, description="Out point timecode")
     duration: TimeCode | None = Field(default=None, description="Duration")

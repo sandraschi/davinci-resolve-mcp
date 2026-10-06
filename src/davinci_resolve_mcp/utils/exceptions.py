@@ -5,6 +5,8 @@ This module defines custom exception classes for handling various
 error conditions in the DaVinci Resolve MCP server.
 """
 
+from typing import Any
+
 
 class DaVinciResolveMCPError(Exception):
     """Base exception for all DaVinci Resolve MCP errors."""
@@ -104,7 +106,8 @@ class TimelineNotFoundError(TimelineError):
     """Exception raised when specified timeline doesn't exist."""
 
     def __init__(self, timeline_name: str):
-        super().__init__(f"Timeline '{timeline_name}' not found", recovery_action="list_available_timelines")
+        super().__init__(f"Timeline '{timeline_name}' not found")
+        self.recovery_action = "list_available_timelines"
 
 
 class ColorGradingError(DaVinciResolveMCPError):
@@ -125,7 +128,8 @@ class RenderQueueError(RenderError):
     """Exception raised when render queue operation fails."""
 
     def __init__(self, message: str):
-        super().__init__(f"Render queue error: {message}", recovery_action="check_render_queue_state")
+        super().__init__(f"Render queue error: {message}")
+        self.recovery_action = "check_render_queue_state"
 
 
 class AudioProcessingError(DaVinciResolveMCPError):
@@ -152,7 +156,7 @@ class EnvironmentError(DaVinciResolveMCPError):
 class ValidationError(DaVinciResolveMCPError):
     """Exception raised when input validation fails."""
 
-    def __init__(self, field: str, value: any, reason: str | None = None):
+    def __init__(self, field: str, value: Any, reason: str | None = None):
         message = f"Invalid value for {field}: {value}"
         if reason:
             message += f" - {reason}"

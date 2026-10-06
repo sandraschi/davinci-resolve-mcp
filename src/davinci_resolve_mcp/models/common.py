@@ -5,7 +5,7 @@ This module contains the fundamental data types and base classes that are used t
 the DaVinci Resolve MCP system. These types provide the foundation for all other models.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import StrEnum
 from typing import Any
 
@@ -430,9 +430,11 @@ class ResolveObject(BaseModel):
     """
 
     id: str | None = Field(default=None, description="Unique identifier for the object")
-    name: str | None = Field(default=None, description="Human-readable name of the object")
-    created_at: datetime | None = Field(default=None, description="Timestamp when the object was created")
-    modified_at: datetime | None = Field(default=None, description="Timestamp when the object was last modified")
+    name: str = Field(default="", description="Human-readable name of the object")
+    created_at: datetime = Field(default_factory=datetime.now, description="Timestamp when the object was created")
+    modified_at: datetime = Field(
+        default_factory=datetime.now, description="Timestamp when the object was last modified"
+    )
 
     model_config = ConfigDict(
         extra="allow",
@@ -499,6 +501,20 @@ class TimeCode(BaseModel):
             frames -= drop_frames
 
         return frames
+
+    def _total_seconds_nominal(self) -> float:
+        """Total seconds with the frames component at nominal 30 fps.
+
+        Used only for rough durations (e.g. file-size estimates). For exact
+        frame math use to_frames(frame_rate).
+        """
+        return (self.hours * 3600) + (self.minutes * 60) + self.seconds + (self.frames / 30.0)
+
+    def __sub__(self, other: "TimeCode") -> timedelta:
+        """Timecode difference as a timedelta (frames at nominal 30 fps)."""
+        if not isinstance(other, TimeCode):
+            return NotImplemented
+        return timedelta(seconds=self._total_seconds_nominal() - other._total_seconds_nominal())
 
 
 class Resolution(BaseModel):
