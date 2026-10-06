@@ -5,9 +5,10 @@ Consolidates audio operations into a single tool.
 """
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastmcp.tools.tool import ToolAnnotations
+from pydantic import Field
 
 logger = logging.getLogger(__name__)
 
@@ -20,18 +21,26 @@ def setup_audio_portmanteau(app):
 
     @app.tool(annotations=_MUTATING)
     async def resolve_audio(
-        action: Literal["get_tracks", "add_effect", "adjust_levels", "normalize"],
-        timeline_name: str | None = None,
-        track_index: int = 1,
-        effect_type: str = "eq",
-        preset: str | None = None,
-        parameters: dict[str, Any] | None = None,
-        volume: float | None = None,
-        pan: float | None = None,
-        mute: bool | None = None,
-        solo: bool | None = None,
-        target_level: float = -23.0,
-        track_indices: list[int] | None = None,
+        action: Annotated[
+            Literal["get_tracks", "add_effect", "adjust_levels", "normalize"], Field(description="Operation to perform")
+        ],
+        timeline_name: Annotated[str | None, Field(description="Target timeline. Optional")] = None,
+        track_index: Annotated[int, Field(description="1-based track index. Used by: add_effect, adjust_levels")] = 1,
+        effect_type: Annotated[
+            str, Field(description="Effect type (eq, compressor, limiter, reverb, ...). Used by: add_effect")
+        ] = "eq",
+        preset: Annotated[str | None, Field(description="Effect preset name. Used by: add_effect. Optional")] = None,
+        parameters: Annotated[
+            dict[str, Any] | None, Field(description="Effect parameters dict. Used by: add_effect. Optional")
+        ] = None,
+        volume: Annotated[float | None, Field(description="Volume level (0.0-1.0). Used by: adjust_levels")] = None,
+        pan: Annotated[float | None, Field(description="Pan position (-1.0 to 1.0). Used by: adjust_levels")] = None,
+        mute: Annotated[bool | None, Field(description="Mute track. Used by: adjust_levels")] = None,
+        solo: Annotated[bool | None, Field(description="Solo track. Used by: adjust_levels")] = None,
+        target_level: Annotated[float, Field(description="Target LUFS level. Used by: normalize")] = -23.0,
+        track_indices: Annotated[
+            list[int] | None, Field(description="Specific tracks to normalize. Used by: normalize")
+        ] = None,
     ) -> dict[str, Any]:
         """
         Comprehensive audio processing for DaVinci Resolve.
@@ -44,38 +53,16 @@ def setup_audio_portmanteau(app):
         - adjust_levels: Adjust track levels (requires: track_index)
         - normalize: Normalize audio levels
 
-        Args:
-            action: Operation to perform (get_tracks, add_effect, adjust_levels, normalize)
-            timeline_name: Target timeline. Optional.
-            track_index: Track index (1-based). Default: 1
-            effect_type: Effect type (eq, compressor, limiter, reverb, etc). Default: eq
-            preset: Effect preset name. Optional.
-            parameters: Effect parameters dict. Optional.
-            volume: Volume level (0.0-1.0). Used by: adjust_levels
-            pan: Pan position (-1.0 to 1.0). Used by: adjust_levels
-            mute: Mute track. Used by: adjust_levels
-            solo: Solo track. Used by: adjust_levels
-            target_level: Target LUFS level. Used by: normalize. Default: -23.0
-            track_indices: Specific tracks to normalize. Used by: normalize
+        ## Return Format
+        {"status": "success", "message": "Human-readable result", ...}
+        {"status": "error", "message": "Human-readable failure reason"}
 
-        Returns:
-            Dict with operation results
-
-        Examples:
-            # Get audio tracks
-            resolve_audio("get_tracks")
-
-            # Add EQ effect
-            resolve_audio("add_effect", track_index=1, effect_type="eq")
-
-            # Adjust levels
-            resolve_audio("adjust_levels", track_index=1, volume=0.8, pan=-0.5)
-
-            # Normalize all tracks
-            resolve_audio("normalize", target_level=-23.0)
-
-            # Normalize specific tracks
-            resolve_audio("normalize", track_indices=[1, 2, 3])
+        ## Examples
+        resolve_audio("get_tracks")
+        resolve_audio("add_effect", track_index=1, effect_type="eq")
+        resolve_audio("adjust_levels", track_index=1, volume=0.8, pan=-0.5)
+        resolve_audio("normalize", target_level=-23.0)
+        resolve_audio("normalize", track_indices=[1, 2, 3])
         """
         from ..audio_tools import (
             AudioEffectType,

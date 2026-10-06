@@ -5,9 +5,10 @@ Consolidates timeline editing operations into a single tool.
 """
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastmcp.tools.tool import ToolAnnotations
+from pydantic import Field
 
 logger = logging.getLogger(__name__)
 
@@ -20,37 +21,47 @@ def setup_timeline_portmanteau(app):
 
     @app.tool(annotations=_MUTATING)
     async def resolve_timeline(
-        action: Literal[
-            "create",
-            "info",
-            "add_clip",
-            "cut",
-            "set_playhead",
-            "add_marker",
-            "get_markers",
-            "delete_marker",
-            "add_keyframe",
-            "get_keyframes",
-            "delete_keyframe",
-            "set_clip_property",
+        action: Annotated[
+            Literal[
+                "create",
+                "info",
+                "add_clip",
+                "cut",
+                "set_playhead",
+                "add_marker",
+                "get_markers",
+                "delete_marker",
+                "add_keyframe",
+                "get_keyframes",
+                "delete_keyframe",
+                "set_clip_property",
+            ],
+            Field(description="Operation to perform"),
         ],
-        name: str | None = None,
-        timeline_name: str | None = None,
-        frame_rate: float = 24.0,
-        width: int = 1920,
-        height: int = 1080,
-        start_frame: int = 0,
-        clip_path: str | None = None,
-        track_index: int = 1,
-        track_type: str = "video",
-        frame: int | None = None,
+        name: Annotated[str | None, Field(description="Timeline or marker name. Required for: create")] = None,
+        timeline_name: Annotated[str | None, Field(description="Target timeline. Optional")] = None,
+        frame_rate: Annotated[float, Field(description="Frame rate for new timeline. Used by: create")] = 24.0,
+        width: Annotated[int, Field(description="Width in pixels. Used by: create")] = 1920,
+        height: Annotated[int, Field(description="Height in pixels. Used by: create")] = 1080,
+        start_frame: Annotated[int, Field(description="Start frame. Used by: create")] = 0,
+        clip_path: Annotated[str | None, Field(description="Clip file path. Required for: add_clip")] = None,
+        track_index: Annotated[int, Field(description="1-based track index. Used by: add_clip, cut")] = 1,
+        track_type: Annotated[str, Field(description='"video" or "audio". Used by: add_clip, cut')] = "video",
+        frame: Annotated[
+            int | None, Field(description="Frame number. Required for: cut, set_playhead, markers, keyframes")
+        ] = None,
         # Marker params
-        color: str = "Blue",
-        note: str = "",
-        duration: int = 1,
+        color: Annotated[str, Field(description="Marker color. Used by: add_marker")] = "Blue",
+        note: Annotated[str, Field(description="Marker note. Used by: add_marker")] = "",
+        duration: Annotated[int, Field(description="Marker duration in frames. Used by: add_marker")] = 1,
         # Keyframe params
-        property_name: str | None = None,
-        value: float | None = None,
+        property_name: Annotated[
+            str | None,
+            Field(description="Clip property (Speed, Zoom, ...). Required for: keyframes, set_clip_property"),
+        ] = None,
+        value: Annotated[
+            float | None, Field(description="Keyframe or property value. Required for: add_keyframe, set_clip_property")
+        ] = None,
     ) -> dict[str, Any]:
         """
         Comprehensive timeline editing for DaVinci Resolve.

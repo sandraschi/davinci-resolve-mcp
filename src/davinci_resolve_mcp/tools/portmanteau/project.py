@@ -5,9 +5,10 @@ Consolidates project management operations into a single tool with conversationa
 """
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastmcp.tools.tool import ToolAnnotations
+from pydantic import Field
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +21,18 @@ def setup_project_portmanteau(app):
 
     @app.tool(annotations=_MUTATING)
     async def resolve_project(
-        action: Literal["create", "open", "list", "get_settings", "update_settings"],
-        name: str | None = None,
-        frame_rate: float = 24.0,
-        width: int = 1920,
-        height: int = 1080,
-        template: str | None = None,
-        settings: dict[str, Any] | None = None,
+        action: Annotated[
+            Literal["create", "open", "list", "get_settings", "update_settings"],
+            Field(description="Operation to perform"),
+        ],
+        name: Annotated[str | None, Field(description="Project name. Required for: create, open")] = None,
+        frame_rate: Annotated[float, Field(description="Frame rate for new project. Used by: create")] = 24.0,
+        width: Annotated[int, Field(description="Width in pixels. Used by: create")] = 1920,
+        height: Annotated[int, Field(description="Height in pixels. Used by: create")] = 1080,
+        template: Annotated[str | None, Field(description="Template name. Used by: create. Optional")] = None,
+        settings: Annotated[
+            dict[str, Any] | None, Field(description="Settings dict. Required for: update_settings")
+        ] = None,
     ) -> dict[str, Any]:
         """
         Comprehensive project management for DaVinci Resolve.
@@ -40,33 +46,16 @@ def setup_project_portmanteau(app):
         - get_settings: Get current project settings
         - update_settings: Update project settings (requires: settings dict)
 
-        Args:
-            action: Operation to perform (create, open, list, get_settings, update_settings)
-            name: Project name. Required for: create, open
-            frame_rate: Frame rate for new project. Used by: create. Default: 24.0
-            width: Width in pixels. Used by: create. Default: 1920
-            height: Height in pixels. Used by: create. Default: 1080
-            template: Template name. Used by: create. Optional.
-            settings: Settings dict. Required for: update_settings
+        ## Return Format
+        {"success": true, "message": "Opened project 'X' successfully", ...}
+        {"success": false, "error": "<code>", "message": "Human-readable failure reason"}
 
-        Returns:
-            Dict with conversational response and operation results
-
-        Examples:
-            # Create 4K project
-            resolve_project("create", name="My Film", width=3840, height=2160)
-
-            # Open existing project
-            resolve_project("open", name="Client Video")
-
-            # List all projects
-            resolve_project("list")
-
-            # Get current settings
-            resolve_project("get_settings")
-
-            # Update settings
-            resolve_project("update_settings", settings={"timelineFrameRate": "30"})
+        ## Examples
+        resolve_project("create", name="My Film", width=3840, height=2160)
+        resolve_project("open", name="Client Video")
+        resolve_project("list")
+        resolve_project("get_settings")
+        resolve_project("update_settings", settings={"timelineFrameRate": "30"})
         """
         from ..project_tools import (
             create_project_impl as create_project,

@@ -5,9 +5,10 @@ Consolidates media pool operations into a single tool.
 """
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastmcp.tools.tool import ToolAnnotations
+from pydantic import Field
 
 logger = logging.getLogger(__name__)
 
@@ -20,14 +21,18 @@ def setup_media_portmanteau(app):
 
     @app.tool(annotations=_MUTATING)
     async def resolve_media(
-        action: Literal["import", "list", "create_folder", "get_metadata"],
-        paths: list[str] | None = None,
-        folder_path: str = "",
-        target_folder: str | None = None,
-        as_sequence: bool = False,
-        force_framerate: float | None = None,
-        force_resolution: str | None = None,
-        clip_path: str | None = None,
+        action: Annotated[
+            Literal["import", "list", "create_folder", "get_metadata"], Field(description="Operation to perform")
+        ],
+        paths: Annotated[list[str] | None, Field(description="File paths to import. Required for: import")] = None,
+        folder_path: Annotated[str, Field(description="Folder path in media pool. Used by: list, create_folder")] = "",
+        target_folder: Annotated[str | None, Field(description="Target folder for imports. Used by: import")] = None,
+        as_sequence: Annotated[bool, Field(description="Treat as image sequence. Used by: import")] = False,
+        force_framerate: Annotated[float | None, Field(description="Force frame rate. Used by: import")] = None,
+        force_resolution: Annotated[str | None, Field(description="Force resolution (WxH). Used by: import")] = None,
+        clip_path: Annotated[
+            str | None, Field(description="Path to clip for metadata. Required for: get_metadata")
+        ] = None,
     ) -> dict[str, Any]:
         """
         Comprehensive media pool management for DaVinci Resolve.
@@ -40,34 +45,16 @@ def setup_media_portmanteau(app):
         - create_folder: Create folder in media pool (requires: folder_path)
         - get_metadata: Get clip metadata (requires: clip_path)
 
-        Args:
-            action: Operation to perform (import, list, create_folder, get_metadata)
-            paths: File paths to import. Required for: import
-            folder_path: Folder path in media pool. Used by: list, create_folder
-            target_folder: Target folder for imports. Used by: import
-            as_sequence: Treat as image sequence. Used by: import. Default: False
-            force_framerate: Force frame rate. Used by: import
-            force_resolution: Force resolution (WxH). Used by: import
-            clip_path: Path to clip for metadata. Required for: get_metadata
+        ## Return Format
+        {"status": "success", "message": "Human-readable result", ...}
+        {"status": "error", "message": "Human-readable failure reason"}
 
-        Returns:
-            Dict with operation results
-
-        Examples:
-            # Import media files
-            resolve_media("import", paths=["C:/Videos/clip1.mp4", "C:/Videos/clip2.mp4"])
-
-            # Import to specific folder
-            resolve_media("import", paths=["C:/Videos/raw.mp4"], target_folder="Raw Footage")
-
-            # List media in folder
-            resolve_media("list", folder_path="Raw Footage")
-
-            # Create folder
-            resolve_media("create_folder", folder_path="Assets/Music")
-
-            # Get metadata
-            resolve_media("get_metadata", clip_path="C:/Videos/clip1.mp4")
+        ## Examples
+        resolve_media("import", paths=["C:/Videos/clip1.mp4", "C:/Videos/clip2.mp4"])
+        resolve_media("import", paths=["C:/Videos/raw.mp4"], target_folder="Raw Footage")
+        resolve_media("list", folder_path="Raw Footage")
+        resolve_media("create_folder", folder_path="Assets/Music")
+        resolve_media("get_metadata", clip_path="C:/Videos/clip1.mp4")
         """
         from ..media_tools import (
             create_folder_impl as create_folder,

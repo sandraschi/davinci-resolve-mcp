@@ -5,9 +5,10 @@ Consolidates color grading operations into a single tool.
 """
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastmcp.tools.tool import ToolAnnotations
+from pydantic import Field
 
 logger = logging.getLogger(__name__)
 
@@ -20,32 +21,50 @@ def setup_color_portmanteau(app):
 
     @app.tool(annotations=_MUTATING)
     async def resolve_color(
-        action: Literal[
-            "create_node",
-            "apply_lut",
-            "set_color_space",
-            "adjust_wheels",
-            "grab_still",
-            "get_stills",
-            "apply_grade_from_still",
+        action: Annotated[
+            Literal[
+                "create_node",
+                "apply_lut",
+                "set_color_space",
+                "adjust_wheels",
+                "grab_still",
+                "get_stills",
+                "apply_grade_from_still",
+            ],
+            Field(description="Operation to perform"),
         ],
-        node_type: str = "primary",
-        node_name: str | None = None,
-        parent_node: str | None = None,
-        timeline_name: str | None = None,
-        clip_path: str | None = None,
-        lut_path: str | None = None,
-        intensity: float = 1.0,
-        input_color_space: str | None = None,
-        output_color_space: str | None = None,
-        input_gamma: str | None = None,
-        output_gamma: str | None = None,
-        lift: dict[str, float] | None = None,
-        gamma: dict[str, float] | None = None,
-        gain: dict[str, float] | None = None,
-        offset: dict[str, float] | None = None,
-        still_name: str | None = None,
-        still_index: int = 0,
+        node_type: Annotated[
+            str,
+            Field(description="Node type (primary, log, hdr, curves, qualifier, window, lut). Used by: create_node"),
+        ] = "primary",
+        node_name: Annotated[str | None, Field(description="Name for the node. Optional")] = None,
+        parent_node: Annotated[str | None, Field(description="Parent node to connect to. Optional")] = None,
+        timeline_name: Annotated[str | None, Field(description="Target timeline. Optional")] = None,
+        clip_path: Annotated[str | None, Field(description="Path to clip. Required for: apply_lut")] = None,
+        lut_path: Annotated[str | None, Field(description="Path to LUT file. Required for: apply_lut")] = None,
+        intensity: Annotated[float, Field(description="LUT intensity (0.0-1.0)")] = 1.0,
+        input_color_space: Annotated[
+            str | None, Field(description="Input color space. Used by: set_color_space")
+        ] = None,
+        output_color_space: Annotated[
+            str | None, Field(description="Output color space. Used by: set_color_space")
+        ] = None,
+        input_gamma: Annotated[str | None, Field(description="Input gamma. Used by: set_color_space")] = None,
+        output_gamma: Annotated[str | None, Field(description="Output gamma. Used by: set_color_space")] = None,
+        lift: Annotated[
+            dict[str, float] | None, Field(description="Lift adjustments {r, g, b, y}. Used by: adjust_wheels")
+        ] = None,
+        gamma: Annotated[
+            dict[str, float] | None, Field(description="Gamma adjustments {r, g, b, y}. Used by: adjust_wheels")
+        ] = None,
+        gain: Annotated[
+            dict[str, float] | None, Field(description="Gain adjustments {r, g, b, y}. Used by: adjust_wheels")
+        ] = None,
+        offset: Annotated[
+            dict[str, float] | None, Field(description="Offset adjustments {r, g, b, y}. Used by: adjust_wheels")
+        ] = None,
+        still_name: Annotated[str | None, Field(description="Still name. Used by: grab_still. Optional")] = None,
+        still_index: Annotated[int, Field(description="Gallery still index. Required for: apply_grade_from_still")] = 0,
     ) -> dict[str, Any]:
         """
         Comprehensive color grading for DaVinci Resolve.
@@ -61,36 +80,14 @@ def setup_color_portmanteau(app):
         - get_stills: List gallery stills
         - apply_grade_from_still: Apply grade from still (requires: still_index)
 
-        Args:
-            action: Operation to perform (create_node, apply_lut, set_color_space, adjust_wheels)
-            node_type: Node type (primary, log, hdr, curves, qualifier, window, lut). Default: primary
-            node_name: Name for the node. Optional.
-            parent_node: Parent node to connect to. Optional.
-            timeline_name: Target timeline. Optional.
-            clip_path: Path to clip. Required for: apply_lut
-            lut_path: Path to LUT file. Required for: apply_lut
-            intensity: LUT intensity (0.0-1.0). Default: 1.0
-            input_color_space: Input color space. Used by: set_color_space
-            output_color_space: Output color space. Used by: set_color_space
-            input_gamma: Input gamma. Used by: set_color_space
-            output_gamma: Output gamma. Used by: set_color_space
-            lift: Lift adjustments {r, g, b, y}. Used by: adjust_wheels
-            gamma: Gamma adjustments {r, g, b, y}. Used by: adjust_wheels
-            gain: Gain adjustments {r, g, b, y}. Used by: adjust_wheels
-            offset: Offset adjustments {r, g, b, y}. Used by: adjust_wheels
+        ## Return Format
+        {"status": "success", "message": "Human-readable result", ...}
+        {"status": "error", "message": "Human-readable failure reason"}
 
-        Returns:
-            Dict with operation results
-
-        Examples:
-            # Create primary color node
-            resolve_color("create_node", node_type="primary", node_name="Base Grade")
-
-            # Apply LUT
-            resolve_color("apply_lut", clip_path="C:/clip.mp4", lut_path="C:/LUTs/Film.cube")
-
-            # Adjust color wheels
-            resolve_color("adjust_wheels", lift={"r": 0.1, "g": 0.0, "b": -0.1})
+        ## Examples
+        resolve_color("create_node", node_type="primary", node_name="Base Grade")
+        resolve_color("apply_lut", clip_path="C:/clip.mp4", lut_path="C:/LUTs/Film.cube")
+        resolve_color("adjust_wheels", lift={"r": 0.1, "g": 0.0, "b": -0.1})
         """
         from ..color_tools import (
             ColorCorrectionType,
