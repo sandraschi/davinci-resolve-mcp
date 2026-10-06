@@ -4,20 +4,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export function Actions() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="actions-page">
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-white">Production Actions</h2>
-        <p className="text-slate-400">Rapid timeline and media management</p>
+        <p className="text-slate-300">Rapid timeline and media management</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="border-slate-800 bg-slate-950/50">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3" data-testid="actions-grid">
+        <Card className="border-slate-800 bg-slate-950/50" data-testid="action-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white text-base">
               <Play className="h-4 w-4 text-emerald-400" />
               Render Active Timeline
             </CardTitle>
-            <CardDescription className="text-xs text-slate-400">
+            <CardDescription className="text-sm text-slate-300">
               Queue the current timeline to the Render Queue immediately.
             </CardDescription>
           </CardHeader>
@@ -26,13 +26,13 @@ export function Actions() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800 bg-slate-950/50">
+        <Card className="border-slate-800 bg-slate-950/50" data-testid="action-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white text-base">
               <Scissors className="h-4 w-4 text-amber-400" />
               Auto-Cut Scene
             </CardTitle>
-            <CardDescription className="text-xs text-slate-400">
+            <CardDescription className="text-sm text-slate-300">
               Apply scene cut detection to the selected clip.
             </CardDescription>
           </CardHeader>
@@ -43,13 +43,13 @@ export function Actions() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800 bg-slate-950/50">
+        <Card className="border-slate-800 bg-slate-950/50" data-testid="action-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white text-base">
               <RefreshCw className="h-4 w-4 text-blue-400" />
               Relink Media
             </CardTitle>
-            <CardDescription className="text-xs text-slate-400">
+            <CardDescription className="text-sm text-slate-300">
               Scan project paths and relink missing assets from source disk.
             </CardDescription>
           </CardHeader>

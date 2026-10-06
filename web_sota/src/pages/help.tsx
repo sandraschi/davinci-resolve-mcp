@@ -5,16 +5,16 @@ const API_BASE = "/api/v1";
 
 export function Help() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-testid="help-page">
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
           <HelpCircle className="h-7 w-7 text-blue-500" />
           Help & Documentation
         </h2>
-        <p className="text-slate-400 mt-1">Webapp, MCP server, DaVinci Resolve, and Fairlight</p>
+        <p className="text-slate-300 mt-1">Webapp, MCP server, DaVinci Resolve, and Fairlight</p>
       </div>
 
-      <Card className="border-slate-800 bg-slate-950/50">
+      <Card className="border-slate-800 bg-slate-950/50" data-testid="help-webapp">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Globe className="h-5 w-5 text-blue-400" />
@@ -62,7 +62,7 @@ export function Help() {
         </CardContent>
       </Card>
 
-      <Card className="border-slate-800 bg-slate-950/50">
+      <Card className="border-slate-800 bg-slate-950/50" data-testid="help-mcp">
         <CardHeader>
           <CardTitle className="text-white flex items-center gap-2">
             <Server className="h-5 w-5 text-blue-400" />

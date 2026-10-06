@@ -16,7 +16,7 @@ const LEVEL_COLORS: Record<string, string> = {
   ERROR: "text-red-400 bg-red-950/40",
   WARNING: "text-yellow-400 bg-yellow-950/40",
   INFO: "text-blue-300 bg-blue-950/30",
-  DEBUG: "text-slate-500 bg-slate-900/30",
+  DEBUG: "text-slate-400 bg-slate-900/30",
 };
 
 export default function Logging() {
@@ -131,8 +131,8 @@ export default function Logging() {
   const currentPage = Math.floor(offset / limit) + 1;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="space-y-4" data-testid="logs-page">
+      <div className="flex flex-wrap items-center gap-3" data-testid="logs-controls">
         <h2 className="text-lg font-bold text-slate-200 mr-2">Logs</h2>
 
         <select
@@ -168,6 +168,7 @@ export default function Logging() {
         </select>
 
         <input
+          data-testid="search-logs"
           className="h-8 w-48 rounded border border-slate-700 bg-slate-800 px-2 text-xs text-slate-300 placeholder:text-slate-500"
           placeholder="Search..."
           value={search}

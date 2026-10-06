@@ -390,18 +390,18 @@ export function Workflows() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="workflows-page">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
             <Brain className="h-7 w-7 text-blue-400" />
             AI Workflows
           </h2>
-          <p className="text-slate-400 mt-1">Agentic orchestration patterns for DaVinci Resolve automation</p>
+          <p className="text-slate-300 mt-1">Agentic orchestration patterns for DaVinci Resolve automation</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" data-testid="workflows-connection">
           {connectionStatus === "loading" ? (
-            <Badge className="border-slate-700 text-slate-400">
+            <Badge className="border-slate-700 text-slate-300">
               <Loader2 className="h-3 w-3 mr-1 animate-spin" /> Checking
             </Badge>
           ) : connectionStatus === "connected" ? (
@@ -417,7 +417,7 @@ export function Workflows() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-testid="workflows-stats">
         {[
           {
             label: "Portmanteau Tools",
