@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useLlmStore } from "@/store/llm";
 
 const API_BASE = "/api/v1";
-const CHAT_MODEL_KEY = "resolve-mcp-chat-model";
 const CHAT_PERSONALITY_KEY = "resolve-mcp-chat-personality";
 const CHAT_HISTORY_KEY = "resolve-mcp-chat-history";
 const HISTORY_CAP = 100;
@@ -14,11 +14,6 @@ interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
-}
-
-interface ModelsResponse {
-  models: string[];
-  error?: string;
 }
 
 interface Skill {
@@ -59,53 +54,18 @@ function loadHistory(): Message[] {
 export function Chat() {
   const [messages, setMessages] = useState<Message[]>(loadHistory);
   const [input, setInput] = useState("");
-  const [models, setModels] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>("");
+  const { models, model: selectedModel, setModel, refresh, probing: loadingModels } = useLlmStore();
   const [personality, setPersonality] = useState<string>(() => localStorage.getItem(CHAT_PERSONALITY_KEY) || "Editor");
   const [customPersonality, setCustomPersonality] = useState("");
   const [skills, setSkills] = useState<Skill[]>([]);
   const [providerOk, setProviderOk] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(false);
-  const [loadingModels, setLoadingModels] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const loadModels = async () => {
-    setLoadingModels(true);
-    setError(null);
-    const maxAttempts = 3;
-    const delayMs = 2000;
-    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      try {
-        const res = await fetch(`${API_BASE}/llm/models`);
-        const data: ModelsResponse = await res.json();
-        setModels(data.models || []);
-        setError(data.error || null);
-        const saved = localStorage.getItem(CHAT_MODEL_KEY);
-        if (data.models?.length) {
-          if (saved && data.models.includes(saved)) {
-            setSelectedModel(saved);
-          } else {
-            setSelectedModel(data.models[0]);
-            localStorage.setItem(CHAT_MODEL_KEY, data.models[0]);
-          }
-        }
-        break;
-      } catch (e) {
-        const msg = e instanceof Error ? e.message : "Failed to load models";
-        setError(attempt < maxAttempts ? `Backend starting... (${attempt}/${maxAttempts})` : msg);
-        setModels([]);
-        if (attempt < maxAttempts) {
-          await new Promise((r) => setTimeout(r, delayMs));
-        }
-      }
-    }
-    setLoadingModels(false);
-  };
-
-  // Skill-first: load skill registry + provider status on mount
+  // Skill-first: global LLM state via store + skill registry + provider status
   useEffect(() => {
-    loadModels();
+    refresh();
     fetch(`${API_BASE}/skills`)
       .then((r) => (r.ok ? r.json() : { skills: [] }))
       .then((d) => setSkills(d.skills || []))
@@ -129,10 +89,7 @@ export function Chat() {
     }
   }, [messages]);
 
-  const onSelectModel = (name: string) => {
-    setSelectedModel(name);
-    localStorage.setItem(CHAT_MODEL_KEY, name);
-  };
+  const onSelectModel = (name: string) => setModel(name);
 
   const onSelectPersonality = (name: string) => {
     setPersonality(name);
