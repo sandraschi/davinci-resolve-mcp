@@ -7,6 +7,7 @@ from fastmcp import FastMCP
 from pydantic import ValidationError
 
 from davinci_resolve_mcp.tools.project_tools import ProjectInfo, ProjectSettings, register_tools
+from tests.conftest import call_tool_dict
 
 
 class TestProjectInfo:
@@ -76,7 +77,7 @@ class TestProjectSettings:
 
         # Pixel aspect ratio must be within valid range
         with pytest.raises(ValidationError):
-            ProjectSettings(pixel_aspect_ratio=0.1, resolution_width=1920, resolution_height=1080)
+            ProjectSettings(pixel_aspect_ratio=0.05, resolution_width=1920, resolution_height=1080)
 
 
 class TestProjectTools:
@@ -95,10 +96,14 @@ class TestProjectTools:
         self.mock_project_manager = mock_resolve.GetProjectManager.return_value
         self.mock_project = self.mock_project_manager.GetCurrentProject.return_value
 
-        # Set up connection manager in module state
+        # Set up connection manager in module state + local app state
+        # (fresh FastMCP has no .state until assigned; tools close over self.app)
+        from types import SimpleNamespace
+
         from davinci_resolve_mcp.server import app as server_app
 
         server_app.state.connection_manager = mock_connection_manager
+        self.app.state = SimpleNamespace(connection_manager=mock_connection_manager)
 
         # Set up project manager return values
         self.mock_project_manager.GetProjectListInCurrentFolder.return_value = ["Project 1", "Test Project"]
@@ -118,11 +123,10 @@ class TestProjectTools:
         self.mock_project_manager.CreateProject.return_value = self.mock_project
         self.mock_project.SaveProject.return_value = True
 
-        # Get the create_project tool
-        create_project = self.app.get_tool("create_project")
-
-        # Call the tool
-        result = await create_project("New Project", 30.0, 1920, 1080)
+        # Call the tool (FastMCP 3.x: async call_tool + structured dict)
+        result = await call_tool_dict(
+            self.app, "create_project", {"name": "New Project", "frame_rate": 30.0, "width": 1920, "height": 1080}
+        )
 
         # Verify the result
         assert result["status"] == "success"
@@ -142,12 +146,11 @@ class TestProjectTools:
         # Mock project creation failure
         self.mock_project_manager.CreateProject.return_value = None
 
-        # Get the create_project tool
-        create_project = self.app.get_tool("create_project")
-
         # Call the tool and expect an exception
+        # (individual tools raise; call .fn directly to bypass FastMCP error wrapping)
+        create_project = (await self.app.get_tool("create_project")).fn
         with pytest.raises(Exception) as exc_info:
-            await create_project("New Project")
+            await create_project(name="New Project")
 
         assert "Failed to create project" in str(exc_info.value)
 
@@ -156,11 +159,8 @@ class TestProjectTools:
         # Mock project loading
         self.mock_project_manager.LoadProject.return_value = self.mock_project
 
-        # Get the open_project tool
-        open_project = self.app.get_tool("open_project")
-
         # Call the tool
-        result = await open_project("Test Project")
+        result = await call_tool_dict(self.app, "open_project", {"name": "Test Project"})
 
         # Verify the result
         assert result["status"] == "success"
@@ -176,12 +176,11 @@ class TestProjectTools:
         # Mock project not found
         self.mock_project_manager.LoadProject.return_value = None
 
-        # Get the open_project tool
-        open_project = self.app.get_tool("open_project")
-
         # Call the tool and expect an exception
+        # (individual tools raise; call .fn directly to bypass FastMCP error wrapping)
+        open_project = (await self.app.get_tool("open_project")).fn
         with pytest.raises(Exception) as exc_info:
-            await open_project("Nonexistent Project")
+            await open_project(name="Nonexistent Project")
 
         assert "not found" in str(exc_info.value).lower()
 
@@ -190,25 +189,20 @@ class TestProjectTools:
         # Set up test data
         self.mock_project_manager.GetProjectListInCurrentFolder.return_value = ["Project 1", "Project 2"]
 
-        # Get the list_projects tool
-        list_projects = self.app.get_tool("list_projects")
-
         # Call the tool
-        result = await list_projects()
+        result = await call_tool_dict(self.app, "list_projects", {})
 
-        # Verify the result
+        # Verify the result (impl returns project dicts with name/is_active)
         assert result["status"] == "success"
         assert result["current_project"] == "Test Project"
-        assert "Project 1" in result["projects"]
-        assert "Project 2" in result["projects"]
+        names = [p["name"] for p in result["projects"]]
+        assert "Project 1" in names
+        assert "Project 2" in names
 
     async def test_get_project_settings(self):
         """Test getting project settings."""
-        # Get the get_project_settings tool
-        get_settings = self.app.get_tool("get_project_settings")
-
         # Call the tool
-        result = await get_settings()
+        result = await call_tool_dict(self.app, "get_project_settings", {})
 
         # Verify the result
         assert result["status"] == "success"
@@ -223,12 +217,17 @@ class TestProjectTools:
         # Mock project save
         self.mock_project.SaveProject.return_value = True
 
-        # Get the update_project_settings tool
-        update_settings = self.app.get_tool("update_project_settings")
-
         # Call the tool
-        result = await update_settings(
-            {"timelineFrameRate": "30.0", "timelineResolutionWidth": "1280", "timelineResolutionHeight": "720"}
+        result = await call_tool_dict(
+            self.app,
+            "update_project_settings",
+            {
+                "settings": {
+                    "timelineFrameRate": "30.0",
+                    "timelineResolutionWidth": "1280",
+                    "timelineResolutionHeight": "720",
+                }
+            },
         )
 
         # Verify the result

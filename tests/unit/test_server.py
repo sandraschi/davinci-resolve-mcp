@@ -6,7 +6,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
-from fastmcp import FastMCP
 
 from davinci_resolve_mcp.server import AppState, initialize_server
 
@@ -72,17 +71,17 @@ class TestServerEndpoints:
 
     @pytest.fixture
     def test_client(self, mock_config, mock_connection_manager, app_state):
-        """Create a test client with mocked dependencies."""
-        # Create a test app with our mocks
-        test_app = FastMCP(name="Test App", instructions="Test application", version="0.1.0")
+        """Create a test client with mocked dependencies (FastAPI api_app)."""
+        from davinci_resolve_mcp.server import api_app
+        from davinci_resolve_mcp.server import app as mcp_app
 
-        # Set up app state
-        test_app.mcp.app.state = app_state
-        test_app.mcp.app.state.connection_manager = mock_connection_manager
+        # Wire mocks into the real server app state read by the routes
+        mcp_app.state.connection_manager = mock_connection_manager
 
-        # Create and return a test client using the fastmcp app directly
-        with TestClient(test_app.mcp.app) as client:
+        with TestClient(api_app) as client:
             yield client
+
+        mcp_app.state.connection_manager = None
 
     def test_get_root(self, test_client):
         """Test the root endpoint."""
@@ -92,9 +91,9 @@ class TestServerEndpoints:
 
     def test_get_health(self, test_client):
         """Test the health check endpoint."""
-        response = test_client.get("/health")
+        response = test_client.get("/api/v1/health")
         assert response.status_code == 200
-        assert response.json() == {"status": "ok"}
+        assert response.json()["status"] == "ok"
 
     def test_get_resolve_info(self, test_client, mock_resolve):
         """Test the get_resolve_info endpoint."""
@@ -103,26 +102,25 @@ class TestServerEndpoints:
         mock_resolve.GetApiVersion.return_value = "1.0"
         mock_resolve.IsConsole.return_value = False
 
-        response = test_client.get("/api/v1/resolve/info")
+        response = test_client.get("/api/v1/resolve-info")
 
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "success"
+        assert data["status"] == "connected"
         assert data["version"] == "18.5.0"
-        assert data["api_version"] == "1.0"
-        assert data["is_console"] is False
+        assert data["project_name"] == "Test Project"
 
     def test_get_resolve_info_error(self, test_client, mock_connection_manager):
         """Test the get_resolve_info endpoint when Resolve is not available."""
-        # Make get_connection raise an error
+        # Make get_connection raise an error (routes degrade to disconnected dict)
         mock_connection_manager.get_connection.side_effect = Exception("Connection failed")
 
-        response = test_client.get("/api/v1/resolve/info")
+        response = test_client.get("/api/v1/resolve-info")
 
-        assert response.status_code == 500
+        assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "error"
-        assert "Connection failed" in data["error"]
+        assert data["status"] == "disconnected"
+        assert "Connection failed" in data["message"]
 
     def test_signal_handlers(self):
         """Test that signal handlers are set up correctly by FastMCP."""

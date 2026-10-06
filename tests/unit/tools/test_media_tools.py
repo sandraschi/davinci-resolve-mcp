@@ -9,6 +9,7 @@ from fastmcp import FastMCP
 from pydantic import ValidationError
 
 from davinci_resolve_mcp.tools.media_tools import FolderInfo, MediaItem, register_tools
+from tests.conftest import call_tool_dict
 
 
 class TestMediaItem:
@@ -93,8 +94,10 @@ class TestMediaTools:
         self.mock_project = self.mock_project_manager.GetCurrentProject.return_value
         self.mock_media_pool = self.mock_project.GetMediaPool.return_value
 
-        # Set up connection manager
-        self.app.state.connection_manager = mock_connection_manager
+        # Set up connection manager (fresh FastMCP has no .state until assigned)
+        from types import SimpleNamespace
+
+        self.app.state = SimpleNamespace(connection_manager=mock_connection_manager)
 
         # Set up media pool mocks
         self.mock_media_pool.GetCurrentFolder.return_value = {"name": "Root"}
@@ -111,11 +114,8 @@ class TestMediaTools:
         # Mock media pool operations
         self.mock_media_pool.ImportMedia.return_value = True
 
-        # Get the import_media tool
-        import_media = self.app.get_tool("import_media")
-
-        # Call the tool
-        result = await import_media([str(video_file)])
+        # Call the tool (FastMCP 3.x: async call_tool + structured dict)
+        result = await call_tool_dict(self.app, "import_media", {"paths": [str(video_file)]})
 
         # Verify the result
         assert result["status"] == "success"
@@ -138,11 +138,10 @@ class TestMediaTools:
         self.mock_media_pool.AddSubFolder.return_value = mock_folder
         self.mock_media_pool.ImportMedia.return_value = True
 
-        # Get the import_media tool
-        import_media = self.app.get_tool("import_media")
-
         # Call the tool with a target folder
-        result = await import_media(paths=[str(video_file)], target_folder="Videos/Test")
+        result = await call_tool_dict(
+            self.app, "import_media", {"paths": [str(video_file)], "target_folder": "Videos/Test"}
+        )
 
         # Verify the result
         assert result["status"] == "success"
@@ -153,11 +152,8 @@ class TestMediaTools:
 
     async def test_import_media_nonexistent_file(self):
         """Test importing a non-existent file."""
-        # Get the import_media tool
-        import_media = self.app.get_tool("import_media")
-
         # Call the tool with a non-existent file
-        result = await import_media(["/nonexistent/file.mp4"])
+        result = await call_tool_dict(self.app, "import_media", {"paths": ["/nonexistent/file.mp4"]})
 
         # Verify the result
         assert result["status"] == "failed"
@@ -181,11 +177,8 @@ class TestMediaTools:
 
         self.mock_media_pool.GetClipsInFolder.return_value = {1: mock_clip}
 
-        # Get the list_media tool
-        list_media = self.app.get_tool("list_media")
-
         # Call the tool
-        result = await list_media()
+        result = await call_tool_dict(self.app, "list_media", {})
 
         # Verify the result
         assert result["status"] == "success"
@@ -200,11 +193,8 @@ class TestMediaTools:
         mock_subfolder = {"name": "Videos"}
         self.mock_media_pool.GetSubFolders.return_value = {"Videos": mock_subfolder}
 
-        # Get the list_media tool
-        list_media = self.app.get_tool("list_media")
-
         # Call the tool with a subfolder path
-        result = await list_media("Videos")
+        result = await call_tool_dict(self.app, "list_media", {"folder_path": "Videos"})
 
         # Verify the result
         assert result["status"] == "success"
@@ -216,11 +206,8 @@ class TestMediaTools:
         mock_folder = {"name": "New Folder"}
         self.mock_media_pool.AddSubFolder.return_value = mock_folder
 
-        # Get the create_folder tool
-        create_folder = self.app.get_tool("create_folder")
-
-        # Call the tool
-        result = await create_folder("New Folder")
+        # Call the tool (registered param is `path`)
+        result = await call_tool_dict(self.app, "create_folder", {"path": "New Folder"})
 
         # Verify the result
         assert result["status"] == "success"
@@ -236,11 +223,8 @@ class TestMediaTools:
         # First call: create parent, second call: create child
         self.mock_media_pool.AddSubFolder.side_effect = [mock_parent, mock_child]
 
-        # Get the create_folder tool
-        create_folder = self.app.get_tool("create_folder")
-
-        # Call the tool with a nested path
-        result = await create_folder("Parent/Child")
+        # Call the tool with a nested path (registered param is `path`)
+        result = await call_tool_dict(self.app, "create_folder", {"path": "Parent/Child"})
 
         # Verify the result
         assert result["status"] == "success"
@@ -249,11 +233,12 @@ class TestMediaTools:
 
     async def test_get_media_metadata_success(self):
         """Test getting metadata for a media item."""
-        # Mock clip
+        # Mock clip (impl calls GetClipProperty() with no args for the full
+        # dict, then per-key; the mock serves both)
         mock_clip = MagicMock()
         mock_clip.GetName.return_value = "test_clip.mp4"
         mock_clip.GetMediaPath.return_value = "/path/to/test_clip.mp4"
-        mock_clip.GetClipProperty.side_effect = lambda x: {
+        all_props = {
             "Duration": "00:01:30:00",
             "FPS": "24.0",
             "Width": "1920",
@@ -266,16 +251,20 @@ class TestMediaTools:
             "File Size": "1024000",
             "Date Created": "2025-01-01 12:00:00",
             "Date Modified": "2025-01-01 12:30:00",
-        }.get(x, "")
+        }
+
+        def _clip_props(*args):
+            if not args:
+                return dict(all_props)
+            return all_props.get(args[0], "")
+
+        mock_clip.GetClipProperty.side_effect = _clip_props
 
         # Mock media pool to return our clip
         self.mock_media_pool.GetClipsInFolder.return_value = {1: mock_clip}
 
-        # Get the get_media_metadata tool
-        get_metadata = self.app.get_tool("get_media_metadata")
-
         # Call the tool
-        result = await get_metadata("/path/to/test_clip.mp4")
+        result = await call_tool_dict(self.app, "get_media_metadata", {"clip_path": "/path/to/test_clip.mp4"})
 
         # Verify the result
         assert result["status"] == "success"
@@ -294,11 +283,10 @@ class TestMediaTools:
         # Mock empty media pool
         self.mock_media_pool.GetClipsInFolder.return_value = {}
 
-        # Get the get_media_metadata tool
-        get_metadata = self.app.get_tool("get_media_metadata")
-
         # Call the tool with a non-existent path and expect an exception
+        # (individual tools raise; call .fn directly to bypass FastMCP error wrapping)
+        get_metadata = (await self.app.get_tool("get_media_metadata")).fn
         with pytest.raises(Exception) as exc_info:
-            await get_metadata("/nonexistent/file.mp4")
+            await get_metadata(clip_path="/nonexistent/file.mp4")
 
         assert "not found" in str(exc_info.value).lower()

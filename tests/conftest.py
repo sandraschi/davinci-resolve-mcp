@@ -5,7 +5,7 @@ Pytest configuration and fixtures for DaVinci Resolve MCP tests.
 import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -83,6 +83,7 @@ def mock_connection_manager(mock_resolve):
     with patch("davinci_resolve_mcp.connection.manager.ResolveConnectionManager") as mock_manager:
         mock_instance = mock_manager.return_value
         mock_instance.get_connection.return_value = mock_resolve
+        mock_instance.ensure_connection = AsyncMock(return_value=True)
         mock_instance.project_manager = mock_resolve.GetProjectManager.return_value
         mock_instance.current_project = mock_resolve.GetProjectManager.return_value.GetCurrentProject.return_value
         yield mock_instance
@@ -125,6 +126,27 @@ def test_app():
     test_app = FastMCP(name="Test DaVinci Resolve MCP", instructions="Test application", version="0.1.0")
 
     return test_app
+
+
+async def call_tool_dict(app, name, arguments=None):
+    """Call a FastMCP 3.x tool by name and return the raw result dict.
+
+    FastMCP 3.x is async throughout: ``get_tool`` is a coroutine and
+    ``call_tool`` returns a ``ToolResult`` carrying ``structured_content``.
+    This helper hides both so tool tests keep asserting plain dicts.
+    """
+    import json
+
+    result = await app.call_tool(name, arguments or {})
+    structured = getattr(result, "structured_content", None)
+    if isinstance(structured, dict):
+        return structured
+    text = result.content[0].text if getattr(result, "content", None) else "{}"
+    try:
+        parsed = json.loads(text)
+        return parsed if isinstance(parsed, dict) else {"text": text}
+    except Exception:
+        return {"text": text}
 
 
 @pytest.fixture(autouse=True)

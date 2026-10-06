@@ -54,6 +54,8 @@ class TestSubtitleOperations:
 
     @pytest.mark.asyncio
     async def test_add_subtitle_no_api(self, mock_app):
+        timeline = mock_app.state.connection_manager.get_connection.return_value.GetProjectManager.return_value.GetCurrentProject.return_value.GetCurrentTimeline.return_value
+        timeline.InsertSubtitle = None
         with pytest.raises(ResolveOperationError, match="InsertSubtitle not available"):
             await add_subtitle_impl(mock_app, track_index=1, name="S", start_frame=0, end_frame=10)
 
@@ -151,7 +153,8 @@ Second line
         mock_item.GetClipProperty.return_value = "Hello"
         timeline.GetSubtitleList = MagicMock(return_value=[mock_item])
 
-        output = tempfile.mkstemp(suffix=".srt")[1]
+        output_fd, output = tempfile.mkstemp(suffix=".srt")
+        os.close(output_fd)
         try:
             result = await export_srt_impl(mock_app, output_path=output)
             assert result["status"] == "success"
