@@ -7,7 +7,8 @@ Consolidates color grading operations into a single tool.
 import logging
 from typing import Annotated, Any, Literal
 
-from fastmcp.tools.tool import ToolAnnotations
+# fastmcp.tools.tool resolves via vendored mcp.server.fastmcp at runtime (shadowed by tool() fn)
+from fastmcp.tools.tool import ToolAnnotations  # pyright: ignore[reportMissingImports]
 from pydantic import Field
 
 logger = logging.getLogger(__name__)
@@ -144,16 +145,22 @@ def setup_color_portmanteau(app):
             return await apply_lut(app, lut_path, clip_path, None, timeline_name)
 
         elif action == "set_color_space":
-            if not all([input_color_space, output_color_space]):
+            if not input_color_space or not output_color_space:
                 return {
                     "status": "error",
                     "message": "input_color_space and output_color_space required",
                 }
             input_transform = ColorSpaceTransform(
-                input_color_space=input_color_space, output_color_space=input_color_space
+                input_color_space=input_color_space,
+                output_color_space=input_color_space,
+                input_gamma=input_gamma or "",
+                output_gamma=output_gamma or "",
             )
             output_transform = ColorSpaceTransform(
-                input_color_space=output_color_space, output_color_space=output_color_space
+                input_color_space=output_color_space,
+                output_color_space=output_color_space,
+                input_gamma=input_gamma or "",
+                output_gamma=output_gamma or "",
             )
             return await set_color_space(app, input_transform, output_transform, clip_path, timeline_name)
 

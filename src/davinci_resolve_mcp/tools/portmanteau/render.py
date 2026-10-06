@@ -7,7 +7,8 @@ Consolidates rendering operations into a single tool.
 import logging
 from typing import Annotated, Any, Literal
 
-from fastmcp.tools.tool import ToolAnnotations
+# fastmcp.tools.tool resolves via vendored mcp.server.fastmcp at runtime (shadowed by tool() fn)
+from fastmcp.tools.tool import ToolAnnotations  # pyright: ignore[reportMissingImports]
 from pydantic import Field
 
 logger = logging.getLogger(__name__)
@@ -113,7 +114,7 @@ def setup_render_portmanteau(app):
                 return {"status": "error", "message": "output_path required for timeline render"}
             format_enum = format_map.get(format.lower(), RenderFormat.MP4)
             return await render_timeline(
-                app, output_path, format_enum, codec_enum, preset_name, custom_name, timeline_name
+                app, output_path, format_enum, codec_enum or RenderCodec.H264, preset_name, custom_name, timeline_name
             )
 
         elif action == "presets":
