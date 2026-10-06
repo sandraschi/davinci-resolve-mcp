@@ -2,6 +2,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ExternalLink, HelpCircle, LayoutGrid, Loader2, Moon, Play, Sun, WifiOff } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { APPS_CATALOG } from "@/common/apps-catalog";
+import { useBackendStatus } from "@/hooks/use-backend-status";
 
 // EXPERIMENTAL light mode (invert hack). Not fleet standard - see index.css.
 // Toggling `.dark` off the root flips the invert filter; persisted so the
@@ -39,6 +40,7 @@ interface HostState {
 export function Topbar() {
   const [host, setHost] = useState<HostState | null>(null);
   const [launching, setLaunching] = useState(false);
+  const backend = useBackendStatus();
   const { light, toggle } = useExperimentalTheme();
 
   const fetchStatus = useCallback(async () => {
@@ -80,6 +82,24 @@ export function Topbar() {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Backend health dot (Tauri event + HTTP poll, see useBackendStatus) */}
+        <div
+          data-testid="backend-dot"
+          title={
+            backend === "online"
+              ? "Backend connected"
+              : backend === "offline"
+                ? "Backend unreachable"
+                : "Probing backend"
+          }
+          className={`mr-1 h-2.5 w-2.5 rounded-full ${
+            backend === "online"
+              ? "bg-emerald-500"
+              : backend === "offline"
+                ? "bg-red-500"
+                : "bg-slate-600 animate-pulse"
+          }`}
+        />
         {/* Day mode toggle */}
         <button
           type="button"

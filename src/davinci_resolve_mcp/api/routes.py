@@ -2,6 +2,7 @@
 FastMCP API routes for DaVinci Resolve MCP.
 """
 
+import json
 import os
 import time
 
@@ -58,18 +59,35 @@ async def llm_load(name: str = Query(..., description="Model name to load into m
 
 @router.post("/llm/generate")
 async def llm_generate(body: dict):
-    """Generate completion from local LLM. Body: { model, prompt, stream? }."""
+    """Generate completion from local LLM. Body: { model, prompt, stream?, system? }."""
     model = body.get("model") or ""
     prompt = body.get("prompt") or ""
     stream = body.get("stream", False)
+    system = body.get("system")
     if not model or not prompt:
         raise HTTPException(status_code=400, detail="model and prompt required")
+    payload: dict = {"model": model, "prompt": prompt, "stream": stream}
+    if system:
+        payload["system"] = system
+    if stream:
+        # NDJSON passthrough for token streaming (client reads via getReader)
+        from fastapi.responses import StreamingResponse
+
+        async def _stream():
+            try:
+                async with httpx.AsyncClient(timeout=300.0) as client:
+                    async with client.stream("POST", f"{OLLAMA_URL}/api/generate", json=payload) as r:
+                        r.raise_for_status()
+                        async for line in r.aiter_lines():
+                            if line:
+                                yield line + "\n"
+            except Exception as e:
+                yield json.dumps({"error": str(e)}) + "\n"
+
+        return StreamingResponse(_stream(), media_type="application/x-ndjson")
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
-            r = await client.post(
-                f"{OLLAMA_URL}/api/generate",
-                json={"model": model, "prompt": prompt, "stream": stream},
-            )
+            r = await client.post(f"{OLLAMA_URL}/api/generate", json=payload)
             r.raise_for_status()
             data = r.json()
             return {"response": data.get("response", ""), "done": data.get("done", True)}
@@ -372,7 +390,6 @@ async def api_diagnostics():
 @router.post("/shutdown")
 async def api_shutdown():
     """Gracefully shut down the server (respond 200, then exit after flush)."""
-    import os
     import threading
 
     threading.Timer(0.5, lambda: os._exit(0)).start()
@@ -521,9 +538,15 @@ async def llm_discover():
 
 @router.get("/llm/providers")
 async def llm_providers():
-    """Provider registry: local detected flags + cloud configured flags (never key bytes)."""
+    """Provider registry: local detected flags + cloud configured flags (never key bytes).
+
+    Also carries `ollama` / `lm_studio` model arrays in the shape the Settings
+    page consumes: [{name}].
+    """
     ollama = await _probe_json(f"{OLLAMA_URL}/api/tags")
     lmstudio = await _probe_json(f"{_LM_STUDIO_URL}/v1/models")
+    ollama_models = [{"name": m.get("name")} for m in (ollama or {}).get("models", [])]
+    lmstudio_models = [{"name": m.get("id")} for m in (lmstudio or {}).get("data", [])]
     return {
         "local": [
             {"id": "ollama", "detected": ollama is not None, "free": True},
@@ -533,6 +556,8 @@ async def llm_providers():
             {"id": "openai", "configured": bool(os.getenv("OPENAI_API_KEY"))},
             {"id": "anthropic", "configured": bool(os.getenv("ANTHROPIC_API_KEY"))},
         ],
+        "ollama": ollama_models,
+        "lm_studio": lmstudio_models,
     }
 
 
