@@ -38,17 +38,20 @@ export function Timeline() {
 
   if (loading) {
     return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      <div className="flex h-[50vh] items-center justify-center" data-testid="timeline-loading">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-300" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6" data-testid="timeline-page">
         <h2 className="text-2xl font-bold tracking-tight text-white">Timeline inspector</h2>
-        <div className="p-8 text-center border border-slate-800 bg-slate-900/50 rounded-lg text-slate-400">
+        <div
+          className="p-8 text-center border border-slate-800 bg-slate-900/50 rounded-lg text-slate-300"
+          data-testid="timeline-error"
+        >
           <p className="text-red-400 mb-2">Error connecting to Resolve API</p>
           <p className="text-sm">{error}</p>
         </div>
@@ -59,19 +62,22 @@ export function Timeline() {
   const { timeline } = data || {};
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="timeline-page">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-white">Timeline Inspector</h2>
-          <p className="text-slate-400">Current timeline metadata and tracks</p>
+          <p className="text-slate-300">Current timeline metadata and tracks</p>
         </div>
       </div>
 
       {!timeline ? (
-        <div className="p-12 text-center border border-slate-800 bg-slate-950/50 rounded-lg">
+        <div
+          className="p-12 text-center border border-slate-800 bg-slate-950/50 rounded-lg"
+          data-testid="timeline-empty"
+        >
           <Clock className="h-10 w-10 text-slate-600 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-slate-300">No active timeline</h3>
-          <p className="text-sm text-slate-500 mt-2">Open a timeline in DaVinci Resolve to see details here.</p>
+          <p className="text-sm text-slate-300 mt-2">Open a timeline in DaVinci Resolve to see details here.</p>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">

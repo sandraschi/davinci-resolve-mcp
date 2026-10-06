@@ -35,6 +35,7 @@ function LLMSettings() {
   return (
     <div className="space-y-3">
       <select
+        data-testid="llm-provider-select"
         className="h-9 w-full rounded-md border border-slate-700 bg-slate-900 px-3 text-sm text-slate-200"
         value={selectedProvider}
         onChange={(e) => {
@@ -46,6 +47,7 @@ function LLMSettings() {
         <option value="lm_studio">LM Studio</option>
       </select>
       <select
+        data-testid="llm-model-select"
         className="h-9 w-full rounded-md border border-slate-700 bg-slate-900 px-3 text-sm text-slate-200"
         value={selectedModel}
         onChange={(e) => {
@@ -65,17 +67,17 @@ function LLMSettings() {
 
 export function Settings() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="settings-page">
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-white">Settings</h2>
-        <p className="text-slate-400">Manage connections and preferences</p>
+        <p className="text-slate-300">Manage connections and preferences</p>
       </div>
 
       <div className="grid gap-6">
-        <Card className="border-slate-800 bg-slate-950/50">
+        <Card className="border-slate-800 bg-slate-950/50" data-testid="settings-bridge">
           <CardHeader>
             <CardTitle className="text-white">DaVinci Resolve API Bridge</CardTitle>
-            <CardDescription className="text-slate-400">
+            <CardDescription className="text-slate-300">
               Connection details for the Resolve Scripting API
             </CardDescription>
           </CardHeader>
@@ -84,37 +86,41 @@ export function Settings() {
               <Label className="text-slate-300">Bridge Host</Label>
               <Input
                 className="bg-slate-900 border-slate-800 text-slate-100 placeholder:text-slate-400"
-                defaultValue="localhost"
+                defaultValue="127.0.0.1"
               />
             </div>
             <div className="grid gap-2">
               <Label className="text-slate-300">Bridge Port</Label>
               <Input
                 className="bg-slate-900 border-slate-800 text-slate-100 placeholder:text-slate-400"
-                defaultValue="8080"
+                defaultValue="10843"
                 type="number"
               />
             </div>
-            <Button variant="outline" className="border-slate-800 text-slate-300 hover:bg-slate-800">
+            <Button
+              variant="outline"
+              className="border-slate-800 text-slate-300 hover:bg-slate-800"
+              data-testid="settings-test-connection"
+            >
               Test API Connection
             </Button>
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800 bg-slate-950/50">
+        <Card className="border-slate-800 bg-slate-950/50" data-testid="settings-llm">
           <CardHeader>
             <CardTitle className="text-white">Local LLM</CardTitle>
-            <CardDescription className="text-slate-400">Provider and model selection</CardDescription>
+            <CardDescription className="text-slate-300">Provider and model selection</CardDescription>
           </CardHeader>
           <CardContent>
             <LLMSettings />
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800 bg-slate-950/50">
+        <Card className="border-slate-800 bg-slate-950/50" data-testid="settings-preferences">
           <CardHeader>
             <CardTitle className="text-white">Professional Preferences</CardTitle>
-            <CardDescription className="text-slate-400">Default project and timeline settings</CardDescription>
+            <CardDescription className="text-slate-300">Default project and timeline settings</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-2">
