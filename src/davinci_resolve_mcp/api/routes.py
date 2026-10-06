@@ -90,12 +90,14 @@ async def llm_generate(body: dict):
         async with httpx.AsyncClient(timeout=120.0) as client:
             r = await client.post(f"{OLLAMA_URL}/api/generate", json=payload)
             r.raise_for_status()
-            data = r.json()
+            data = _read_ollama_body(r)
             return {"response": data.get("response", ""), "done": data.get("done", True)}
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e)) from e
 
 
+# ---------------------------------------------------------------------------
+# Logs
 # ---------------------------------------------------------------------------
 # Chat (OpenAI-style proxy + skill-aware route)
 # ---------------------------------------------------------------------------
@@ -133,9 +135,12 @@ async def llm_chat(body: dict):
         async with httpx.AsyncClient(timeout=120.0) as client:
             r = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
             r.raise_for_status()
-            data = r.json()
+            data = _read_ollama_body(r)
             message = data.get("message", {}) or {}
-            return {"response": message.get("content", ""), "done": data.get("done", True)}
+            if not isinstance(message, dict):
+                message = {}
+            text = message.get("content", "") or data.get("response", "")
+            return {"response": text, "done": data.get("done", True)}
     except Exception as e:
         raise HTTPException(status_code=502, detail=str(e)) from e
 
@@ -168,7 +173,7 @@ async def api_chat(body: dict):
                 f"{OLLAMA_URL}/api/generate", json={"model": model, "prompt": message, "system": system}
             )
             r.raise_for_status()
-            data = r.json()
+            data = _read_ollama_body(r)
             return {
                 "response": data.get("response", ""),
                 "model": model,
@@ -710,6 +715,35 @@ async def _probe_json(url: str, timeout: float = 3.0):
             return r.json()
     except Exception:
         return None
+
+
+def _read_ollama_body(resp: httpx.Response) -> dict:
+    """Parse an Ollama response body.
+
+    Thinking models may return NDJSON chunks (one JSON object per line, with
+    `thinking`/`response` fragments) even for non-streaming requests, which
+    breaks a single ``resp.json()`` call ("Extra data"). Merge fragments.
+    """
+    try:
+        data = resp.json()
+    except Exception:
+        data = None
+    if isinstance(data, dict):
+        return data
+    merged: dict = {"response": "", "thinking": "", "done": True}
+    for line in resp.text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            chunk = json.loads(line)
+        except Exception:
+            continue
+        if isinstance(chunk, dict):
+            merged["response"] += str(chunk.get("response", ""))
+            merged["thinking"] += str(chunk.get("thinking", ""))
+            merged.update({k: v for k, v in chunk.items() if k not in ("response", "thinking")})
+    return merged
 
 
 @router.get("/llm/discover")
