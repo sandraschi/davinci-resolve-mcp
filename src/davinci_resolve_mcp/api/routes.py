@@ -7,7 +7,8 @@ import os
 import time
 
 import httpx
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
+from fastapi.responses import JSONResponse
 
 router = APIRouter(tags=["v1"])
 
@@ -96,6 +97,88 @@ async def llm_generate(body: dict):
 
 
 # ---------------------------------------------------------------------------
+# Chat (OpenAI-style proxy + skill-aware route)
+# ---------------------------------------------------------------------------
+
+
+@router.post("/llm/chat")
+async def llm_chat(body: dict):
+    """OpenAI-style chat proxy. Body: { model, messages: [{role, content}], stream? }.
+
+    The ONLY path the Chat page should use for multi-turn conversation.
+    Keys never leave the server.
+    """
+    model = body.get("model") or ""
+    messages = body.get("messages") or []
+    stream = body.get("stream", False)
+    if not model or not messages:
+        raise HTTPException(status_code=400, detail="model and messages required")
+    payload: dict = {"model": model, "messages": messages, "stream": stream}
+    if stream:
+        from fastapi.responses import StreamingResponse
+
+        async def _stream():
+            try:
+                async with httpx.AsyncClient(timeout=300.0) as client:
+                    async with client.stream("POST", f"{OLLAMA_URL}/api/chat", json=payload) as r:
+                        r.raise_for_status()
+                        async for line in r.aiter_lines():
+                            if line:
+                                yield line + "\n"
+            except Exception as e:
+                yield json.dumps({"error": str(e)}) + "\n"
+
+        return StreamingResponse(_stream(), media_type="application/x-ndjson")
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            r = await client.post(f"{OLLAMA_URL}/api/chat", json=payload)
+            r.raise_for_status()
+            data = r.json()
+            message = data.get("message", {}) or {}
+            return {"response": message.get("content", ""), "done": data.get("done", True)}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
+
+
+@router.post("/chat")
+async def api_chat(body: dict):
+    """Skill-aware chat route. Body: { message, personality?, model? }.
+
+    Composes the skill registry + personality into the system prompt
+    server-side, then answers via the local LLM (non-streaming).
+    """
+    from ..prompts import SKILL_CATALOG
+
+    message = (body.get("message") or "").strip()
+    if not message:
+        raise HTTPException(status_code=400, detail="message required")
+    personality = body.get("personality") or "You are a senior video editor."
+    model = body.get("model") or ""
+    if not model:
+        discovered = await _probe_json(f"{OLLAMA_URL}/api/tags")
+        models = [m.get("name") for m in (discovered or {}).get("models", [])]
+        if not models:
+            raise HTTPException(status_code=503, detail="No local LLM available")
+        model = models[0]
+    skill_block = "\n".join(f"- {s['name']}: {', '.join(s['operations'])}" for s in SKILL_CATALOG)
+    system = f"{personality}\nAvailable Resolve skills (ground every answer in these):\n{skill_block}"
+    try:
+        async with httpx.AsyncClient(timeout=120.0) as client:
+            r = await client.post(
+                f"{OLLAMA_URL}/api/generate", json={"model": model, "prompt": message, "system": system}
+            )
+            r.raise_for_status()
+            data = r.json()
+            return {
+                "response": data.get("response", ""),
+                "model": model,
+                "skills": [s["name"] for s in SKILL_CATALOG],
+            }
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=str(e)) from e
+
+
+# ---------------------------------------------------------------------------
 # Logs
 # ---------------------------------------------------------------------------
 
@@ -161,26 +244,132 @@ async def get_resolve_info():
 
 @router.get("/projects")
 async def get_projects():
-    """Get list of DaVinci Resolve projects."""
+    """Get list of DaVinci Resolve projects (name/is_active dicts)."""
     try:
         from ..server import app as mcp_app
+        from ..tools.project_tools import list_projects_impl
 
         if not hasattr(mcp_app, "state") or not mcp_app.state.connection_manager:
-            return {"current_project": None, "projects": []}
+            return {"status": "success", "current_project": None, "projects": []}
 
-        mgr = mcp_app.state.connection_manager
-        if not await mgr.ensure_connection():
-            return {"current_project": None, "projects": [], "error": "not_connected"}
+        result = await list_projects_impl(mcp_app)
+        result.setdefault("status", "success")
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
-        resolve = mgr.get_connection()
-        project_manager = resolve.GetProjectManager()
 
-        current_project = project_manager.GetCurrentProject()
-        current_project_name = current_project.GetName() if current_project else None
+@router.post("/projects", status_code=201)
+async def create_project(body: dict):
+    """Create a new Resolve project. Body: { name, frame_rate?, width?, height?, template? }."""
+    try:
+        from ..server import app as mcp_app
+        from ..tools.project_tools import create_project_impl
 
-        projects = project_manager.GetProjectListInCurrentFolder() or []
+        result = await create_project_impl(
+            mcp_app,
+            body.get("name") or "",
+            body.get("frame_rate", 24.0),
+            body.get("width", 1920),
+            body.get("height", 1080),
+            body.get("template"),
+        )
+        return JSONResponse(status_code=201, content=result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
-        return {"current_project": current_project_name, "projects": projects}
+
+@router.get("/projects/{project_name}/settings")
+async def get_project_settings(project_name: str):
+    """Get settings for a project (current project settings + name echo)."""
+    try:
+        from ..server import app as mcp_app
+        from ..tools.project_tools import get_project_settings_impl
+
+        result = await get_project_settings_impl(mcp_app)
+        result["project_name"] = project_name
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.patch("/projects/{project_name}/settings")
+async def update_project_settings(project_name: str, body: dict):
+    """Update project settings. Body: { setting: value, ... }."""
+    try:
+        from ..server import app as mcp_app
+        from ..tools.project_tools import update_project_settings_impl
+
+        result = await update_project_settings_impl(mcp_app, body)
+        result["project_name"] = project_name
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.post("/media/import")
+async def import_media_upload(files: list[UploadFile] = File(...), target_folder: str = Form("")):
+    """Upload media files and import them into the Resolve media pool."""
+    import tempfile
+
+    try:
+        from ..server import app as mcp_app
+        from ..tools.media_tools import import_media_impl
+
+        staged: list[str] = []
+        tmpdir = tempfile.mkdtemp(prefix="resolve_import_")
+        try:
+            for upload in files:
+                dest = f"{tmpdir}/{upload.filename}"
+                with open(dest, "wb") as f:
+                    f.write(await upload.read())
+                staged.append(dest)
+            result = await import_media_impl(mcp_app, staged, target_folder or None)
+            return result
+        finally:
+            import shutil
+
+            shutil.rmtree(tmpdir, ignore_errors=True)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/media")
+async def list_media(folder_path: str = ""):
+    """List media in the current (or given) media pool folder."""
+    try:
+        from ..server import app as mcp_app
+        from ..tools.media_tools import list_media_impl
+
+        return await list_media_impl(mcp_app, folder_path)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.post("/media/folders", status_code=201)
+async def create_media_folder(body: dict):
+    """Create a folder in the media pool. Body: { name }."""
+    try:
+        from ..server import app as mcp_app
+        from ..tools.media_tools import create_folder_impl
+
+        result = await create_folder_impl(mcp_app, body.get("name") or "")
+        return JSONResponse(
+            status_code=201,
+            content={"status": "success", "folder": {"name": body.get("name"), "path": result.get("path", "")}},
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/media/metadata/{clip_name}")
+async def get_media_metadata(clip_name: str):
+    """Get metadata for a media item by clip name."""
+    try:
+        from ..server import app as mcp_app
+        from ..tools.media_tools import get_media_metadata_impl
+
+        return await get_media_metadata_impl(mcp_app, clip_name)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 

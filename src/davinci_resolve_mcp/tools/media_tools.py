@@ -189,18 +189,28 @@ async def import_media_impl(
             if as_sequence:
                 media_storage["isSequence"] = True
 
-            # Import the media
+            # Import the media (tolerates bool or list returns across API versions)
             result = media_pool.ImportMedia([media_storage])
             if result:
-                import_results.append({"path": path, "status": "success", "clips_created": len(result)})
+                try:
+                    clips_created = len(result)
+                except TypeError:
+                    clips_created = 1
+                import_results.append({"path": path, "status": "success", "clips_created": clips_created})
             else:
                 import_results.append({"path": path, "status": "error", "message": "Import failed"})
 
+        ok_items = [r["path"] for r in import_results if r["status"] == "success"]
+        bad_items = [r for r in import_results if r["status"] != "success"]
         return {
             "status": "success",
             "target_folder": target_folder,
             "results": import_results,
-            "total_imported": sum(1 for r in import_results if r["status"] == "success"),
+            "total_imported": len(ok_items),
+            "imported_count": len(ok_items),
+            "failed_count": len(bad_items),
+            "imported_items": ok_items,
+            "failed_imports": bad_items,
         }
 
     except Exception as e:
@@ -225,11 +235,11 @@ async def list_media_impl(app, folder_path: str = "") -> dict[str, Any]:
         if not media_pool:
             raise ResolveOperationError("Failed to access media pool")
 
-        # Navigate to target folder
-        target_folder = media_pool.GetCurrentFolder()
+        # Navigate to target folder if specified
+        current_folder = media_pool.GetRootFolder()
+
         if folder_path:
             folder_parts = [p for p in folder_path.split("/") if p]
-            current_folder = media_pool.GetRootFolder()
 
             for folder_name in folder_parts:
                 subfolders = media_pool.GetSubFolders(current_folder)
@@ -243,45 +253,50 @@ async def list_media_impl(app, folder_path: str = "") -> dict[str, Any]:
                             break
 
                 if not found:
-                    raise ResolveOperationError(f"Folder '{folder_name}' not found")
+                    raise ResolveOperationError(f"Folder not found: {folder_path}")
 
-            target_folder = current_folder
-
-        # Get clips in folder
-        clips = media_pool.GetClipList(target_folder) or []
-        clip_info = []
-
-        for clip in clips:
-            clip_info.append(
-                {
-                    "name": clip.GetName(),
-                    "type": clip.GetClipProperty("Type") or "Unknown",
-                    "duration": clip.GetClipProperty("Duration") or 0,
-                    "frame_rate": clip.GetClipProperty("Frame Rate") or 0,
-                    "resolution": f"{clip.GetClipProperty('Resolution Width') or 0}x{clip.GetClipProperty('Resolution Height') or 0}",
-                }
-            )
+        # Get contents of current folder
+        media_pool.SetCurrentFolder(current_folder)
 
         # Get subfolders
-        subfolders = media_pool.GetSubFolders(target_folder) or {}
-        folder_info = []
+        subfolders = []
+        folder_items = media_pool.GetSubFolders(current_folder)
+        if folder_items:
+            for name, _folder in folder_items.items():
+                subfolders.append(
+                    {
+                        "name": name,
+                        "path": f"{folder_path}/{name}" if folder_path else name,
+                        "type": "folder",
+                    }
+                )
 
-        for name, folder in subfolders.items():
-            folder_info.append(
-                {
-                    "name": name,
-                    "item_count": len(media_pool.GetClipList(folder) or []),
-                    "subfolder_count": len(media_pool.GetSubFolders(folder) or {}),
+        # Get media items
+        media_items = []
+        clips = media_pool.GetClipsInFolder(current_folder) or {}
+
+        for clip_id, clip in clips.items():
+            try:
+                clip_info = {
+                    "id": clip_id,
+                    "name": clip.GetName(),
+                    "type": "clip",
+                    "path": clip.GetMediaPath(),
+                    "duration": clip.GetClipProperty("Duration"),
+                    "frame_rate": clip.GetClipProperty("FPS"),
+                    "resolution": f"{clip.GetClipProperty('Width')}x{clip.GetClipProperty('Height')}",
+                    "has_video": clip.GetClipProperty("Has Video") == "1",
+                    "has_audio": clip.GetClipProperty("Has Audio") == "1",
                 }
-            )
+                media_items.append(clip_info)
+            except Exception as e:
+                logger.warning(f"Error getting clip info: {e!s}")
 
         return {
             "status": "success",
-            "folder_path": folder_path,
-            "clips": clip_info,
-            "folders": folder_info,
-            "total_clips": len(clip_info),
-            "total_folders": len(folder_info),
+            "current_folder": folder_path or "/",
+            "subfolders": subfolders,
+            "media_items": media_items,
         }
 
     except Exception as e:
@@ -388,49 +403,51 @@ async def get_media_metadata_impl(app, clip_path: str) -> dict[str, Any]:
                 if not found:
                     raise ResolveOperationError(f"Folder '{folder_name}' not found")
 
-        # Find the clip
-        clips = media_pool.GetClipList(current_folder) or []
+        # Find the clip by path, falling back to bare clip name
+        wanted_name = clip_name = path_parts[-1]
+        clips = media_pool.GetClipsInFolder(current_folder) or {}
         target_clip = None
 
-        for clip in clips:
-            if clip.GetName() == clip_name:
+        for _clip_id, clip in clips.items():
+            if clip.GetMediaPath() == clip_path or clip.GetName() == wanted_name:
                 target_clip = clip
                 break
 
         if not target_clip:
             raise ResolveOperationError(f"Clip '{clip_name}' not found")
 
-        # Get clip properties
-        properties = [
-            "Type",
-            "Duration",
-            "Frame Rate",
-            "Resolution Width",
-            "Resolution Height",
-            "PAR",
-            "DAR",
-            "Audio Channels",
-            "Audio Sample Rate",
-            "Bit Depth",
-            "Codec",
-            "File Path",
-            "File Size",
-            "Date Created",
-            "Date Modified",
-        ]
+        # Get clip properties (full dict when supported, per-key otherwise)
+        try:
+            properties = target_clip.GetClipProperty() or {}
+        except TypeError:
+            properties = {}
+        if not isinstance(properties, dict):
+            properties = {}
 
-        metadata = {}
-        for prop in properties:
-            value = target_clip.GetClipProperty(prop)
-            if value is not None:
-                # Convert property name to lowercase with underscores
-                key = prop.lower().replace(" ", "_")
-                metadata[key] = value
+        # Extract relevant metadata
+        metadata = {
+            "name": target_clip.GetName(),
+            "path": target_clip.GetMediaPath(),
+            "type": "video" if target_clip.GetClipProperty("Has Video") == "1" else "audio",
+            "duration": target_clip.GetClipProperty("Duration"),
+            "frame_rate": target_clip.GetClipProperty("FPS"),
+            "resolution": f"{target_clip.GetClipProperty('Width')}x{target_clip.GetClipProperty('Height')}",
+            "start_frame": target_clip.GetClipProperty("Start"),
+            "end_frame": target_clip.GetClipProperty("End"),
+            "has_audio": target_clip.GetClipProperty("Has Audio") == "1",
+            "audio_channels": target_clip.GetClipProperty("Audio Channels"),
+            "audio_sample_rate": target_clip.GetClipProperty("Sample Rate"),
+            "codec": target_clip.GetClipProperty("Codec"),
+            "file_size": target_clip.GetClipProperty("File Size"),
+            "date_created": target_clip.GetClipProperty("Date Created"),
+            "date_modified": target_clip.GetClipProperty("Date Modified"),
+        }
 
-        # Add any additional properties
+        # Add any additional properties (never clobber typed fields above)
         for key, value in properties.items():
-            if key not in metadata:
-                metadata[key.lower().replace(" ", "_")] = value
+            norm = key.lower().replace(" ", "_")
+            if norm not in metadata:
+                metadata[norm] = value
 
         return {"status": "success", "clip_path": clip_path, "metadata": metadata}
 
@@ -759,12 +776,13 @@ def register_tools(app):
             if not media_pool:
                 raise ResolveOperationError("Failed to access media pool")
 
-            # Find the clip by path
+            # Find the clip by path, falling back to bare clip name
             clip = None
             clips = media_pool.GetClipsInFolder(media_pool.GetRootFolder()) or {}
+            wanted_name = clip_path.split("/")[-1]
 
             for _clip_id, c in clips.items():
-                if c.GetMediaPath() == clip_path:
+                if c.GetMediaPath() == clip_path or c.GetName() == wanted_name:
                     clip = c
                     break
 

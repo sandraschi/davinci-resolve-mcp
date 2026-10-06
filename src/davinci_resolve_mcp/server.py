@@ -416,6 +416,14 @@ def register_tools():
         register_agentic_tools()
         logger.info("Registered agentic workflow tools", count=3)
 
+        # Register prompts + resources (always: skill-grounded starting points
+        # and the skill registry / live status over the MCP transport)
+        from .prompts import setup_prompts, setup_resources
+
+        setup_prompts(app)
+        setup_resources(app)
+        logger.info("Registered prompts and resources")
+
         # Register shutdown tool
         @app.tool()
         async def davinci_resolve_shutdown(confirm: bool = False) -> dict:

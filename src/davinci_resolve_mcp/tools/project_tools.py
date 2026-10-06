@@ -467,49 +467,9 @@ def register_tools(app):
         Raises:
             ResolveOperationError: If project listing fails
         """
-        try:
-            connection = app.state.connection_manager
-            if not connection or not connection.resolve:
-                raise ResolveConnectionError("Not connected to DaVinci Resolve")
-
-            project_manager = connection.project_manager
-            if not project_manager:
-                raise ResolveConnectionError("Failed to get project manager")
-
-            # Get current project
-            current_project = project_manager.GetCurrentProject()
-            current_project_name = current_project.GetName() if current_project else None
-
-            # Get all projects in current folder
-            projects = project_manager.GetProjectListInCurrentFolder() or []
-
-            # Get project details
-            project_list = []
-            for project_name in projects:
-                project = project_manager.LoadProject(project_name)
-                if project:
-                    frame_rate = project.GetSetting("timelineFrameRate") or "N/A"
-                    width = project.GetSetting("timelineResolutionWidth") or "N/A"
-                    height = project.GetSetting("timelineResolutionHeight") or "N/A"
-
-                    project_list.append(
-                        {
-                            "name": project_name,
-                            "frame_rate": frame_rate,
-                            "resolution": f"{width}x{height}",
-                            "is_active": project_name == current_project_name,
-                        }
-                    )
-
-            return {
-                "status": "success",
-                "current_project": current_project_name,
-                "projects": project_list,
-            }
-
-        except Exception as e:
-            logger.error(f"Error listing projects: {e!s}")
-            raise ResolveOperationError(f"Failed to list projects: {e!s}") from e
+        # NOTE: deliberately side-effect free (no LoadProject per entry:
+        # loading switches Resolve's current project).
+        return await list_projects_impl(app)
 
     @app.tool()
     async def get_project_settings() -> dict[str, Any]:
