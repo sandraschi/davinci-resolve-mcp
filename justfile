@@ -26,7 +26,6 @@ fix:
 
 # Quick ruff check only (fast feedback loop)
 ruff-check:
-    Set-Location '{{justfile_directory()}}'
     uv run ruff check .
 
 # --- Testing ---
@@ -55,12 +54,10 @@ test-debug:
 
 # Bandit security audit
 check-sec:
-    Set-Location '{{justfile_directory()}}'
     uv run bandit -r src/
 
 # Safety dependency audit
 audit-deps:
-    Set-Location '{{justfile_directory()}}'
     uv run pip-audit
 
 # --- Development ---
@@ -152,5 +149,37 @@ stats:
 count:
     Get-ChildItem -Recurse -Include '*.py' | Get-Content | Measure-Object -Line | Select-Object -ExpandProperty Lines
 
+
+# Format Python (ruff format) — pairs with lint
+fmt:
+    uv run ruff format .
+
+# Serve the HTTP API backend (port 10843, fleet engine contract: api_app)
+serve:
+    uv run uvicorn davinci_resolve_mcp.server:api_app --host 127.0.0.1 --port 10843
+
+# Local five-gate CI: ruff + format-check + pytest + tsc + biome
+ci:
+    uv run ruff check .
+    uv run ruff format . --check
+    uv run pytest tests/unit/ -q --timeout=30
+    npx tsc --noEmit
+    npx @biomejs/biome ci web_sota/src
+
+# MCPB pack with fresh stage (wipe+recopy src/ -> mcpb/src/ before pack)
+mcpb-pack:
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File '{{justfile_directory()}}\scripts\mcpb-pack-inline.ps1'
+
+# Build the Tauri native wrapper (requires Rust + Node)
+build-native:
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File '{{justfile_directory()}}\native\build.ps1'
+
+# CUA NSIS smoke test (post-install UI walk)
+cua-nsis-test:
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File '{{justfile_directory()}}\scripts\just\cua-nsis-test.ps1'
+
+# CUA webapp smoke test (pre-Tauri browser walk)
+cua-webapp-test:
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File '{{justfile_directory()}}\scripts\just\cua-webapp-test.ps1'
 
 # Bootstrap: install dev deps + pre-commit hook
