@@ -5,9 +5,10 @@ Consolidates Fairlight (DAW) operations: open page, tracks, mute, solo, volume, 
 """
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastmcp.tools.tool import ToolAnnotations
+from pydantic import Field
 
 from ..fairlight_tools import (
     fairlight_get_buses_impl,
@@ -32,36 +33,41 @@ def setup_fairlight_portmanteau(app):
 
     @app.tool(annotations=_MUTATING)
     async def resolve_fairlight(
-        operation: Literal[
-            "open_page",
-            "get_tracks",
-            "set_mute",
-            "set_solo",
-            "set_volume",
-            "track_eq",
-            "track_send",
-            "get_buses",
-            "track_automation",
+        operation: Annotated[
+            Literal[
+                "open_page",
+                "get_tracks",
+                "set_mute",
+                "set_solo",
+                "set_volume",
+                "track_eq",
+                "track_send",
+                "get_buses",
+                "track_automation",
+            ],
+            Field(description="Operation to perform"),
         ],
-        timeline_name: str | None = None,
-        track_index: int = 1,
-        mute: bool = False,
-        solo: bool = False,
-        volume: float | None = None,
+        timeline_name: Annotated[str | None, Field(description="Target timeline. Optional")] = None,
+        track_index: Annotated[int, Field(description="1-based track index")] = 1,
+        mute: Annotated[bool, Field(description="Mute state. Used by: set_mute")] = False,
+        solo: Annotated[bool, Field(description="Solo state. Used by: set_solo")] = False,
+        volume: Annotated[float | None, Field(description="Volume (0.0-1.0). Required for: set_volume")] = None,
         # EQ params
-        eq_band: int | None = None,
-        eq_frequency: float | None = None,
-        eq_gain_db: float | None = None,
-        eq_q_factor: float | None = None,
-        eq_band_type: str | None = None,
-        eq_enabled: bool | None = None,
+        eq_band: Annotated[int | None, Field(description="EQ band number. Used by: track_eq")] = None,
+        eq_frequency: Annotated[float | None, Field(description="EQ frequency Hz. Used by: track_eq")] = None,
+        eq_gain_db: Annotated[float | None, Field(description="EQ gain dB. Used by: track_eq")] = None,
+        eq_q_factor: Annotated[float | None, Field(description="EQ Q factor. Used by: track_eq")] = None,
+        eq_band_type: Annotated[str | None, Field(description="EQ band type. Used by: track_eq")] = None,
+        eq_enabled: Annotated[bool | None, Field(description="EQ enabled flag. Used by: track_eq")] = None,
         # Send params
-        bus_index: int = 1,
-        send_level: float | None = None,
-        send_pre_fader: bool | None = None,
-        send_enabled: bool | None = None,
+        bus_index: Annotated[int, Field(description="Target bus index. Used by: track_send")] = 1,
+        send_level: Annotated[float | None, Field(description="Send level. Used by: track_send")] = None,
+        send_pre_fader: Annotated[bool | None, Field(description="Pre-fader send. Used by: track_send")] = None,
+        send_enabled: Annotated[bool | None, Field(description="Send enabled. Used by: track_send")] = None,
         # Automation params
-        automation_param: str = "volume",
+        automation_param: Annotated[
+            str, Field(description="Automation parameter. Used by: track_automation")
+        ] = "volume",
     ) -> dict[str, Any]:
         """
         Fairlight (DAW) operations in DaVinci Resolve.
@@ -74,6 +80,10 @@ def setup_fairlight_portmanteau(app):
         - track_send: Set track send to bus (send_level, bus_index).
         - get_buses: Get bus configuration.
         - track_automation: Get automation keyframes for a parameter.
+
+        ## Return Format
+        {"status": "success", "message": "Human-readable result", ...}
+        {"status": "error", "message": "Human-readable failure reason"}
 
         ## Examples
         resolve_fairlight("track_eq", track_index=1, eq_band=1, eq_gain_db=-3.5)

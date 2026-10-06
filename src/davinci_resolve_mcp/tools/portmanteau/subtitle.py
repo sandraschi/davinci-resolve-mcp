@@ -5,9 +5,10 @@ Consolidates subtitle operations into a single tool.
 """
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastmcp.tools.tool import ToolAnnotations
+from pydantic import Field
 
 logger = logging.getLogger(__name__)
 
@@ -20,16 +21,19 @@ def setup_subtitle_portmanteau(app):
 
     @app.tool(annotations=_MUTATING)
     async def resolve_subtitle(
-        action: Literal["add", "get", "edit", "delete", "import_srt", "export_srt"],
-        track_index: int = 1,
-        subtitle_index: int = 0,
-        name: str | None = None,
-        text: str = "",
-        start_frame: int | None = None,
-        end_frame: int | None = None,
-        srt_path: str | None = None,
-        output_path: str | None = None,
-        timeline_name: str | None = None,
+        action: Annotated[
+            Literal["add", "get", "edit", "delete", "import_srt", "export_srt"],
+            Field(description="Operation to perform"),
+        ],
+        track_index: Annotated[int, Field(description="1-based subtitle track index")] = 1,
+        subtitle_index: Annotated[int, Field(description="Subtitle index. Required for: edit, delete")] = 0,
+        name: Annotated[str | None, Field(description="Subtitle name. Required for: add")] = None,
+        text: Annotated[str, Field(description="Subtitle text. Used by: add, edit")] = "",
+        start_frame: Annotated[int | None, Field(description="Start frame. Required for: add")] = None,
+        end_frame: Annotated[int | None, Field(description="End frame. Required for: add")] = None,
+        srt_path: Annotated[str | None, Field(description="SRT file path. Required for: import_srt")] = None,
+        output_path: Annotated[str | None, Field(description="Output file path. Required for: export_srt")] = None,
+        timeline_name: Annotated[str | None, Field(description="Target timeline. Optional")] = None,
     ) -> dict[str, Any]:
         """
         Manage subtitles in DaVinci Resolve timelines.

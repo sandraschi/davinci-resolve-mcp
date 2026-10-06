@@ -5,9 +5,10 @@ Consolidates system/utility operations into a single tool with conversational re
 """
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastmcp.tools.tool import ToolAnnotations
+from pydantic import Field
 
 logger = logging.getLogger(__name__)
 
@@ -20,9 +21,14 @@ def setup_system_portmanteau(app):
 
     @app.tool(annotations=_READ_ONLY)
     async def resolve_system(
-        action: Literal["info", "status", "health", "help", "host_status", "host_launch"],
-        topic: str | None = None,
-        level: str | None = None,
+        action: Annotated[
+            Literal["info", "status", "health", "help", "host_status", "host_launch"],
+            Field(description="Operation to perform"),
+        ],
+        topic: Annotated[str | None, Field(description="Help topic. Used by: help. Optional")] = None,
+        level: Annotated[
+            str | None, Field(description="User level (beginner, intermediate, advanced, developer). Used by: help")
+        ] = None,
     ) -> dict[str, Any]:
         """
         System information and utilities for DaVinci Resolve MCP.
@@ -35,26 +41,15 @@ def setup_system_portmanteau(app):
         - health: Perform comprehensive health check
         - help: Get help on topics (optional: topic, level)
 
-        Args:
-            action: Operation to perform (info, status, health, help)
-            topic: Help topic. Used by: help. Optional.
-            level: User level (beginner, intermediate, advanced, developer). Used by: help.
+        ## Return Format
+        {"success": true, "message": "Human-readable result", ...}
+        {"success": false, "error": "<code>", "message": "Human-readable failure reason"}
 
-        Returns:
-            Dict with conversational response and operation results
-
-        Examples:
-            # Get Resolve info
-            resolve_system("info")
-
-            # Get status
-            resolve_system("status")
-
-            # Health check
-            resolve_system("health")
-
-            # Get help
-            resolve_system("help", topic="color_grading", level="beginner")
+        ## Examples
+        resolve_system("info")
+        resolve_system("status")
+        resolve_system("health")
+        resolve_system("help", topic="color_grading", level="beginner")
         """
         # Import from server module - these are the core functions
         from ..help_tool import get_help

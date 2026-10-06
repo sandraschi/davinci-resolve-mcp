@@ -5,9 +5,10 @@ Consolidates rendering operations into a single tool.
 """
 
 import logging
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastmcp.tools.tool import ToolAnnotations
+from pydantic import Field
 
 logger = logging.getLogger(__name__)
 
@@ -20,18 +21,22 @@ def setup_render_portmanteau(app):
 
     @app.tool(annotations=_MUTATING)
     async def resolve_render(
-        action: Literal["timeline", "presets", "with_preset", "job_status"],
-        output_path: str | None = None,
-        format: str = "mp4",
-        codec: str | None = None,
-        resolution: str | None = None,
-        frame_rate: float | None = None,
-        timeline_name: str | None = None,
-        use_timeline_name: bool = True,
-        custom_name: str | None = None,
-        overwrite: bool = False,
-        preset_name: str | None = None,
-        job_id: int | None = None,
+        action: Annotated[
+            Literal["timeline", "presets", "with_preset", "job_status"], Field(description="Operation to perform")
+        ],
+        output_path: Annotated[
+            str | None, Field(description="Output directory. Required for: timeline, with_preset")
+        ] = None,
+        format: Annotated[str, Field(description="Output format (mp4, mov, mxf, dnxhd, prores, ...)")] = "mp4",
+        codec: Annotated[str | None, Field(description="Video codec. Optional")] = None,
+        resolution: Annotated[str | None, Field(description="Output resolution (WxH). Optional")] = None,
+        frame_rate: Annotated[float | None, Field(description="Output frame rate. Optional")] = None,
+        timeline_name: Annotated[str | None, Field(description="Timeline to render. Optional")] = None,
+        use_timeline_name: Annotated[bool, Field(description="Include timeline name in filename")] = True,
+        custom_name: Annotated[str | None, Field(description="Custom output filename. Optional")] = None,
+        overwrite: Annotated[bool, Field(description="Overwrite existing files")] = False,
+        preset_name: Annotated[str | None, Field(description="Render preset name. Required for: with_preset")] = None,
+        job_id: Annotated[int | None, Field(description="Render job ID. Required for: job_status")] = None,
     ) -> dict[str, Any]:
         """
         Comprehensive rendering and export for DaVinci Resolve.
@@ -44,39 +49,16 @@ def setup_render_portmanteau(app):
         - with_preset: Render using preset (requires: preset_name, output_path)
         - job_status: Get render job status (requires: job_id)
 
-        Args:
-            action: Operation to perform (timeline, presets, with_preset, job_status)
-            output_path: Output directory. Required for: timeline, with_preset
-            format: Output format (mp4, mov, mxf, dnxhd, prores, etc). Default: mp4
-            codec: Video codec. Optional.
-            resolution: Output resolution (WxH). Optional.
-            frame_rate: Output frame rate. Optional.
-            timeline_name: Timeline to render. Optional.
-            use_timeline_name: Include timeline name in filename. Default: True
-            custom_name: Custom output filename. Optional.
-            overwrite: Overwrite existing files. Default: False
-            preset_name: Render preset name. Required for: with_preset
-            job_id: Render job ID. Required for: job_status
+        ## Return Format
+        {"status": "success", "message": "Human-readable result", ...}
+        {"status": "error", "message": "Human-readable failure reason"}
 
-        Returns:
-            Dict with operation results
-
-        Examples:
-            # Render timeline to MP4
-            resolve_render("timeline", output_path="C:/Output", format="mp4")
-
-            # Render 4K ProRes
-            resolve_render("timeline", output_path="C:/Output", format="prores",
-                          resolution="3840x2160", codec="prores_422_hq")
-
-            # List presets
-            resolve_render("presets")
-
-            # Render with preset
-            resolve_render("with_preset", preset_name="YouTube 4K", output_path="C:/Output")
-
-            # Check job status
-            resolve_render("job_status", job_id=1)
+        ## Examples
+        resolve_render("timeline", output_path="C:/Output", format="mp4")
+        resolve_render("timeline", output_path="C:/Output", format="prores", resolution="3840x2160", codec="prores_422_hq")
+        resolve_render("presets")
+        resolve_render("with_preset", preset_name="YouTube 4K", output_path="C:/Output")
+        resolve_render("job_status", job_id=1)
         """
         from ..render_tools import (
             RenderCodec,
