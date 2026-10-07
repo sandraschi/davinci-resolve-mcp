@@ -1,81 +1,87 @@
 {
+  "author": {
+    "name": "sandraschi"
+  },
+  "description": "FastMCP 3.x MCP server for professional DaVinci Resolve video editing automation. 9 portmanteau tools plus help/status/agentic tools for complete video production workflows.",
   "manifest_version": "0.2",
   "name": "davinci-resolve-mcp",
-  "version": "0.2.0",
-  "description": "Professional AI-powered video editing automation for DaVinci Resolve. Revolutionary natural language control of complete video production workflows with FastMCP 2.14.3 conversational orchestration.",
-  "author": {
-    "name": "sandraschi",
-    "email": "sandra@sandraschi.dev"
-  },
-  "license": "MIT",
-  "keywords": [
-    "video-editing",
-    "davinci-resolve",
-    "mcp",
-    "fastmcp",
-    "ai-automation",
-    "professional-video",
-    "color-grading",
-    "post-production"
-  ],
-  "homepage": "https://github.com/sandraschi/davinci-resolve-mcp",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sandraschi/davinci-resolve-mcp"
-  },
-  "bugs": {
-    "url": "https://github.com/sandraschi/davinci-resolve-mcp/issues"
-  },
-  "categories": [
-    "productivity",
-    "developer-tools",
-    "media",
-    "video"
-  ],
   "server": {
-    "type": "python",
-    "module": "davinci_resolve_mcp.server",
-    "entry_point": "app",
+    "entry_point": "src/davinci_resolve_mcp/server.py",
     "mcp_config": {
+      "args": [
+        "-m",
+        "davinci_resolve_mcp.server"
+      ],
       "command": "python",
-      "args": ["-m", "davinci_resolve_mcp.server"],
       "env": {
         "PYTHONPATH": "${__dirname}/src",
         "PYTHONUNBUFFERED": "1",
         "RESOLVE_TOOL_MODE": "portmanteau"
       }
+    },
+    "type": "python"
+  },
+  "tools": [
+    {
+      "description": "Project lifecycle: create, open, list, settings",
+      "name": "resolve_project"
+    },
+    {
+      "description": "Media pool: import, list, folders, metadata",
+      "name": "resolve_media"
+    },
+    {
+      "description": "Editing: timelines, clips, cuts, markers, keyframes",
+      "name": "resolve_timeline"
+    },
+    {
+      "description": "Grading: nodes, LUTs, wheels, stills",
+      "name": "resolve_color"
+    },
+    {
+      "description": "Delivery: presets, queue, job status",
+      "name": "resolve_render"
+    },
+    {
+      "description": "Track audio: effects, levels, normalize",
+      "name": "resolve_audio"
+    },
+    {
+      "description": "Fairlight page: EQ, sends, buses, automation",
+      "name": "resolve_fairlight"
+    },
+    {
+      "description": "Captions: add/edit/delete, SRT import/export",
+      "name": "resolve_subtitle"
+    },
+    {
+      "description": "System info, health, help, host lifecycle (read-only)",
+      "name": "resolve_system"
+    },
+    {
+      "description": "Multi-level help",
+      "name": "help"
+    },
+    {
+      "description": "Connection status",
+      "name": "get_status"
+    },
+    {
+      "description": "Confirm-gated server shutdown",
+      "name": "davinci_resolve_shutdown"
+    },
+    {
+      "description": "LLM-orchestrated workflow analysis",
+      "name": "agentic_resolve_workflow"
+    },
+    {
+      "description": "Batch project processing",
+      "name": "intelligent_video_processing"
+    },
+    {
+      "description": "Intent analysis",
+      "name": "conversational_resolve_assistant"
     }
-  },
-  "engines": {
-    "python": ">=3.8",
-    "fastmcp": ">=2.14.3"
-  },
-  "dependencies": {
-    "fastmcp": ">=2.14.3,<2.15.0",
-    "structlog": ">=23.0.0",
-    "pydantic": ">=2.0.0,<3.0.0"
-  },
-  "mcp_features": {
-    "conversational_tools": true,
-    "sampling_capabilities": true,
-    "portmanteau_tools": true,
-    "agentic_workflows": true
-  },
-  "supported_platforms": [
-    "windows",
-    "macos",
-    "linux"
   ],
-  "davinci_resolve": {
-    "minimum_version": "18.0",
-    "recommended_version": "18.5+",
-    "features": [
-      "project_management",
-      "media_pool",
-      "timeline_editing",
-      "color_grading",
-      "audio_processing",
-      "rendering"
-    ]
-  }
+  "version": "0.1.0"
 }
