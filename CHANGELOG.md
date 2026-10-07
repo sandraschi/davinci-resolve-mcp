@@ -1,4 +1,16 @@
 
+## [Unreleased] - 2026-10-07 (MCPB ship)
+
+### Fixed
+- Removed legacy root `manifest.json` (pre-standard shape); `mcpb/manifest.json`
+  is now strict v0.2 (real entry path, 15 real tool names, current pins).
+- `types.py` renamed to `resolve_types.py` (stdlib shadow broke direct launch).
+- `examples.json` regenerated in the standard
+  {name, description, prompt, tool, arguments} shape (114 entries).
+- `mcpb/pack.ps1` step 10 launches `-m` entries as modules (relative imports).
+- First conforming bundle packed and launch-proven:
+  `dist/davinci-resolve-mcp-v0.1.0.mcpb` (177.8 KB, 12/12 steps green).
+
 ## [Unreleased] - 2026-10-06 (follow-up 2: remaining gates)
 
 ### Fixed
