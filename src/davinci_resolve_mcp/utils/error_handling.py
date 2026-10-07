@@ -14,7 +14,7 @@ from typing import Any, cast
 
 from fastmcp import FastMCP
 
-from ..types import ErrorResponse, F, SuccessResponse
+from ..resolve_types import ErrorResponse, F, SuccessResponse
 from .exceptions import (
     DaVinciResolveMCPError,
     ResolveAPIError,

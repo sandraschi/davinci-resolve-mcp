@@ -12,7 +12,7 @@ import logging
 import time
 from typing import TYPE_CHECKING, Any
 
-from ..types import ConnectionState
+from ..resolve_types import ConnectionState
 from ..utils.exceptions import ResolveAPIError, ResolveConnectionError, ResolveNotRunningError
 from .environment import ResolveEnvironment
 

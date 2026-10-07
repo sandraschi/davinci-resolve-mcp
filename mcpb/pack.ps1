@@ -233,14 +233,27 @@ if (-not (Test-Path $VenvPython)) { throw "No venv python at $VenvPython -- run 
 
 $proc = $null
 $prevMcpPort = $env:MCP_PORT
+$prevPythonPath = $env:PYTHONPATH
 try {
     # Use an arbitrary high port so this never collides with a real dev
     # server the same machine might already have running.
     $env:MCP_PORT = '39812'
     $outLog = Join-Path $LaunchDir 'launch.out.log'
     $errLog = Join-Path $LaunchDir 'launch.err.log'
+    # Launch method follows the bundle's own mcp_config: a `-m module` entry
+    # must run as a module (relative imports break under direct file launch);
+    # otherwise launch the entry file directly. PYTHONPATH points at the
+    # UNPACKED bundle src so the check exercises bundle code, not the repo.
+    $mcpArgs = @()
+    if ($manifest.server.mcp_config) { $mcpArgs = @($manifest.server.mcp_config.args) }
+    if ($mcpArgs.Count -ge 2 -and $mcpArgs[0] -eq '-m') {
+        $launchArgs = @('-m', $mcpArgs[1])
+        $env:PYTHONPATH = (Join-Path $LaunchDir 'src')
+    } else {
+        $launchArgs = @($launchEntry)
+    }
     $proc = Start-Process -FilePath $VenvPython `
-        -ArgumentList @($launchEntry) `
+        -ArgumentList $launchArgs `
         -WorkingDirectory $LaunchDir -PassThru -WindowStyle Hidden `
         -RedirectStandardOutput $outLog -RedirectStandardError $errLog
     Start-Sleep -Seconds 4
@@ -263,6 +276,7 @@ try {
 } finally {
     if ($proc -and -not $proc.HasExited) { Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue }
     if ($null -eq $prevMcpPort) { Remove-Item Env:\MCP_PORT -ErrorAction SilentlyContinue } else { $env:MCP_PORT = $prevMcpPort }
+    if ($null -eq $prevPythonPath) { Remove-Item Env:\PYTHONPATH -ErrorAction SilentlyContinue } else { $env:PYTHONPATH = $prevPythonPath }
     Remove-Item -Recurse -Force $LaunchDir -ErrorAction SilentlyContinue
 }
 
