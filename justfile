@@ -166,9 +166,9 @@ ci:
     npx tsc --noEmit
     npx @biomejs/biome ci web_sota/src
 
-# MCPB pack with fresh stage (wipe+recopy src/ -> mcpb/src/ before pack)
+# MCPB pack via the repo pipeline (wipe+fresh-copy src -> mcpb/src, checks, pack)
 mcpb-pack:
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -File '{{justfile_directory()}}\scripts\mcpb-pack-inline.ps1'
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File '{{justfile_directory()}}\mcpb\pack.ps1'
 
 # Build the Tauri native wrapper (requires Rust + Node)
 build-native:

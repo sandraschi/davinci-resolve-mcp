@@ -138,12 +138,19 @@ $examples = @(
 
 $items = foreach ($i in 0..($examples.Count - 1)) {
   $e = $examples[$i]
+  $verb = if ($e.ContainsKey('operation')) { $e.operation } else { $e.action }
+  $args = [ordered]@{}
+  foreach ($k in $e.arguments.Keys) { $args[$k] = $e.arguments[$k] }
+  if ($e.ContainsKey('operation')) { $args['operation'] = $e.operation } else { $args['action'] = $e.action }
+  $slug = ("{0}-{1}-{2}" -f $e.tool, $verb, ($i + 1)).ToLower() -replace '[^a-z0-9]+', '-'
+  # Standard shape per MCPB_PACKAGING_STANDARDS 2.3b:
+  # {name, description, prompt, tool, arguments}
   [ordered]@{
-    id = $i + 1
+    name = $slug.Trim('-')
+    description = "$($e.tool).$($verb): $($e.description)"
+    prompt = $e.description
     tool = $e.tool
-    action = $(if ($e.ContainsKey('operation')) { $e.operation } else { $e.action })
-    arguments = $e.arguments
-    description = $e.description
+    arguments = $args
   }
 }
 
