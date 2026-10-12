@@ -4,6 +4,7 @@ DaVinci Resolve System Portmanteau Tool.
 Consolidates system/utility operations into a single tool with conversational returns.
 """
 
+import asyncio
 import logging
 from typing import Annotated, Any, Literal, cast
 
@@ -189,7 +190,7 @@ def setup_system_portmanteau(app):
             from ...connection.host_app_probe import probe_host_app
             from ...connection.resolve_probe_config import RESOLVE_PROBE_CONFIG
 
-            status = probe_host_app(**RESOLVE_PROBE_CONFIG)
+            status = await asyncio.to_thread(probe_host_app, **RESOLVE_PROBE_CONFIG)
             return {
                 "success": True,
                 "operation": "host_status",
@@ -201,7 +202,7 @@ def setup_system_portmanteau(app):
             from ...connection.host_app_probe import launch_app, probe_host_app
             from ...connection.resolve_probe_config import RESOLVE_PROBE_CONFIG
 
-            status = probe_host_app(**RESOLVE_PROBE_CONFIG)
+            status = await asyncio.to_thread(probe_host_app, **RESOLVE_PROBE_CONFIG)
             ok, msg = launch_app(status)
             return {
                 "success": ok,

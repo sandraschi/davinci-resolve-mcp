@@ -2,6 +2,7 @@
 FastMCP API routes for DaVinci Resolve MCP.
 """
 
+import asyncio
 import json
 import os
 import time
@@ -516,7 +517,7 @@ async def get_host_status():
         from ..connection.host_app_probe import probe_host_app
         from ..connection.resolve_probe_config import RESOLVE_PROBE_CONFIG
 
-        status = probe_host_app(**cast(Any, RESOLVE_PROBE_CONFIG))
+        status = await asyncio.to_thread(probe_host_app, **cast(Any, RESOLVE_PROBE_CONFIG))
         return {
             "success": True,
             **status.to_dict(),
@@ -598,7 +599,7 @@ async def launch_host():
         from ..connection.host_app_probe import launch_app, probe_host_app
         from ..connection.resolve_probe_config import RESOLVE_PROBE_CONFIG
 
-        status = probe_host_app(**cast(Any, RESOLVE_PROBE_CONFIG))
+        status = await asyncio.to_thread(probe_host_app, **cast(Any, RESOLVE_PROBE_CONFIG))
         ok, msg = launch_app(status)
         return {
             "success": ok,
