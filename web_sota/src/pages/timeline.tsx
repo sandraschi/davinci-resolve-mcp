@@ -1,6 +1,7 @@
 import { Box, Clock, Loader2, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiUrl } from "@/lib/api";
 
 interface TimelineInfo {
   name: string;
@@ -21,7 +22,7 @@ export function Timeline() {
   useEffect(() => {
     const fetchTimeline = async () => {
       try {
-        const response = await fetch("/api/v1/timeline");
+        const response = await fetch(apiUrl("/timeline"));
         if (!response.ok) throw new Error("Failed to fetch timeline");
         const result = await response.json();
         setData(result);

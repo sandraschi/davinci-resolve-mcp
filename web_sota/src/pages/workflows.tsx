@@ -26,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { apiUrl } from "@/lib/api";
 
 interface WorkflowStep {
   tool: string;
@@ -369,7 +370,7 @@ export function Workflows() {
   const [connectionStatus, setConnectionStatus] = useState<"loading" | "connected" | "disconnected">("loading");
 
   useEffect(() => {
-    fetch("/api/v1/resolve-info")
+    fetch(apiUrl("/resolve-info"))
       .then((r) => r.json())
       .then((d) => setConnectionStatus(d.version ? "connected" : "disconnected"))
       .catch(() => setConnectionStatus("disconnected"));

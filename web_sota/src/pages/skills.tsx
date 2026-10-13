@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiUrl } from "@/lib/api";
 
 interface Skill {
   name: string;
@@ -17,7 +18,7 @@ export function Skills() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/v1/skills");
+      const res = await fetch(apiUrl("/skills"));
       if (!res.ok) throw new Error("Failed to fetch skills");
       const data = await res.json();
       setSkills(data.skills || []);

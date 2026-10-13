@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { apiUrl } from "@/lib/api";
 
 const PROVIDER_KEY = "llm_provider";
 const MODEL_KEY = "llm_model";
@@ -58,12 +59,12 @@ export const useLlmStore = create<LlmState>((set, get) => ({
   refresh: async () => {
     set({ probing: true });
     try {
-      const d = await fetch("/api/v1/llm/discover").then((r) => (r.ok ? r.json() : { providers: [] }));
+      const d = await fetch(apiUrl("/llm/discover")).then((r) => (r.ok ? r.json() : { providers: [] }));
       const providers = d.providers || [];
       set({ providers });
       const detected = providers.some((p: { detected: boolean }) => p.detected);
       if (detected) {
-        const m = await fetch("/api/v1/llm/models").then((r) => (r.ok ? r.json() : { models: [] }));
+        const m = await fetch(apiUrl("/llm/models")).then((r) => (r.ok ? r.json() : { models: [] }));
         const models: string[] = m.models || [];
         set({ models });
         const { model } = get();
