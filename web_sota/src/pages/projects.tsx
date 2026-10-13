@@ -1,6 +1,7 @@
 import { Clock, FolderOpen, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiUrl } from "@/lib/api";
 
 interface ProjectEntry {
   name: string;
@@ -22,7 +23,7 @@ export function Projects() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("/api/v1/projects");
+      const response = await fetch(apiUrl("/projects"));
       if (!response.ok) throw new Error("Failed to fetch projects");
       const result = await response.json();
       setData(result);

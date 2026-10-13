@@ -2,6 +2,7 @@ import { Loader2, Play, Wifi, WifiOff } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/common/utils";
 import { Badge } from "@/components/ui/badge";
+import { apiUrl } from "@/lib/api";
 
 interface HostStatus {
   success: boolean;
@@ -34,7 +35,7 @@ export function ResolveBanner({ className }: Props) {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const r = await fetch("/api/v1/host-status");
+      const r = await fetch(apiUrl("/host-status"));
       const d = await r.json();
       setStatus(d);
       setLoading(false);
@@ -53,7 +54,7 @@ export function ResolveBanner({ className }: Props) {
     setLaunching(true);
     setLaunchMsg("");
     try {
-      const r = await fetch("/api/v1/host/launch", { method: "POST" });
+      const r = await fetch(apiUrl("/host/launch"), { method: "POST" });
       const d = await r.json();
       setLaunchMsg(d.message || "Launching...");
       setTimeout(fetchStatus, 4000);

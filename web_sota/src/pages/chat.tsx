@@ -3,9 +3,9 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { API_BASE } from "@/lib/api";
 import { useLlmStore } from "@/store/llm";
 
-const API_BASE = "/api/v1";
 const CHAT_PERSONALITY_KEY = "resolve-mcp-chat-personality";
 const CHAT_HISTORY_KEY = "resolve-mcp-chat-history";
 const HISTORY_CAP = 100;

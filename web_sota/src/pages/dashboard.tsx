@@ -1,6 +1,7 @@
 import { Activity, Box, Cpu, Film, GitMerge, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiUrl } from "@/lib/api";
 
 interface ManagerStatus {
   status?: string;
@@ -38,7 +39,7 @@ export function Dashboard() {
   useEffect(() => {
     const fetchInfo = async () => {
       try {
-        const res = await fetch("/api/v1/resolve-info");
+        const res = await fetch(apiUrl("/resolve-info"));
         const data = await res.json();
         setInfo(data);
       } catch {
@@ -49,7 +50,7 @@ export function Dashboard() {
     };
     const fetchHost = async () => {
       try {
-        const r = await fetch("/api/v1/host-status");
+        const r = await fetch(apiUrl("/host-status"));
         const d = await r.json();
         setHostState(d.state || "unknown");
         setHostPid(d.pid || null);
@@ -59,7 +60,7 @@ export function Dashboard() {
     };
     const fetchTimeline = async () => {
       try {
-        const r = await fetch("/api/v1/timeline");
+        const r = await fetch(apiUrl("/timeline"));
         const d = await r.json();
         setTimeline(d.timeline);
       } catch {
@@ -68,7 +69,7 @@ export function Dashboard() {
     };
     const fetchOnboarding = async () => {
       try {
-        const r = await fetch("/api/v1/llm/onboarding");
+        const r = await fetch(apiUrl("/llm/onboarding"));
         setOnboarding(await r.json());
       } catch {
         /* ignore */

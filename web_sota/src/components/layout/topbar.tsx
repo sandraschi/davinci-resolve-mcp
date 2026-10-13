@@ -3,6 +3,7 @@ import { ExternalLink, HelpCircle, LayoutGrid, Loader2, Moon, Play, Sun, WifiOff
 import { useCallback, useEffect, useState } from "react";
 import { APPS_CATALOG } from "@/common/apps-catalog";
 import { useBackendStatus } from "@/hooks/use-backend-status";
+import { apiUrl } from "@/lib/api";
 
 // EXPERIMENTAL light mode (invert hack). Not fleet standard - see index.css.
 // Toggling `.dark` off the root flips the invert filter; persisted so the
@@ -45,7 +46,7 @@ export function Topbar() {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const r = await fetch("/api/v1/host-status");
+      const r = await fetch(apiUrl("/host-status"));
       const d = await r.json();
       setHost(d);
     } catch {
@@ -62,7 +63,7 @@ export function Topbar() {
   const handleLaunch = async () => {
     setLaunching(true);
     try {
-      await fetch("/api/v1/host/launch", { method: "POST" });
+      await fetch(apiUrl("/host/launch"), { method: "POST" });
       setTimeout(fetchStatus, 5000);
     } finally {
       setLaunching(false);

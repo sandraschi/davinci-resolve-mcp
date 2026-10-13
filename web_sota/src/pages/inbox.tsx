@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { apiUrl } from "@/lib/api";
 
 interface InboxEntry {
   id: string;
@@ -23,7 +24,7 @@ export function Inbox() {
     setError(null);
     try {
       const params = new URLSearchParams({ limit: "50", sort: "desc" });
-      const res = await fetch(`/api/v1/logs?${params}`);
+      const res = await fetch(apiUrl(`/logs?${params}`));
       if (!res.ok) throw new Error("Failed to fetch events");
       const data = await res.json();
       const items: InboxEntry[] = (data.entries || []).filter(

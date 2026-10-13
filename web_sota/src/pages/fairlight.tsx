@@ -2,8 +2,7 @@ import { Loader2, Mic, MicOff, Music2, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const API_BASE = "/api/v1";
+import { API_BASE } from "@/lib/api";
 
 interface FairlightTrack {
   index: number;

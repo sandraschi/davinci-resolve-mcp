@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiUrl } from "@/lib/api";
 
 export type BackendStatus = "online" | "offline" | "unknown";
 
@@ -44,7 +45,7 @@ export function useBackendStatus(pollMs = 5000): BackendStatus {
     const poll = async () => {
       if (cancelled) return;
       try {
-        const r = await fetch("/api/v1/health");
+        const r = await fetch(apiUrl("/health"));
         if (cancelled) return;
         setStatus(r.ok ? "online" : "offline");
         delay = r.ok ? pollMs : Math.min(delay * 2, 16000);

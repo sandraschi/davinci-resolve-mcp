@@ -1,7 +1,6 @@
 import { Film, Globe, HelpCircle, List, Music2, Server } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const API_BASE = "/api/v1";
+import { API_BASE } from "@/lib/api";
 
 export function Help() {
   return (
