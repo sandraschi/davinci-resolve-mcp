@@ -5,7 +5,7 @@ if site_pkgs not in sys.path:
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller spec for davinci-resolve-mcp backend sidecar."""
 
-from PyInstaller.utils.hooks import copy_metadata
+from PyInstaller.utils.hooks import collect_all, collect_submodules, copy_metadata
 
 pkg_name = "davinci_resolve_mcp"
 
@@ -17,6 +17,8 @@ for pkg in (
     "pydantic",
     "starlette",
     "httpx",
+    "mcp",
+    "opentelemetry-api",
 ):
     datas += copy_metadata(pkg)
 
@@ -30,12 +32,36 @@ hiddenimports = [
     "uvicorn.protocols.http.h11_impl",
     "uvicorn.lifespan",
     "uvicorn.lifespan.on",
+    # Stdlib C extensions (eager import in run_server.py is not enough alone)
+    "_strptime",
+    "_datetime",
+    # FastMCP 3.4+ JWT (authlib -> joserfc migration)
+    "joserfc",
+    "joserfc.jwk",
+    "joserfc.jwt",
+    # Common extras (calibre parity)
+    "fastmcp",
+    "h11",
+    "beartype",
+    "websockets",
+    "sqlite3",
+    "jwt",
+    "pytz",
+    "jsonschema",
     "davinci_resolve_mcp.server",
     "davinci_resolve_mcp.api",
-    "davinci_resolve_mcp.app",
+    "davinci_resolve_mcp.api.routes",
     "davinci_resolve_mcp.main",
     "davinci_resolve_mcp.tools",
+    "davinci_resolve_mcp.prompts",
 ]
+hiddenimports += collect_submodules("davinci_resolve_mcp")
+hiddenimports += collect_submodules("cachetools")
+hiddenimports += collect_submodules("key_value")
+for _pkg in ("cachetools", "beartype", "pytz", "jsonschema"):
+    _datas, _binaries, _hidden = collect_all(_pkg)
+    datas += _datas
+    hiddenimports += _hidden
 
 a = Analysis(
     ["run_server.py"],
@@ -47,7 +73,7 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=["tkinter", "matplotlib", "pandas", "scipy", "torch", "tensorflow"],
-    noarchive=False,
+    noarchive=True,
     optimize=0,
 )
 pyz = PYZ(a.pure)
@@ -62,7 +88,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,
     upx_exclude=[],
     runtime_tmpdir=None,
     console=True,
