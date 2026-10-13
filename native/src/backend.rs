@@ -13,7 +13,7 @@ pub struct BackendProcess(pub Mutex<Option<Child>>);
 
 // -- PER-REPO: Customize these constants --
 const BACKEND_NAME: &str = "davinci-resolve-mcp-backend.exe";
-const BACKEND_PORT: u16 = 10843;
+const BACKEND_PORT: u16 = 11238;
 const BACKEND_TAG: &str = "davinci-resolve-mcp-backend-x86_64-pc-windows-msvc.exe";
 const ENV_PORT: &str = "PORT";
 const ENV_HOST: &str = "HOST";
@@ -164,7 +164,7 @@ pub fn spawn_backend(app: AppHandle, state: &BackendProcess) -> Result<String, S
 
     log_line(
         &app,
-        &format!("spawning {} (cwd {}) on port 10843",
+        &format!("spawning {} (cwd {}) on port 11238",
             backend_path.display(), workdir.display()),
     );
 
@@ -201,7 +201,7 @@ pub fn spawn_backend(app: AppHandle, state: &BackendProcess) -> Result<String, S
         thread::spawn(move || watch_backend_stream(err, app_handle));
     }
 
-    Ok(format!("Backend starting on port 10843"))
+    Ok(format!("Backend starting on port 11238"))
 }
 
 fn watch_backend_stream<R: std::io::Read + Send + 'static>(stream: R, app: AppHandle) {
