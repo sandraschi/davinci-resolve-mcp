@@ -1,18 +1,18 @@
 # Test dependencies
-pytest>=7.0.0
-pytest-asyncio>=0.20.0
-pytest-cov>=4.0.0
-pytest-mock>=3.10.0
-pytest-xdist>=3.0.0
-httpx>=0.23.0
-pytest-httpx>=0.21.0
+pytest>=9.1.1
+pytest-asyncio>=1.4.0
+pytest-cov>=7.1.0
+pytest-mock>=3.16.0
+pytest-xdist>=3.8.0
+httpx>=0.28.1
+pytest-httpx>=0.36.2
 
 # Development tools
-black>=22.0.0
-isort>=5.10.0
-mypy>=0.910
-flake8>=4.0.0
+black>=26.10.1
+isort>=9.0.2
+mypy>=2.4.0
+flake8>=7.4.1
 
 # Documentation
-sphinx>=4.0.0
-sphinx-rtd-theme>=1.0.0
+sphinx>=9.1.0
+sphinx-rtd-theme>=3.1.0
