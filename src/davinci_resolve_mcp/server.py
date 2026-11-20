@@ -454,14 +454,14 @@ def start_server(host: str | None = None, port: int | None = None, debug: bool |
     Start the HTTP API server (api_app) for the web dashboard.
 
     Args:
-        host: Host to bind the server to (default: from config or "0.0.0.0")
-        port: Port to run the server on (default: from config or 8000)
+        host: Host to bind the server to (default: from config or "127.0.0.1")
+        port: Port to run the server on (default: from config or 10843)
         debug: Enable debug mode with verbose logging (default: from config or False)
     """
     import uvicorn
 
-    host = host or os.getenv("HOST", "0.0.0.0")
-    port = port or int(os.getenv("PORT", "8000"))
+    host = host or os.getenv("HOST", "127.0.0.1")
+    port = port or int(os.getenv("PORT", "10843"))
     debug = debug if debug is not None else os.getenv("DEBUG", "false").lower() == "true"
 
     logger.info("Starting DaVinci Resolve MCP API on %s:%s (debug: %s)", host, port, debug)
